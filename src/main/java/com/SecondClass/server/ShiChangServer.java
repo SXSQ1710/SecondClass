@@ -40,7 +40,6 @@ public class ShiChangServer {
         for (ShiChang s :shiChangs){
             stringRedisTemplate.opsForHash().put("secondclass:shichang",s.getSid().toString(),s.getShichangName());
         }
-
         return Response.success(ResponseStatus.SUCCESS,collect);
     }
 }
