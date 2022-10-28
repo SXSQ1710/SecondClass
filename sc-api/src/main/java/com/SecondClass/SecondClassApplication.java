@@ -8,9 +8,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 @SpringBootApplication
 @MapperScan("com.SecondClass.mapper")
 public class SecondClassApplication {
-
 	public static void main(String[] args) {
 		SpringApplication.run(SecondClassApplication.class, args);
 	}
-
 }
