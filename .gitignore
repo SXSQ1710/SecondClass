@@ -18,6 +18,7 @@ target/
 .idea
 *.iws
 *.iml
+*.yml
 *.ipr
 .mvn
 mvnw*
