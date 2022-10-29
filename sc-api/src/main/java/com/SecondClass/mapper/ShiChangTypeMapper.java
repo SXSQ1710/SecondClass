@@ -1,6 +1,6 @@
 package com.SecondClass.mapper;
 
-import com.SecondClass.entity.ShiChang;
+import com.SecondClass.entity.ShichangType;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.springframework.stereotype.Repository;
 
@@ -12,5 +12,5 @@ import org.springframework.stereotype.Repository;
  **/
 
 @Repository
-public interface ShiChangMapper  extends BaseMapper<ShiChang> {
+public interface ShiChangTypeMapper extends BaseMapper<ShichangType> {
 }
