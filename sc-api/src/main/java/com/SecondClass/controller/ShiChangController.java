@@ -1,7 +1,10 @@
 package com.SecondClass.controller;
 
 import com.SecondClass.entity.Response;
-import com.SecondClass.server.ShiChangServer;
+import com.SecondClass.entity.ShichangType;
+
+import com.SecondClass.server.ShiChangTypeServer;
+
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -20,10 +23,10 @@ import javax.annotation.Resource;
 public class ShiChangController {
 
     @Resource
-    ShiChangServer shiChangServer;
+    ShiChangTypeServer shichangTypeServer;
 
     @GetMapping(value = "test")
     public Response test(){
-        return shiChangServer.test();
+        return shichangTypeServer.test();
     }
 }

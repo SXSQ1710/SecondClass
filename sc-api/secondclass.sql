@@ -11,7 +11,7 @@
  Target Server Version : 80025
  File Encoding         : 65001
 
- Date: 29/10/2022 09:45:25
+ Date: 29/10/2022 22:31:58
 */
 
 SET NAMES utf8mb4;
@@ -45,16 +45,17 @@ CREATE TABLE `t_activity`  (
   `aid` bigint NOT NULL COMMENT '活动id',
   `aname` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '活动名字',
   `adescription` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '活动地点',
-  `a_register_open` date NULL DEFAULT NULL COMMENT '报名开始时间',
-  `a_register_close` date NULL DEFAULT NULL COMMENT '报名结束时间',
+  `a_register_open` datetime NULL DEFAULT NULL COMMENT '报名开始时间',
+  `a_register_close` datetime NULL DEFAULT NULL COMMENT '报名结束时间',
   `a_limitted_number` int NULL DEFAULT NULL COMMENT '报名限制人数',
   `a_oid` bigint NULL DEFAULT NULL COMMENT '举办单位',
-  `a_hold_open` date NULL DEFAULT NULL COMMENT '举办开始时间',
-  `a_hold_end` date NULL DEFAULT NULL COMMENT '举办结束时间',
+  `a_hold_start` datetime NULL DEFAULT NULL COMMENT '举办开始时间',
+  `a_hold_end` datetime NULL DEFAULT NULL COMMENT '举办结束时间',
   `astatus` int NULL DEFAULT NULL COMMENT '活动状态',
   `apic` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '活动图片路径',
   `a_shichang_num` int NULL DEFAULT NULL COMMENT '活动时长数量',
   `a_shichang_type` bigint NULL DEFAULT NULL COMMENT '活动时长类型',
+  `aAddress` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '活动地址',
   PRIMARY KEY (`aid`) USING BTREE,
   INDEX `a_oid`(`a_oid`) USING BTREE,
   INDEX `a_shichang_type`(`a_shichang_type`) USING BTREE,
@@ -204,7 +205,7 @@ CREATE TABLE `t_shichang`  (
   INDEX `sid`(`sid`) USING BTREE,
   CONSTRAINT `t_shichang_ibfk_1` FOREIGN KEY (`uid`) REFERENCES `t_user` (`uid`) ON DELETE RESTRICT ON UPDATE RESTRICT,
   CONSTRAINT `t_shichang_ibfk_2` FOREIGN KEY (`sid`) REFERENCES `t_shichang_type` (`sid`) ON DELETE RESTRICT ON UPDATE RESTRICT
-) ENGINE = InnoDB AUTO_INCREMENT = 6 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic;
 
 -- ----------------------------
 -- Records of t_shichang

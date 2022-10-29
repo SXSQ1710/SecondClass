@@ -1,6 +1,7 @@
 package com.SecondClass.entity;
 
 import lombok.Data;
+import org.springframework.format.annotation.DateTimeFormat;
 
 import java.util.Date;
 import java.io.Serializable;
@@ -30,6 +31,7 @@ public class Activity implements Serializable {
     /**
      * 报名开始时间
      */
+
     private Date aRegisterOpen;
     /**
      * 报名结束时间
@@ -46,7 +48,7 @@ public class Activity implements Serializable {
     /**
      * 举办开始时间
      */
-    private Date aHoldOpen;
+    private Date aHoldStart;
     /**
      * 举办结束时间
      */
@@ -68,7 +70,7 @@ public class Activity implements Serializable {
      */
     private Long aShichangType;
 
-
+    private String aAddress;
 
 }
 
