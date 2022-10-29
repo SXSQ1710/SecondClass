@@ -7,7 +7,7 @@ filePath: &filePath SecondClass/src/main/resources/static
 #数据库配置
 mysql-url: &url jdbc:mysql://localhost:3306/secondclass?useSSL=false&amp&serverTimezone=UTC&allowPublicKeyRetrieval=true
 mysql-username: &username root
-mysql-password: &password 11111111111
+mysql-password: &password root
 #静态资源地址
 static-locations: &static file:D:/javaide/SecondClass/src/main/resources/static
 

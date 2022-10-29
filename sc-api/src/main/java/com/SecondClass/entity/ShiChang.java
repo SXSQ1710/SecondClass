@@ -12,7 +12,7 @@ import java.io.Serializable;
  * @since 2022-10-29 09:33:02
  */
 @Data
-public class Shichang implements Serializable {
+public class ShiChang implements Serializable {
     private static final long serialVersionUID = 826449020332591856L;
     /**
      * 时长id

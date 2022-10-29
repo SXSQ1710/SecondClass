@@ -1,20 +1,23 @@
 package com.SecondClass.entity;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
+import org.springframework.data.annotation.Id;
+import org.springframework.format.annotation.DateTimeFormat;
 
-import java.util.Date;
 import java.io.Serializable;
+import java.util.Date;
 
 /**
  * (TActivity)实体类
  *
  * @author makejava
- * @since 2022-10-29 09:33:01
+ * @since 2022-10-29 18:48:25
  */
-
 @Data
 public class Activity implements Serializable {
-    private static final long serialVersionUID = -56724925718894306L;
+    private static final long serialVersionUID = 237752534655381205L;
     /**
      * 活动id
      */
@@ -30,6 +33,8 @@ public class Activity implements Serializable {
     /**
      * 报名开始时间
      */
+
+    @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private Date aRegisterOpen;
     /**
      * 报名结束时间
@@ -38,6 +43,7 @@ public class Activity implements Serializable {
     /**
      * 报名限制人数
      */
+
     private Integer aLimittedNumber;
     /**
      * 举办单位
@@ -46,7 +52,7 @@ public class Activity implements Serializable {
     /**
      * 举办开始时间
      */
-    private Date aHoldOpen;
+    private Date aHoldStart;
     /**
      * 举办结束时间
      */
@@ -67,7 +73,6 @@ public class Activity implements Serializable {
      * 活动时长类型
      */
     private Long aShichangType;
-
 
 
 }
