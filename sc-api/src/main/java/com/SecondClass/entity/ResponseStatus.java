@@ -41,9 +41,11 @@ public enum ResponseStatus {
     //活动相关响应
     ACTIVITY_APPLY_SUCCESS("2-200","活动申请成功，请等待审核结果！"),
     ACTIVITY_APPLY_FAIL("2-400","活动申请失败，请检查申请信息！"),
-    ACTIVITY_APPLY_ERROR("2-500","服务器错误！")
+    ACTIVITY_APPLY_ERROR("2-500","服务器错误！"),
 
-    ;
+    //审核相关相应
+    ADUIT_SUCCESS("3-200","审核操作成功！"),
+    ADUIT_FAIL("3-400","审核操作失败！"),;
 
     private final String responseStatus;
 

@@ -2,6 +2,7 @@ package com.SecondClass.entity;
 
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -25,12 +26,9 @@ public class ActicityApplication implements Serializable {
     /**
      * 申请活动表id（物理id）
      */
-    @TableId(value = "aid",type= IdType.AUTO)
+    @TableId(value = "a_app_id",type= IdType.AUTO)
+    @JsonProperty("a_app_id")
     private Long aAppId;
-    /**
-     * 申请活动id
-     */
-    private Long aid;
     /**
      * 申请人id
      */
@@ -51,5 +49,7 @@ public class ActicityApplication implements Serializable {
      * 申请状态 1：申请中 2：通过 0：拒绝
      */
     private Integer aAppStatus;
+
+    private String aAppExplain;
 }
 

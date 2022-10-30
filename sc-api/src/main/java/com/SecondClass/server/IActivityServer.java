@@ -22,4 +22,12 @@ public interface IActivityServer {
     Response applyActivity(R_ActicityApplication request);
 
 
+    /**
+     * 审核活动
+     * @param aAppID 申请活动表id
+     * @param status 活动状态 2：通过 0：拒绝
+     * @return
+     */
+    Response auditActivity(Integer aAppID,Integer status,String explain);
+
 }
