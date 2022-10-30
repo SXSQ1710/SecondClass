@@ -18,24 +18,30 @@ public enum ResponseStatus {
     FAIL("400","FAIL"),
     ERROR("500","ERROR"),
 
+    /** ResponseStatus说明：
+     * 成功响应为：200
+     * 失败响应为：400
+     * 服务器错误响应为：500
+     *
+     * 1：用户登录相关响应
+     * 2：活动申请相关响应
+     * 3：
+     * 4：
+     * .....其他的直接根据想要填写
+     *
+     * 例：
+     *   1-200：用户登录成功响应
+     *   2-400：活动申请失败响应
+     */
+
     //用户登录响应
-    USER_LOGIN_SUCCESS("1-1-200","登录成功！"),
-    USER_LOGIN_FAIL("1-1-400","用户名或密码错误！"),
+    USER_LOGIN_SUCCESS("1-200","登录成功！"),
+    USER_LOGIN_FAIL("1-400","用户名或密码错误！"),
 
-    //用户注册申请响应
-    USER_REGISTER_REQUEST_SUCCESS("1-2-200","验证邮件已发送，请在5分钟内前往邮箱查看完成注册！"),
-    USER_REGISTER_REQUEST_FAIL("1-2-400","用户名已被注册!"),
-    USER_REGISTER_REQUEST_ERROR("1-2-500","验证邮件发送失败!"),
-
-    //用户注册验证响应
-    USER_REGISTER_SUCCESS("1-2-200","注册成功！"),
-    USER_REGISTER_FAIL("1-2-400","验证邮件已过期，请重新注册！"),
-
-    //用户密码修改
-    USER_FORGET_SUCCESS("1-3-200","邮件已发送，请在5分钟内完成密码修改！"),
-    USER_FORGET_FAIL("1-3-400","用户不存在，请查看用户名是否输入正确！"),
-    USER_FORGET_ERROR("1-3-500","邮件发送失败！"),
-
+    //活动相关响应
+    ACTIVITY_APPLY_SUCCESS("2-200","活动申请成功，请等待审核结果！"),
+    ACTIVITY_APPLY_FAIL("2-400","活动申请失败，请检查申请信息！"),
+    ACTIVITY_APPLY_ERROR("2-500","服务器错误！")
 
     ;
 

@@ -1,8 +1,8 @@
 package com.SecondClass.controller;
 
-import com.SecondClass.entity.Activity;
+import com.SecondClass.entity.R_entity.R_ActicityApplication;
 import com.SecondClass.entity.Response;
-import com.SecondClass.server.ActivityServer;
+import com.SecondClass.server.ActivityServerImpl;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
@@ -11,12 +11,10 @@ import javax.annotation.Resource;
 @RequestMapping (value = "/api/activity")
 public class ActivityController {
     @Resource
-    ActivityServer activityServer;
+    ActivityServerImpl activityServer;
 
     @PostMapping("/applyActivity")
-    public Response applyActivity(@RequestBody Activity activity){
-        System.out.println(activity);
-        return null;
-//        return activity.applyActivity(activity);
+    public Response applyActivity(@RequestBody R_ActicityApplication request){
+        return activityServer.applyActivity(request);
     }
 }

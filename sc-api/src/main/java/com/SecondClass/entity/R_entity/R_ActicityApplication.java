@@ -1,4 +1,4 @@
-package com.SecondClass.entity;
+package com.SecondClass.entity.R_entity;
 
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
@@ -11,26 +11,19 @@ import lombok.NoArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 
 import java.util.Date;
-import java.io.Serializable;
 
 /**
- * (TActivity)实体类
- *
- * @author makejava
- * @since 2022-10-29 09:33:01
- */
-
+ * @title: R_ActicityApplication
+ * @Author SXSQ
+ * @Description //TODO
+ * @Date 2022/10/30 14:17
+ **/
 @Data
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class Activity implements Serializable {
-    private static final long serialVersionUID = -56724925718894306L;
-    /**
-     * 活动id
-     */
-    @TableId(value = "aid",type= IdType.AUTO)
-    private Long aid;
+public class R_ActicityApplication {
+
     /**
      * 活动名字
      */
@@ -56,7 +49,6 @@ public class Activity implements Serializable {
     /**
      * 报名限制人数
      */
-
     @JsonProperty(value = "a_limitted_number")
     private Integer aLimittedNumber;
     /**
@@ -84,10 +76,6 @@ public class Activity implements Serializable {
     @JsonProperty(value = "a_hold_end")
     private Date aHoldEnd;
     /**
-     * 活动状态
-     */
-    private Integer astatus;
-    /**
      * 活动图片路径
      */
     private String apic;
@@ -106,6 +94,9 @@ public class Activity implements Serializable {
      */
     @JsonProperty(value = "a_address")
     private String aAddress;
-
+    /**
+     * 申请附件路径
+     */
+    @JsonProperty(value = "a_app_attachment")
+    private String aAppAttachment;
 }
-
