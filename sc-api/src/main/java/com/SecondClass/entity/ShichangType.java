@@ -1,5 +1,6 @@
 package com.SecondClass.entity;
 
+import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 
 import java.io.Serializable;
@@ -11,6 +12,7 @@ import java.io.Serializable;
  * @since 2022-10-29 09:33:02
  */
 @Data
+@TableName("t_shichang_type")
 public class ShichangType implements Serializable {
     private static final long serialVersionUID = 110615786567587556L;
     /**
