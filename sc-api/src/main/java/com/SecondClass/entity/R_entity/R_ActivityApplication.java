@@ -22,7 +22,7 @@ import java.util.Date;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class R_ActicityApplication {
+public class R_ActivityApplication {
 
     /**
      * 活动名字

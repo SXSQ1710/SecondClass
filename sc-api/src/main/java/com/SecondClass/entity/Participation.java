@@ -11,12 +11,12 @@ import java.io.Serializable;
  * @since 2022-10-29 09:33:02
  */
 @Data
-public class Paticipation implements Serializable {
+public class Participation implements Serializable {
     private static final long serialVersionUID = -15005800947646660L;
     /**
      * 参加活动id
      */
-    private Long pid;
+    private String pid;
     /**
      * 用户id
      */

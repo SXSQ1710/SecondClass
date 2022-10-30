@@ -1,6 +1,6 @@
 package com.SecondClass.mapper;
 
-import com.SecondClass.entity.ActicityApplication;
+import com.SecondClass.entity.ActivityApplication;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
 /**
@@ -10,5 +10,5 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
  * @Date 2022/10/30 13:30
  **/
 
-public interface ActicityApplicationMapper extends BaseMapper<ActicityApplication> {
+public interface ActivityApplicationMapper extends BaseMapper<ActivityApplication> {
 }

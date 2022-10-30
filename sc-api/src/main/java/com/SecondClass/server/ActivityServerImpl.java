@@ -2,16 +2,14 @@ package com.SecondClass.server;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.json.JSONUtil;
-import com.SecondClass.entity.ActicityApplication;
-import com.SecondClass.entity.Activity;
-import com.SecondClass.entity.R_entity.R_ActicityApplication;
-import com.SecondClass.entity.Response;
-import com.SecondClass.entity.ResponseStatus;
-import com.SecondClass.mapper.ActicityApplicationMapper;
+import com.SecondClass.entity.*;
+import com.SecondClass.entity.R_entity.R_ActivityApplication;
+import com.SecondClass.mapper.ActivityApplicationMapper;
 import com.SecondClass.mapper.ActivityMapper;
-import com.alibaba.druid.support.json.JSONUtils;
+import com.SecondClass.mapper.ParticipationMapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
-import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -26,12 +24,14 @@ public class ActivityServerImpl implements IActivityServer{
     @Resource
     ActivityMapper activityMapper;
     @Resource
-    ActicityApplicationMapper acticityApplicationMapper;
+    ActivityApplicationMapper activityApplicationMapper;
+    @Resource
+    ParticipationMapper participationMapper;
     @Resource
     StringRedisTemplate stringRedisTemplate;
 
     @Transactional
-    public Response applyActivity(R_ActicityApplication request){
+    public Response applyActivity(R_ActivityApplication request){
         try{
             //1.生成活动描述
             //  将活动信息转换为json字符串存入申请表的活动描述
@@ -41,13 +41,13 @@ public class ActivityServerImpl implements IActivityServer{
 
             //2.添加活动申请表到数据库
             //  设置申请状态为1
-            ActicityApplication acticityApplication = ActicityApplication.builder().uid(activity.getAUid())
+            ActivityApplication acticityApplication = ActivityApplication.builder().uid(activity.getAUid())
                     .aAppDescription(jsonStr_activity)
                     .aAppAttachment(request.getAAppAttachment())
                     .aAppStatus(1).build();
             System.out.println(acticityApplication);
             //  插入失败抛出异常
-            if (acticityApplicationMapper.insert(acticityApplication) != 1) throw new IllegalArgumentException();
+            if (activityApplicationMapper.insert(acticityApplication) != 1) throw new IllegalArgumentException();
 
             //将活动申请活动信息写入redis，以活动id作为hashKey
             String jsonStr_acticityApplication = JSONUtil.toJsonStr(acticityApplication);
@@ -74,9 +74,9 @@ public class ActivityServerImpl implements IActivityServer{
         try {
             //1.更新活动申请实体和活动实体的状态
             //1.1 获得活动实体
-            QueryWrapper<ActicityApplication> queryWrapper = new QueryWrapper<>();
+            QueryWrapper<ActivityApplication> queryWrapper = new QueryWrapper<>();
             queryWrapper.eq("a_app_id", aAppId);
-            ActicityApplication acticityApplication = acticityApplicationMapper.selectOne(queryWrapper);
+            ActivityApplication acticityApplication = activityApplicationMapper.selectOne(queryWrapper);
 
             //1.2修改活动申请状态   2表示通过 0：表示拒绝
             acticityApplication.setAAppStatus(status);
@@ -102,7 +102,7 @@ public class ActivityServerImpl implements IActivityServer{
 
             }
             //2.5 更新活动申请表
-            if(acticityApplicationMapper.updateById(acticityApplication)!=1)throw new IllegalArgumentException();
+            if(activityApplicationMapper.updateById(acticityApplication)!=1)throw new IllegalArgumentException();
 
             //3.修改redis里面的数据
             //3.1 活动申请表
@@ -120,6 +120,155 @@ public class ActivityServerImpl implements IActivityServer{
             //其他错误
             e.printStackTrace();
             return Response.success(ResponseStatus.ERROR);
+        }
+    }
+
+
+    public Response findActivityAppByUid(Long uid,Page page) {
+        QueryWrapper<ActivityApplication> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("uid",uid);
+        IPage<ActivityApplication> appList =  activityApplicationMapper.selectPage(page,queryWrapper);
+        if(appList.getSize() == 0 ){
+            return Response.success(ResponseStatus.ACTIVITY_APP_QUERY_FAIL,appList);
+        }
+        else{
+            return Response.success(ResponseStatus.ACTIVITY_APP_QUERY_SUCCESS,appList);
+        }
+    }
+
+
+    public Response findAppStatusByAid(Long aAppId) {
+        QueryWrapper<ActivityApplication> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("a_app_id",aAppId);
+        ActivityApplication ActivityApplication = activityApplicationMapper.selectOne(queryWrapper);
+        if(ActivityApplication == null){
+            return Response.success(ResponseStatus.ACTIVITY_APP_QUERY_FAIL,ActivityApplication);
+        }
+        else{
+            return Response.success(ResponseStatus.ACTIVITY_APP_QUERY_SUCCESS,ActivityApplication);
+        }
+    }
+
+    @Override
+    public Response getAllApp(Page page) {
+        QueryWrapper<ActivityApplication> queryWrapper = new QueryWrapper<>();
+        IPage<ActivityApplication> appList =  activityApplicationMapper.selectPage(page,queryWrapper);
+        return Response.success(ResponseStatus.ACTIVITY_APP_QUERY_SUCCESS,appList);
+    }
+
+    @Override
+    public Response getAll(Page page) {
+        QueryWrapper<Activity> queryWrapper = new QueryWrapper<>();
+        IPage<Activity> activityIPage =  activityMapper.selectPage(page,queryWrapper);
+        return Response.success(ResponseStatus.ACTIVITY_APP_QUERY_SUCCESS,activityIPage);
+
+    }
+
+
+    public Response findActivityByAid(Long aid) {
+        QueryWrapper<Activity> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("aid",aid);
+        Activity activity = activityMapper.selectOne(queryWrapper);
+        return Response.success(ResponseStatus.ACTIVITY_QUERY_SUCCESS,activity);
+    }
+
+
+    public Response register(Participation participation){
+        try {
+            String UUID = java.util.UUID.randomUUID().toString().replaceAll("-", "");
+            participation.setPid(UUID);
+            participation.setParticipateStatus(0);
+            if(participationMapper.insert(participation) != 1) throw new IllegalArgumentException();
+
+            return Response.success(ResponseStatus.REGISTER_ACTIVITY_SUCCESS);
+        } catch (IllegalArgumentException i) {
+            i.printStackTrace();
+            return Response.error(ResponseStatus.REGISTER_ACTIVITY_FAIL);
+        } catch (DataIntegrityViolationException d) {
+            d.printStackTrace();
+            return Response.error(ResponseStatus.REGISTER_ACTIVITY_FAIL);
+        } catch (Exception e) {
+            //其他错误
+            e.printStackTrace();
+            return Response.success(ResponseStatus.ERROR);
+        }
+
+    }
+
+    @Override
+    public Response signIn(Participation participation) {
+        try {
+            participation.setParticipateStatus(2);
+            if (participationMapper.updateById(participation) != 1) throw new IllegalArgumentException();
+            return Response.success(ResponseStatus.ACTIVITY_SIGN_IN_SUCCESS);
+        } catch (IllegalArgumentException i) {
+            i.printStackTrace();
+            return Response.error(ResponseStatus.ACTIVITY_SIGN_IN_FAIL);
+        } catch (DataIntegrityViolationException d) {
+            d.printStackTrace();
+            return Response.error(ResponseStatus.ACTIVITY_SIGN_IN_FAIL);
+        } catch (Exception e) {
+            //其他错误
+            e.printStackTrace();
+            return Response.success(ResponseStatus.ERROR);
+
+        }
+    }
+
+    public Response signOff(Participation participation) {
+        try {
+            participation.setParticipateStatus(3);
+            if (participationMapper.updateById(participation) != 1) throw new IllegalArgumentException();
+            return Response.success(ResponseStatus.ACTIVITY_SIGN_OFF_SUCCESS);
+        } catch (IllegalArgumentException i) {
+            i.printStackTrace();
+            return Response.error(ResponseStatus.ACTIVITY_SIGN_OFF_FAIL);
+        } catch (DataIntegrityViolationException d) {
+            d.printStackTrace();
+            return Response.error(ResponseStatus.ACTIVITY_SIGN_OFF_FAIL);
+        } catch (Exception e) {
+            //其他错误
+            e.printStackTrace();
+            return Response.success(ResponseStatus.ERROR);
+
+        }
+    }
+
+    /** todo
+     *
+     * @param aid
+     * @param page
+     * @return
+     */
+    @Override
+    public Response getAllRegisteredUser(Long aid, Page page) {
+//        IPage<Activity> activityIPage =  activityMapper.selectPage(page,queryWrapper);
+        return null;
+    }
+
+    /**
+     * TODO 签到签退和这个都有问题 明天再改吧
+     * @param participation
+     * @return
+     */
+    @Override
+    public Response modifyRegisterStatusByUid(Participation participation) {
+        try {
+            //审核通过
+            participation.setParticipateStatus(1);
+            if (participationMapper.updateById(participation) != 1) throw new IllegalArgumentException();
+            return Response.success(ResponseStatus.ADUIT_SUCCESS);
+        } catch (IllegalArgumentException i) {
+            i.printStackTrace();
+            return Response.error(ResponseStatus.ADUIT_FAIL);
+        } catch (DataIntegrityViolationException d) {
+            d.printStackTrace();
+            return Response.error(ResponseStatus.ADUIT_FAIL);
+        } catch (Exception e) {
+            //其他错误
+            e.printStackTrace();
+            return Response.success(ResponseStatus.ERROR);
+
         }
     }
 }
