@@ -21,7 +21,7 @@ import java.io.Serializable;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class ActicityApplication implements Serializable {
+public class ActivityApplication implements Serializable {
     private static final long serialVersionUID = 339862784358061142L;
     /**
      * 申请活动表id（物理id）
@@ -52,4 +52,3 @@ public class ActicityApplication implements Serializable {
 
     private String aAppExplain;
 }
-

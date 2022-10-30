@@ -45,7 +45,24 @@ public enum ResponseStatus {
 
     //审核相关相应
     ADUIT_SUCCESS("3-200","审核操作成功！"),
-    ADUIT_FAIL("3-400","审核操作失败！"),;
+    ADUIT_FAIL("3-400","审核操作失败！"),
+
+    //申请查询相关相应
+    ACTIVITY_APP_QUERY_SUCCESS("4-200","查询成功"),
+    ACTIVITY_APP_QUERY_FAIL("4-400","没有相关数据"),
+
+    //活动相关相应
+    ACTIVITY_QUERY_SUCCESS("5-200","查询成功"),
+    ACTIVITY_QUERY_FAIL("5-400","没有相关数据"),
+    ACTIVITY_SIGN_IN_SUCCESS("5-200","签到成功"),
+    ACTIVITY_SIGN_IN_FAIL("5-400","签到失败"),
+    ACTIVITY_SIGN_OFF_SUCCESS("5-200","签退成功"),
+    ACTIVITY_SIGN_OFF_FAIL("5-400","签退失败"),
+
+    //报名相关响应
+    REGISTER_ACTIVITY_SUCCESS("6-200","报名成功"),
+    REGISTER_ACTIVITY_FAIL("6-400","报名失败");
+
 
     private final String responseStatus;
 

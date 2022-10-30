@@ -11,31 +11,11 @@
  Target Server Version : 80025
  File Encoding         : 65001
 
- Date: 30/10/2022 19:31:46
+ Date: 31/10/2022 01:30:02
 */
 
 SET NAMES utf8mb4;
 SET FOREIGN_KEY_CHECKS = 0;
-
--- ----------------------------
--- Table structure for t_acticity_application
--- ----------------------------
-DROP TABLE IF EXISTS `t_acticity_application`;
-CREATE TABLE `t_acticity_application`  (
-  `a_app_id` bigint NOT NULL AUTO_INCREMENT COMMENT '申请活动表id（物理id）',
-  `uid` bigint NOT NULL COMMENT '申请人id',
-  `a_app_type` bigint NULL DEFAULT NULL COMMENT '申请类型',
-  `a_app_description` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL COMMENT '申请描述',
-  `a_app_attachment` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '申请附件路径',
-  `a_app_status` tinyint NULL DEFAULT NULL COMMENT '申请状态 1：申请中 2：通过 0：拒绝',
-  `a_app_explain` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '审核说明',
-  PRIMARY KEY (`a_app_id`) USING BTREE,
-  INDEX `uid`(`uid`) USING BTREE
-) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = DYNAMIC;
-
--- ----------------------------
--- Records of t_acticity_application
--- ----------------------------
 
 -- ----------------------------
 -- Table structure for t_activity
@@ -67,6 +47,26 @@ CREATE TABLE `t_activity`  (
 
 -- ----------------------------
 -- Records of t_activity
+-- ----------------------------
+
+-- ----------------------------
+-- Table structure for t_activity_application
+-- ----------------------------
+DROP TABLE IF EXISTS `t_activity_application`;
+CREATE TABLE `t_activity_application`  (
+  `a_app_id` bigint NOT NULL AUTO_INCREMENT COMMENT '申请活动表id（物理id）',
+  `uid` bigint NOT NULL COMMENT '申请人id',
+  `a_app_type` bigint NULL DEFAULT NULL COMMENT '申请类型',
+  `a_app_description` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL COMMENT '申请描述',
+  `a_app_attachment` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '申请附件路径',
+  `a_app_status` tinyint NULL DEFAULT NULL COMMENT '申请状态 1：申请中 2：通过 0：拒绝',
+  `a_app_explain` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '审核说明',
+  PRIMARY KEY (`a_app_id`) USING BTREE,
+  INDEX `uid`(`uid`) USING BTREE
+) ENGINE = InnoDB AUTO_INCREMENT = 10 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = DYNAMIC;
+
+-- ----------------------------
+-- Records of t_activity_application
 -- ----------------------------
 
 -- ----------------------------
@@ -147,11 +147,11 @@ CREATE TABLE `t_oganization_member`  (
 -- ----------------------------
 
 -- ----------------------------
--- Table structure for t_paticipation
+-- Table structure for t_participation
 -- ----------------------------
-DROP TABLE IF EXISTS `t_paticipation`;
-CREATE TABLE `t_paticipation`  (
-  `pid` varchar(30) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '参加活动id，可能涉及高并发用自增不合适',
+DROP TABLE IF EXISTS `t_participation`;
+CREATE TABLE `t_participation`  (
+  `pid` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '参加活动id，可能涉及高并发用自增不合适',
   `uid` bigint NULL DEFAULT NULL COMMENT '用户id',
   `aid` bigint NULL DEFAULT NULL COMMENT '活动id',
   `participate_status` tinyint NULL DEFAULT NULL COMMENT '参与状态 1：已报名 2：签到 3：签退 4：时长已发放',
@@ -161,8 +161,11 @@ CREATE TABLE `t_paticipation`  (
 ) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
--- Records of t_paticipation
+-- Records of t_participation
 -- ----------------------------
+INSERT INTO `t_participation` VALUES ('519068f46aa5465e9c4560912a253406', 2, 7, 0);
+INSERT INTO `t_participation` VALUES ('5207c73304df4cf18078eac89d4b0358', 2, 7, 0);
+INSERT INTO `t_participation` VALUES ('560e844c624841ef998ecfeb92d15bd8', 2, 7, 0);
 
 -- ----------------------------
 -- Table structure for t_self_application
@@ -244,5 +247,6 @@ CREATE TABLE `t_user`  (
 -- Records of t_user
 -- ----------------------------
 INSERT INTO `t_user` VALUES (1, '123456', 123456, 1, 1);
+INSERT INTO `t_user` VALUES (2, '123456', 12345, 1, 1);
 
 SET FOREIGN_KEY_CHECKS = 1;
