@@ -27,7 +27,6 @@ public class ShiChangController {
 
     @GetMapping(value = "test")
     public Response test(){
-        System.out.println("123nknin");
         return shichangTypeServer.test();
     }
 }
