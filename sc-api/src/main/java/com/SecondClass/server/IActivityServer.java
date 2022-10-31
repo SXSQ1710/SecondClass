@@ -80,7 +80,25 @@ public interface IActivityServer {
 
     Response signOff(Participation participation);
 
+    /**
+     * 查询所有未审核报名人员
+     * @param aid
+     * @param page
+     * @return
+     */
     Response getAllRegisteredUser(Long aid, Page page);
 
+    /**
+     * 审核报名人员状态
+     * @param participation
+     * @return
+     */
     Response modifyRegisterStatusByUid(Participation participation);
+
+    /**
+     *
+     * @param aid
+     * @return
+     */
+    Response getAllParticipatedMember(Long aid);
 }

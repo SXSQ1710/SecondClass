@@ -1,5 +1,8 @@
 package com.SecondClass.entity;
 
+import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableId;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 
 import java.io.Serializable;
@@ -16,6 +19,7 @@ public class Participation implements Serializable {
     /**
      * 参加活动id
      */
+    @TableId(value = "pid",type= IdType.AUTO)
     private String pid;
     /**
      * 用户id
@@ -28,6 +32,7 @@ public class Participation implements Serializable {
     /**
      * 参与状态 1：已报名 2：签到 3：签退 4：时长已发放
      */
+    @JsonProperty(value = "participate_status")
     private Integer participateStatus;
 
 

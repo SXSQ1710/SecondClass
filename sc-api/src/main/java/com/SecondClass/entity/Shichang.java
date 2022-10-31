@@ -1,5 +1,7 @@
 package com.SecondClass.entity;
 
+import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableId;
 import lombok.Data;
 
 import java.util.Date;
@@ -17,6 +19,7 @@ public class Shichang implements Serializable {
     /**
      * 时长id
      */
+    @TableId(value = "id",type= IdType.AUTO)
     private Long id;
     /**
      * 学生id
