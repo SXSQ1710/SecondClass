@@ -48,6 +48,7 @@ public class ActivityController {
     public Response getAll(@PathVariable("pageNo")Integer pageNo,@PathVariable("pageSize")Integer pageSize){
         Page<Activity> page = new Page<>(pageNo,pageSize);
         return activityServer.getAll(page);
+
     }
 
     @GetMapping("/findActivityByAid/{aid}")
