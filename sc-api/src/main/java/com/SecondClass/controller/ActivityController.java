@@ -22,36 +22,36 @@ public class ActivityController {
         return activityServer.applyActivity(request);
     }
 
-    @GetMapping("/auditActivity")
-    public Response auditActivity(Integer aAppId, Integer status, String explain){
+    @GetMapping(value = {"/auditActivity/{aAppId}/{status}/{explain}","/auditActivity/{aAppId}/{status}"})
+    public Response auditActivity(@PathVariable("aAppId")Integer aAppId, @PathVariable("status")Integer status,@PathVariable(value = "explain",required = false) String explain){
         return activityServer.auditActivity(aAppId,status,explain);
     }
 
-    @GetMapping("/findActivityAppByUid")
-    public Response findActivityAppByUid(Long uid,Integer pageNo,Integer pageSize){
+    @GetMapping("/findActivityAppByUid/{uid}/{pageNo}/{pageSize}")
+    public Response findActivityAppByUid(@PathVariable("uid")Long uid,@PathVariable("pageNo")Integer pageNo,@PathVariable("pageSize")Integer pageSize){
         Page<ActivityApplication> page = new Page<>(pageNo,pageSize);
         return activityServer.findActivityAppByUid(uid,page);
     }
 
-    @GetMapping("/findAppStatusByAAppid")
-    public Response findAppStatusByAid(Long aAppId ){
+    @GetMapping("/findAppStatusByAAppid/{aAppId}")
+    public Response findAppStatusByAid(@PathVariable("aAppId") Long aAppId ){
         return activityServer.findAppStatusByAid(aAppId);
     }
 
-    @GetMapping("/getAllApp")
-    public Response getAllApp(Integer pageNo,Integer pageSize){
+    @GetMapping("/getAllApp/{pageNo}/{pageSize}")
+    public Response getAllApp(@PathVariable("pageNo")Integer pageNo,@PathVariable("pageSize")Integer pageSize){
         Page<ActivityApplication> page = new Page<>(pageNo,pageSize);
         return activityServer.getAllApp(page);
     }
 
-    @GetMapping("/getAll")
-    public Response getAll(Integer pageNo,Integer pageSize){
+    @GetMapping("/getAll/{pageNo}/{pageSize}")
+    public Response getAll(@PathVariable("pageNo")Integer pageNo,@PathVariable("pageSize")Integer pageSize){
         Page<Activity> page = new Page<>(pageNo,pageSize);
         return activityServer.getAll(page);
     }
 
-    @GetMapping("/findActivityByAid")
-    public Response findActivityByAid(Long aid){
+    @GetMapping("/findActivityByAid/{aid}")
+    public Response findActivityByAid(@PathVariable("aid") Long aid){
         return activityServer.findActivityByAid(aid);
     }
 
@@ -70,8 +70,8 @@ public class ActivityController {
         return activityServer.signOff(participation);
     }
 
-    @GetMapping("/getAllRegisteredUser")
-    public Response getAllRegisteredUser(Long aid,Integer pageNo,Integer pageSize){
+    @GetMapping("/getAllRegisteredUser/{aid}/{pageNo}/{pageSize}")
+    public Response getAllRegisteredUser(@PathVariable("aid")Long aid,@PathVariable("pageNo")Integer pageNo,@PathVariable("pageSize")Integer pageSize){
         Page<User> page = new Page<>(pageNo,pageSize);
         return activityServer.getAllRegisteredUser(aid,page);
     }
