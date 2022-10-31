@@ -244,7 +244,7 @@ public class ActivityServerImpl implements IActivityServer{
     @Override
     public Response getAllRegisteredUser(Long aid, Page page) {
 //        IPage<Activity> activityIPage =  activityMapper.selectPage(page,queryWrapper);
-        return null;
+        return Response.success(ResponseStatus.SUCCESS);
     }
 
     /**
