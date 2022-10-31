@@ -78,6 +78,7 @@ public class ActivityServerImpl implements IActivityServer{
             queryWrapper.eq("a_app_id", aAppId);
             ActivityApplication acticityApplication = activityApplicationMapper.selectOne(queryWrapper);
 
+            if (acticityApplication == null) throw new IllegalArgumentException();
             //1.2修改活动申请状态   2表示通过 0：表示拒绝
             acticityApplication.setAAppStatus(status);
             if(explain != null){
