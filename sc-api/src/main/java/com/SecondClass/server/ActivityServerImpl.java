@@ -3,11 +3,12 @@ package com.SecondClass.server;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.json.JSONUtil;
 import com.SecondClass.entity.*;
+import com.SecondClass.entity.Class;
 import com.SecondClass.entity.R_entity.R_ActivityApplication;
-import com.SecondClass.mapper.ActivityApplicationMapper;
-import com.SecondClass.mapper.ActivityMapper;
-import com.SecondClass.mapper.ParticipationMapper;
+import com.SecondClass.entity.R_entity.R_Student;
+import com.SecondClass.mapper.*;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import lombok.extern.slf4j.Slf4j;
@@ -17,6 +18,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.util.LinkedList;
+import java.util.List;
 
 @Slf4j
 @Service
@@ -27,6 +30,10 @@ public class ActivityServerImpl implements IActivityServer{
     ActivityApplicationMapper activityApplicationMapper;
     @Resource
     ParticipationMapper participationMapper;
+    @Resource
+    UserMapper userMapper;
+    @Resource
+    ClassMapper classMapper;
     @Resource
     StringRedisTemplate stringRedisTemplate;
 
@@ -161,6 +168,7 @@ public class ActivityServerImpl implements IActivityServer{
     public Response getAll(Page page) {
         QueryWrapper<Activity> queryWrapper = new QueryWrapper<>();
         IPage<Activity> activityIPage =  activityMapper.selectPage(page,queryWrapper);
+
         return Response.success(ResponseStatus.ACTIVITY_APP_QUERY_SUCCESS,activityIPage);
 
     }
@@ -199,8 +207,10 @@ public class ActivityServerImpl implements IActivityServer{
     @Override
     public Response signIn(Participation participation) {
         try {
-            participation.setParticipateStatus(2);
-            if (participationMapper.updateById(participation) != 1) throw new IllegalArgumentException();
+            UpdateWrapper<Participation> updateWrapper = new UpdateWrapper<>();
+            updateWrapper.eq("aid",participation.getAid()).eq("uid",participation.getUid());
+            updateWrapper.set("participate_status",2);
+            if (participationMapper.update(null,updateWrapper) != 1) throw new IllegalArgumentException();
             return Response.success(ResponseStatus.ACTIVITY_SIGN_IN_SUCCESS);
         } catch (IllegalArgumentException i) {
             i.printStackTrace();
@@ -218,8 +228,10 @@ public class ActivityServerImpl implements IActivityServer{
 
     public Response signOff(Participation participation) {
         try {
-            participation.setParticipateStatus(3);
-            if (participationMapper.updateById(participation) != 1) throw new IllegalArgumentException();
+            UpdateWrapper<Participation> updateWrapper = new UpdateWrapper<>();
+            updateWrapper.eq("aid",participation.getAid()).eq("uid",participation.getUid());
+            updateWrapper.set("participate_status",3);
+            if (participationMapper.update(null,updateWrapper) != 1) throw new IllegalArgumentException();
             return Response.success(ResponseStatus.ACTIVITY_SIGN_OFF_SUCCESS);
         } catch (IllegalArgumentException i) {
             i.printStackTrace();
@@ -235,7 +247,7 @@ public class ActivityServerImpl implements IActivityServer{
         }
     }
 
-    /** todo
+    /**
      *
      * @param aid
      * @param page
@@ -243,21 +255,75 @@ public class ActivityServerImpl implements IActivityServer{
      */
     @Override
     public Response getAllRegisteredUser(Long aid, Page page) {
-//        IPage<Activity> activityIPage =  activityMapper.selectPage(page,queryWrapper);
-        return Response.success(ResponseStatus.SUCCESS);
+        QueryWrapper<Participation> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("aid",aid);
+        queryWrapper.eq("participate_status",0);
+        Page selectPage = participationMapper.selectPage(page, queryWrapper);
+        List records = selectPage.getRecords();
+
+        List<R_Student> list = new LinkedList<>();
+        for (int i = 0; i < records.size(); i++) {
+            Participation participation = (Participation) records.get(i);
+            //1.通过参与表查看报名人员  得到uid后再查询cid
+            //1.1先用uid查询redis得到cid
+            Long uid = participation.getUid();
+            User user;
+            Object userStr = stringRedisTemplate.opsForHash().get("secondclass:user:userList", uid.toString());
+            //1.2 如果redis没有，从数据库查询
+            if( userStr != null){
+                System.out.println("从redis中查询");
+                user = JSONUtil.toBean(userStr.toString(), User.class);
+            }else{
+
+                QueryWrapper<User> userQueryWrapper = new QueryWrapper<>();
+                userQueryWrapper.eq("uid",uid);
+                System.out.println("从数据库中查询");
+                user = userMapper.selectOne(userQueryWrapper);
+                //将数据库查询结果存入redis
+                stringRedisTemplate.opsForHash().put("secondclass:user:userList",uid.toString(),JSONUtil.toJsonStr(user));
+            }
+
+            //2.通过cid查询班级、校区等信息
+            //2.1用cid查询redis中班级信息
+            Long cid = user.getCid();
+            Class aClass;
+            //2.2 从redis中查询,如果没有的话就查询数据库
+
+            String classJson = (String) stringRedisTemplate.opsForHash().get("secondclass:class:classList", cid.toString());
+            if(classJson != null){
+                System.out.println("从redis中查询");
+                aClass = JSONUtil.toBean(classJson, Class.class);
+            }else {
+                QueryWrapper<Class> classQueryWrapper = new QueryWrapper<>();
+                classQueryWrapper.eq("cid",cid);
+                System.out.println("从数据库中查询");
+                aClass = classMapper.selectOne(classQueryWrapper);
+                stringRedisTemplate.opsForHash().put("secondclass:class:classList",cid.toString(),JSONUtil.toJsonStr(aClass));
+            }
+            R_Student student = R_Student.builder().uid(user.getUid())
+                    .uname(user.getUname())
+                    .phone(user.getPhone())
+                    .cname(aClass.getCname())
+                    .grade(aClass.getGrade())
+                    .major(aClass.getMajor())
+                    .college(aClass.getCollege())
+                    .campus(aClass.getCampus()).build();
+
+            list.add(student);
+        }
+        page.setRecords(list);
+        return Response.success(ResponseStatus.SUCCESS,page);
     }
 
-    /**
-     * TODO 签到签退和这个都有问题 明天再改吧
-     * @param participation
-     * @return
-     */
+
     @Override
     public Response modifyRegisterStatusByUid(Participation participation) {
         try {
             //审核通过
-            participation.setParticipateStatus(1);
-            if (participationMapper.updateById(participation) != 1) throw new IllegalArgumentException();
+            UpdateWrapper<Participation> updateWrapper = new UpdateWrapper<>();
+            updateWrapper.eq("aid",participation.getAid()).eq("uid",participation.getUid());
+            updateWrapper.set("participate_status",participation.getParticipateStatus());
+            if (participationMapper.update(null,updateWrapper) != 1) throw new IllegalArgumentException();
             return Response.success(ResponseStatus.ADUIT_SUCCESS);
         } catch (IllegalArgumentException i) {
             i.printStackTrace();
@@ -269,7 +335,67 @@ public class ActivityServerImpl implements IActivityServer{
             //其他错误
             e.printStackTrace();
             return Response.success(ResponseStatus.ERROR);
-
         }
+    }
+
+    @Override
+    public Response getAllParticipatedMember(Long aid) {
+        QueryWrapper<Participation> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("aid",aid);
+        queryWrapper.eq("participate_status",3);
+        List<Participation> records = participationMapper.selectList(queryWrapper);
+
+        List<R_Student> list = new LinkedList<>();
+
+        for (int i = 0; i < records.size(); i++) {
+            Participation participation = (Participation) records.get(i);
+            //1.通过参与表查看报名人员  得到uid后再查询cid
+            //1.1先用uid查询redis得到cid
+            Long uid = participation.getUid();
+            User user;
+            Object userStr = stringRedisTemplate.opsForHash().get("secondclass:user:userList", uid.toString());
+            //1.2 如果redis没有，从数据库查询
+            if( userStr != null){
+                System.out.println("从redis中查询");
+                user = JSONUtil.toBean(userStr.toString(), User.class);
+            }else{
+
+                QueryWrapper<User> userQueryWrapper = new QueryWrapper<>();
+                userQueryWrapper.eq("uid",uid);
+                System.out.println("从数据库中查询");
+                user = userMapper.selectOne(userQueryWrapper);
+                //将数据库查询结果存入redis
+                stringRedisTemplate.opsForHash().put("secondclass:user:userList",uid.toString(),JSONUtil.toJsonStr(user));
+            }
+
+            //2.通过cid查询班级、校区等信息
+            //2.1用cid查询redis中班级信息
+            Long cid = user.getCid();
+            Class aClass;
+            //2.2 从redis中查询,如果没有的话就查询数据库
+
+            String classJson = (String) stringRedisTemplate.opsForHash().get("secondclass:class:classList", cid.toString());
+            if(classJson != null){
+                System.out.println("从redis中查询");
+                aClass = JSONUtil.toBean(classJson, Class.class);
+            }else {
+                QueryWrapper<Class> classQueryWrapper = new QueryWrapper<>();
+                classQueryWrapper.eq("cid",cid);
+                System.out.println("从数据库中查询");
+                aClass = classMapper.selectOne(classQueryWrapper);
+                stringRedisTemplate.opsForHash().put("secondclass:class:classList",cid.toString(),JSONUtil.toJsonStr(aClass));
+            }
+            R_Student student = R_Student.builder().uid(user.getUid())
+                    .uname(user.getUname())
+                    .phone(user.getPhone())
+                    .cname(aClass.getCname())
+                    .grade(aClass.getGrade())
+                    .major(aClass.getMajor())
+                    .college(aClass.getCollege())
+                    .campus(aClass.getCampus()).build();
+
+            list.add(student);
+        }
+        return Response.success(ResponseStatus.SUCCESS,list);
     }
 }

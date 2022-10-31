@@ -82,4 +82,9 @@ public class ActivityController {
         return activityServer.modifyRegisterStatusByUid(participation);
     }
 
+    @GetMapping("/getAllParticipatedMember/{aid}")
+    public Response getAllParticipatedMember(@PathVariable("aid")Long aid){
+        return activityServer.getAllParticipatedMember(aid);
+    }
+
 }

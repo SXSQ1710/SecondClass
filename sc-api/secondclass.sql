@@ -11,7 +11,7 @@
  Target Server Version : 80025
  File Encoding         : 65001
 
- Date: 31/10/2022 01:30:02
+ Date: 31/10/2022 21:22:19
 */
 
 SET NAMES utf8mb4;
@@ -43,11 +43,13 @@ CREATE TABLE `t_activity`  (
   INDEX `a_uid`(`a_uid`) USING BTREE,
   CONSTRAINT `t_activity_ibfk_1` FOREIGN KEY (`a_oid`) REFERENCES `t_oganization` (`oid`) ON DELETE RESTRICT ON UPDATE RESTRICT,
   CONSTRAINT `t_activity_ibfk_2` FOREIGN KEY (`a_uid`) REFERENCES `t_user` (`uid`) ON DELETE RESTRICT ON UPDATE RESTRICT
-) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = DYNAMIC;
+) ENGINE = InnoDB AUTO_INCREMENT = 8 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Records of t_activity
 -- ----------------------------
+INSERT INTO `t_activity` VALUES (8, '测试讲座活动', '旨在测试接口', '2022-09-16 06:43:11', '2022-09-20 07:43:11', 100, 1, 1, '2022-10-16 02:00:00', '2022-10-16 04:00:00', 2, 'http://dummyimage.com/400x400', 2, 1, '龙洞校区教学楼101');
+INSERT INTO `t_activity` VALUES (9, '测试讲座活动2', '旨在测试接口', '2022-09-16 06:43:11', '2022-09-20 07:43:11', 100, 1, 1, '2022-10-16 02:00:00', '2022-10-16 04:00:00', 2, 'http://dummyimage.com/400x400', 2, 1, '龙洞校区教学楼101');
 
 -- ----------------------------
 -- Table structure for t_activity_application
@@ -68,6 +70,8 @@ CREATE TABLE `t_activity_application`  (
 -- ----------------------------
 -- Records of t_activity_application
 -- ----------------------------
+INSERT INTO `t_activity_application` VALUES (15, 1, NULL, '{\"aid\":8,\"aname\":\"测试讲座活动\",\"adescription\":\"旨在测试接口\",\"aRegisterOpen\":1663310591000,\"aRegisterClose\":1663659791000,\"aLimittedNumber\":100,\"aOid\":1,\"aUid\":1,\"aHoldStart\":1665885600000,\"aHoldEnd\":1665892800000,\"astatus\":2,\"apic\":\"http://dummyimage.com/400x400\",\"aShichangNum\":2,\"aShichangType\":1,\"aAddress\":\"龙洞校区教学楼101\"}', 'http://dummyimage.com/400x400', 2, '通过');
+INSERT INTO `t_activity_application` VALUES (16, 1, NULL, '{\"aid\":9,\"aname\":\"测试讲座活动2\",\"adescription\":\"旨在测试接口\",\"aRegisterOpen\":1663310591000,\"aRegisterClose\":1663659791000,\"aLimittedNumber\":100,\"aOid\":1,\"aUid\":1,\"aHoldStart\":1665885600000,\"aHoldEnd\":1665892800000,\"astatus\":2,\"apic\":\"http://dummyimage.com/400x400\",\"aShichangNum\":2,\"aShichangType\":1,\"aAddress\":\"龙洞校区教学楼101\"}', 'http://dummyimage.com/400x400', 2, '通过');
 
 -- ----------------------------
 -- Table structure for t_class
@@ -122,7 +126,7 @@ CREATE TABLE `t_oganization_app_shi`  (
   PRIMARY KEY (`shi_app_id`) USING BTREE,
   INDEX `uid`(`uid`) USING BTREE,
   INDEX `sid`(`sid`) USING BTREE
-) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = DYNAMIC;
+) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Records of t_oganization_app_shi
@@ -140,7 +144,7 @@ CREATE TABLE `t_oganization_member`  (
   PRIMARY KEY (`id`) USING BTREE,
   INDEX `uid`(`uid`) USING BTREE,
   INDEX `oid`(`oid`) USING BTREE
-) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = DYNAMIC;
+) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Records of t_oganization_member
@@ -154,7 +158,7 @@ CREATE TABLE `t_participation`  (
   `pid` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '参加活动id，可能涉及高并发用自增不合适',
   `uid` bigint NULL DEFAULT NULL COMMENT '用户id',
   `aid` bigint NULL DEFAULT NULL COMMENT '活动id',
-  `participate_status` tinyint NULL DEFAULT NULL COMMENT '参与状态 1：已报名 2：签到 3：签退 4：时长已发放',
+  `participate_status` tinyint NULL DEFAULT NULL COMMENT '参与状态 0：等待审核 1：已报名 2：签到 3：签退 4：时长已发放 5:报名失败',
   PRIMARY KEY (`pid`) USING BTREE,
   INDEX `uid`(`uid`) USING BTREE,
   INDEX `aid`(`aid`) USING BTREE
@@ -163,9 +167,8 @@ CREATE TABLE `t_participation`  (
 -- ----------------------------
 -- Records of t_participation
 -- ----------------------------
-INSERT INTO `t_participation` VALUES ('519068f46aa5465e9c4560912a253406', 2, 7, 0);
-INSERT INTO `t_participation` VALUES ('5207c73304df4cf18078eac89d4b0358', 2, 7, 0);
-INSERT INTO `t_participation` VALUES ('560e844c624841ef998ecfeb92d15bd8', 2, 7, 0);
+INSERT INTO `t_participation` VALUES ('663ee3ab868e48808ea2d1eb32c5a887', 1, 8, 3);
+INSERT INTO `t_participation` VALUES ('d7932b8f78b74b038c4aec6f22d1acfa', 2, 8, 3);
 
 -- ----------------------------
 -- Table structure for t_self_application
@@ -182,7 +185,7 @@ CREATE TABLE `t_self_application`  (
   PRIMARY KEY (`self_app_id`) USING BTREE,
   INDEX `uid`(`uid`) USING BTREE,
   INDEX `self_app_type`(`self_app_type`) USING BTREE
-) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = DYNAMIC;
+) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Records of t_self_application
@@ -201,7 +204,7 @@ CREATE TABLE `t_shichang`  (
   PRIMARY KEY (`id`) USING BTREE,
   INDEX `uid`(`uid`) USING BTREE,
   INDEX `sid`(`sid`) USING BTREE
-) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = DYNAMIC;
+) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Records of t_shichang
@@ -236,17 +239,18 @@ CREATE TABLE `t_user`  (
   `phone` bigint NULL DEFAULT NULL COMMENT '联系方式',
   `cid` bigint NULL DEFAULT NULL COMMENT '班级id',
   `oid` bigint NULL DEFAULT NULL COMMENT '所属组织（为空时代表没有加入组织）',
+  `uname` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '用户姓名',
   PRIMARY KEY (`uid`) USING BTREE,
   INDEX `cid`(`cid`) USING BTREE,
   INDEX `oid`(`oid`) USING BTREE,
   CONSTRAINT `t_user_ibfk_1` FOREIGN KEY (`cid`) REFERENCES `t_class` (`cid`) ON DELETE RESTRICT ON UPDATE RESTRICT,
   CONSTRAINT `t_user_ibfk_2` FOREIGN KEY (`oid`) REFERENCES `t_oganization` (`oid`) ON DELETE RESTRICT ON UPDATE RESTRICT
-) ENGINE = InnoDB AUTO_INCREMENT = 2 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = DYNAMIC;
+) ENGINE = InnoDB AUTO_INCREMENT = 3 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Records of t_user
 -- ----------------------------
-INSERT INTO `t_user` VALUES (1, '123456', 123456, 1, 1);
-INSERT INTO `t_user` VALUES (2, '123456', 12345, 1, 1);
+INSERT INTO `t_user` VALUES (1, '123456', 123456, 1, 1, '小明');
+INSERT INTO `t_user` VALUES (2, '123456', 12345, 1, 1, '小红');
 
 SET FOREIGN_KEY_CHECKS = 1;
