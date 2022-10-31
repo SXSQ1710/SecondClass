@@ -61,6 +61,11 @@ public class ActivityController {
         return activityServer.register(participation);
     }
 
+    @GetMapping("/signIn/{aid}")
+    public Response getSignIn(@PathVariable("aid")Long aid){
+        return activityServer.getSignIn(aid);
+    }
+
     @PostMapping("/signIn")
     public Response signIn(@RequestBody Participation participation){
         return activityServer.signIn(participation);

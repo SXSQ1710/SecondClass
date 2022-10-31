@@ -1,17 +1,20 @@
 package com.SecondClass.server;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.lang.UUID;
 import cn.hutool.json.JSONUtil;
 import com.SecondClass.entity.*;
 import com.SecondClass.entity.Class;
 import com.SecondClass.entity.R_entity.R_ActivityApplication;
 import com.SecondClass.entity.R_entity.R_Student;
 import com.SecondClass.mapper.*;
+import com.SecondClass.utils.QrCodeUtils;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
@@ -20,6 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.annotation.Resource;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 @Slf4j
 @Service
@@ -202,6 +206,29 @@ public class ActivityServerImpl implements IActivityServer{
             return Response.success(ResponseStatus.ERROR);
         }
 
+    }
+
+    @Value("${myConfig.serveUrl}")
+    private String serveUrl;
+
+    public Response getSignIn(Long aid) {
+        try {
+            //1.生成随机uuid保存在redis里并设置5分钟的TTL
+            String uuid = UUID.randomUUID().toString();
+            stringRedisTemplate.opsForHash().put("secondclass:activity:signIn",uuid,aid.toString());
+            stringRedisTemplate.expire(uuid,5, TimeUnit.MINUTES);
+
+            //2.签到扫描二维码的访问路径
+            String signInUrl = serveUrl + "/api/activity/signIn/" + uuid;
+
+            //3.生成二维码以base64返回响应
+            String qrCode = QrCodeUtils.createQRCode(signInUrl);
+            return Response.success(ResponseStatus.ACTIVITY_GET_SIGN_IN_SUCCESS,qrCode);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return Response.error(ResponseStatus.ACTIVITY_GET_SIGN_IN_FAIL);
+        }
     }
 
     @Override
