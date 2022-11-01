@@ -215,8 +215,8 @@ public class ActivityServerImpl implements IActivityServer{
         try {
             //1.生成随机uuid保存在redis里并设置5分钟的TTL
             String uuid = UUID.randomUUID().toString();
-            stringRedisTemplate.opsForHash().put("secondclass:activity:signIn",uuid,aid.toString());
-            stringRedisTemplate.expire(uuid,5, TimeUnit.MINUTES);
+            stringRedisTemplate.opsForValue().set("secondclass:activity:signIn:"+uuid,aid.toString());
+            stringRedisTemplate.expire("secondclass:activity:signIn:"+uuid,5L, TimeUnit.MINUTES);
 
             //2.签到扫描二维码的访问路径
             String signInUrl = serveUrl + "/api/activity/signIn/" + uuid;
