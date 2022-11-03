@@ -6,6 +6,7 @@ import cn.hutool.json.JSONUtil;
 import com.SecondClass.entity.*;
 import com.SecondClass.entity.Class;
 import com.SecondClass.entity.R_entity.R_ActivityApplication;
+import com.SecondClass.entity.R_entity.R_SignIn;
 import com.SecondClass.entity.R_entity.R_Student;
 import com.SecondClass.mapper.*;
 import com.SecondClass.utils.QrCodeUtils;
@@ -13,6 +14,7 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import io.netty.util.internal.StringUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -23,6 +25,7 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.annotation.Resource;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 @Slf4j
@@ -211,20 +214,27 @@ public class ActivityServerImpl implements IActivityServer{
     @Value("${myConfig.serveUrl}")
     private String serveUrl;
 
-    public Response getSignIn(Long aid) {
+    public Response getSignIn(Long aid,Long uid) {
         try {
-            //1.生成随机uuid保存在redis里并设置5分钟的TTL
-            String uuid = UUID.randomUUID().toString();
-            stringRedisTemplate.opsForValue().set("secondclass:activity:signIn:"+uuid,aid.toString());
-            stringRedisTemplate.expire("secondclass:activity:signIn:"+uuid,5L, TimeUnit.MINUTES);
+            QueryWrapper<Activity> queryWrapper = new QueryWrapper<>();
+            queryWrapper.eq("aid",aid);
+            queryWrapper.eq("a_uid",uid);
+            Activity activity = activityMapper.selectOne(queryWrapper);
+            if(Optional.ofNullable(activity).isPresent()){
+                //1.生成随机uuid保存在redis里并设置5分钟的TTL
+                String uuid = UUID.randomUUID().toString();
+                stringRedisTemplate.opsForValue().set(RedisKeyName.ACTIVITY_GET_SIGN_IN+uuid,aid.toString());
+                stringRedisTemplate.expire(RedisKeyName.ACTIVITY_GET_SIGN_IN+uuid,5L, TimeUnit.MINUTES);
 
-            //2.签到扫描二维码的访问路径
-            String signInUrl = serveUrl + "/api/activity/signIn/" + uuid;
+                //2.签到扫描二维码的访问路径
+                String signInUrl = serveUrl + "/api/activity/signIn/" + uuid;
 
-            //3.生成二维码以base64返回响应
-            String qrCode = QrCodeUtils.createQRCode(signInUrl);
-            return Response.success(ResponseStatus.ACTIVITY_GET_SIGN_IN_SUCCESS,qrCode);
-
+                //3.生成二维码以base64返回响应
+                String qrCode = QrCodeUtils.createQRCode(signInUrl);
+                return Response.success(ResponseStatus.ACTIVITY_GET_SIGN_IN_SUCCESS,qrCode);
+            }else {
+                return Response.error(ResponseStatus.ACTIVITY_GET_SIGN_IN_FAIL);
+            }
         } catch (Exception e) {
             e.printStackTrace();
             return Response.error(ResponseStatus.ACTIVITY_GET_SIGN_IN_FAIL);
@@ -232,13 +242,19 @@ public class ActivityServerImpl implements IActivityServer{
     }
 
     @Override
-    public Response signIn(Participation participation) {
+    public Response signIn(R_SignIn signIn) {
         try {
-            UpdateWrapper<Participation> updateWrapper = new UpdateWrapper<>();
-            updateWrapper.eq("aid",participation.getAid()).eq("uid",participation.getUid());
-            updateWrapper.set("participate_status",2);
-            if (participationMapper.update(null,updateWrapper) != 1) throw new IllegalArgumentException();
-            return Response.success(ResponseStatus.ACTIVITY_SIGN_IN_SUCCESS);
+            String aid = stringRedisTemplate.opsForValue().get(RedisKeyName.ACTIVITY_GET_SIGN_IN + signIn.getUuid());
+            if (StringUtil.isNullOrEmpty(aid)){
+                throw new IllegalArgumentException();
+            }else {
+                Participation participation = BeanUtil.copyProperties(signIn, Participation.class);
+                UpdateWrapper<Participation> updateWrapper = new UpdateWrapper<>();
+                updateWrapper.eq("aid",aid).eq("uid",participation.getUid());
+                updateWrapper.set("participate_status",2);
+                if (participationMapper.update(null,updateWrapper) != 1) throw new IllegalArgumentException();
+                return Response.success(ResponseStatus.ACTIVITY_SIGN_IN_SUCCESS);
+            }
         } catch (IllegalArgumentException i) {
             i.printStackTrace();
             return Response.error(ResponseStatus.ACTIVITY_SIGN_IN_FAIL);

@@ -4,6 +4,7 @@ package com.SecondClass.controller;
 import com.SecondClass.entity.*;
 import com.SecondClass.entity.R_entity.R_ActivityApplication;
 
+import com.SecondClass.entity.R_entity.R_SignIn;
 import com.SecondClass.server.ActivityServerImpl;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -61,14 +62,14 @@ public class ActivityController {
         return activityServer.register(participation);
     }
 
-    @GetMapping("/signIn/{aid}")
-    public Response getSignIn(@PathVariable("aid")Long aid){
-        return activityServer.getSignIn(aid);
+    @GetMapping("/signIn/{aid}/{uid}")
+    public Response getSignIn(@PathVariable("aid")Long aid,@PathVariable("uid")Long uid){
+        return activityServer.getSignIn(aid,uid);
     }
 
     @PostMapping("/signIn")
-    public Response signIn(@RequestBody Participation participation){
-        return activityServer.signIn(participation);
+    public Response signIn(@RequestBody R_SignIn signIn){
+        return activityServer.signIn(signIn);
     }
 
     @PostMapping("/signOff")

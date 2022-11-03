@@ -2,6 +2,7 @@ package com.SecondClass.server;
 
 import com.SecondClass.entity.Participation;
 import com.SecondClass.entity.R_entity.R_ActivityApplication;
+import com.SecondClass.entity.R_entity.R_SignIn;
 import com.SecondClass.entity.Response;
 import com.SecondClass.entity.User;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -76,7 +77,17 @@ public interface IActivityServer {
      */
     Response register(Participation participation);
 
-    Response signIn(Participation participation);
+    /**
+     * @param aid 活动id
+     * @param uid 用户id
+     * @description: TODO 活动管理员申请活动签到码
+     * @return: com.SXSQ.bean.Response
+     * @author: SXSQ
+     * @date: 2022/11/03 13:46
+     */
+    Response getSignIn(Long aid,Long uid);
+
+    Response signIn(R_SignIn signIn);
 
     Response signOff(Participation participation);
 
