@@ -55,7 +55,7 @@ public enum ResponseStatus {
     ACTIVITY_QUERY_SUCCESS("5-200","查询成功"),
     ACTIVITY_QUERY_FAIL("5-400","没有相关数据"),
     ACTIVITY_GET_SIGN_IN_SUCCESS("5-200","获取签到码成功"),
-    ACTIVITY_GET_SIGN_IN_FAIL("5-400","获取签到码失败"),
+    ACTIVITY_GET_SIGN_IN_FAIL("5-400","获取签到码失败，请查看信息是否正确"),
     ACTIVITY_SIGN_IN_SUCCESS("5-200","签到成功"),
     ACTIVITY_SIGN_IN_FAIL("5-400","签到失败"),
     ACTIVITY_SIGN_OFF_SUCCESS("5-200","签退成功"),
