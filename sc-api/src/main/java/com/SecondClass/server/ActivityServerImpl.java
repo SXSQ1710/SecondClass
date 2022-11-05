@@ -10,6 +10,7 @@ import com.SecondClass.entity.R_entity.R_SignIn;
 import com.SecondClass.entity.R_entity.R_Student;
 import com.SecondClass.mapper.*;
 import com.SecondClass.utils.QrCodeUtils;
+import com.SecondClass.utils.RedisUtils;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -43,6 +44,8 @@ public class ActivityServerImpl implements IActivityServer{
     ClassMapper classMapper;
     @Resource
     StringRedisTemplate stringRedisTemplate;
+    @Resource
+    RedisUtils redisUtils;
 
     @Transactional
     public Response applyActivity(R_ActivityApplication request){
@@ -88,41 +91,44 @@ public class ActivityServerImpl implements IActivityServer{
         try {
             //1.更新活动申请实体和活动实体的状态
             //1.1 获得活动实体
-            QueryWrapper<ActivityApplication> queryWrapper = new QueryWrapper<>();
-            queryWrapper.eq("a_app_id", aAppId);
-            ActivityApplication acticityApplication = activityApplicationMapper.selectOne(queryWrapper);
+            String aAppIdStr = aAppId.toString();
+            ActivityApplication activityApplication = redisUtils.queryForHash(RedisKeyName.ACTIVITY_APPLICATION, aAppIdStr,ActivityApplication.class,5L, TimeUnit.MINUTES,
+                    (id) -> {
+                        QueryWrapper<ActivityApplication> queryWrapper = new QueryWrapper<>();
+                        queryWrapper.eq("a_app_id", aAppIdStr);
+                        return activityApplicationMapper.selectOne(queryWrapper);});
 
-            if (acticityApplication == null) throw new IllegalArgumentException();
+            if (activityApplication == null) throw new IllegalArgumentException();
             //1.2修改活动申请状态   2表示通过 0：表示拒绝
-            acticityApplication.setAAppStatus(status);
+            activityApplication.setAAppStatus(status);
             if(explain != null){
-                acticityApplication.setAAppExplain(explain);
+                activityApplication.setAAppExplain(explain);
             }else{
-                acticityApplication.setAAppExplain("无");
+                activityApplication.setAAppExplain("无");
             }
 
             //2.如果活动通过的话，将活动存入活动表中
             if(status == 2){
                 //2.1添加活动到活动表 并将状态设置为1（活动未开始）
-                String json = acticityApplication.getAAppDescription();
+                String json = activityApplication.getAAppDescription();
                 Activity activity = JSONUtil.toBean(json, Activity.class);
                 activity.setAstatus(status);
                 if(activityMapper.insert(activity) !=1)throw new IllegalArgumentException();
                 //2.2 缓存存入活动表中
-                stringRedisTemplate.opsForHash().put("secondclass:activity:activity",activity.getAid().toString(),JSONUtil.toJsonStr(activity));
+                redisUtils.setHash(RedisKeyName.ACTIVITY,activity.getAid().toString(),activity);
 
                 //2.3新的活动状态(多了一个aid）更新到活动描述中
                 String jsonStr_activity = JSONUtil.toJsonStr(activity);
-                acticityApplication.setAAppDescription(jsonStr_activity);
+                activityApplication.setAAppDescription(jsonStr_activity);
 
             }
             //2.5 更新活动申请表
-            if(activityApplicationMapper.updateById(acticityApplication)!=1)throw new IllegalArgumentException();
+            if(activityApplicationMapper.updateById(activityApplication)!=1)throw new IllegalArgumentException();
 
             //3.修改redis里面的数据
             //3.1 活动申请表
-            stringRedisTemplate.opsForHash().delete("secondclass:activity:applyActivity",acticityApplication.getAAppId().toString());
-            stringRedisTemplate.opsForHash().put("secondclass:activity:applyActivity",acticityApplication.getAAppId().toString(),JSONUtil.toJsonStr(acticityApplication));
+            stringRedisTemplate.opsForHash().delete("secondclass:activity:applyActivity",activityApplication.getAAppId().toString());
+            //stringRedisTemplate.opsForHash().put("secondclass:activity:applyActivity",acticityApplication.getAAppId().toString(),JSONUtil.toJsonStr(acticityApplication));
 
             return Response.success(ResponseStatus.ADUIT_SUCCESS);
         } catch (IllegalArgumentException i) {
@@ -153,14 +159,18 @@ public class ActivityServerImpl implements IActivityServer{
 
 
     public Response findAppStatusByAid(Long aAppId) {
-        QueryWrapper<ActivityApplication> queryWrapper = new QueryWrapper<>();
-        queryWrapper.eq("a_app_id",aAppId);
-        ActivityApplication ActivityApplication = activityApplicationMapper.selectOne(queryWrapper);
-        if(ActivityApplication == null){
-            return Response.success(ResponseStatus.ACTIVITY_APP_QUERY_FAIL,ActivityApplication);
+        String aAppIdStr = aAppId.toString();
+        ActivityApplication activityApplication = redisUtils.queryForHash(RedisKeyName.ACTIVITY_APPLICATION, aAppIdStr,ActivityApplication.class,5L, TimeUnit.MINUTES,
+                (id) -> {
+                    QueryWrapper<ActivityApplication> queryWrapper = new QueryWrapper<>();
+                    queryWrapper.eq("a_app_id", aAppIdStr);
+                    return activityApplicationMapper.selectOne(queryWrapper);});
+
+        if(activityApplication == null){
+            return Response.success(ResponseStatus.ACTIVITY_APP_QUERY_FAIL,activityApplication);
         }
         else{
-            return Response.success(ResponseStatus.ACTIVITY_APP_QUERY_SUCCESS,ActivityApplication);
+            return Response.success(ResponseStatus.ACTIVITY_APP_QUERY_SUCCESS,activityApplication);
         }
     }
 
