@@ -1,6 +1,6 @@
 package com.SecondClass.server;
 
-import com.SecondClass.entity.Oganization;
+import com.SecondClass.entity.Organization;
 import com.SecondClass.entity.R_entity.R_SignIn;
 import com.SecondClass.entity.Response;
 import com.SecondClass.entity.User;
@@ -15,7 +15,7 @@ public interface ManageServer {
 
     Response login(R_SignIn request);
 
-    Response createOrg(Oganization request);
+    Response createOrg(Organization request);
 
     Response addAccount(User request);
 

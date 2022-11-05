@@ -1,6 +1,6 @@
 package com.SecondClass.controller;
 
-import com.SecondClass.entity.Oganization;
+import com.SecondClass.entity.Organization;
 import com.SecondClass.entity.R_entity.R_SignIn;
 import com.SecondClass.entity.Response;
 import com.SecondClass.entity.User;
@@ -24,7 +24,7 @@ public class ManageController {
     }
 
     @PostMapping("/createOrg")
-    public Response createOrg(@RequestBody Oganization request){
+    public Response createOrg(@RequestBody Organization request){
         return manageServer.createOrg(request);
     }
 

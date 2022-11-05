@@ -1,6 +1,6 @@
 package com.SecondClass.server;
 
-import com.SecondClass.entity.Oganization;
+import com.SecondClass.entity.Organization;
 import com.SecondClass.entity.R_entity.R_SignIn;
 import com.SecondClass.entity.Response;
 import com.SecondClass.entity.User;
@@ -17,7 +17,7 @@ public class ManageServerImpl {
         return null;
     }
 
-    public Response createOrg(Oganization request) {
+    public Response createOrg(Organization request) {
         return null;
 
     }
