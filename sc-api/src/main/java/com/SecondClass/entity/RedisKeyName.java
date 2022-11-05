@@ -11,5 +11,9 @@ import lombok.Data;
  **/
 @Data
 public class RedisKeyName {
+    public final static String ACTIVITY = "secondclass:activity:activity";
+
     public final static String ACTIVITY_GET_SIGN_IN = "secondclass:activity:signIn:";
+
+    public final static String ACTIVITY_APPLICATION = "secondclass:activity:applyActivity";
 }

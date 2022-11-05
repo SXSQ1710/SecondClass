@@ -11,7 +11,7 @@ import java.io.Serializable;
  * @since 2022-10-29 09:33:02
  */
 @Data
-public class OganizationAppShi implements Serializable {
+public class OrganizationAppShi implements Serializable {
     private static final long serialVersionUID = 573628772029508401L;
     
     private Long shiAppId;

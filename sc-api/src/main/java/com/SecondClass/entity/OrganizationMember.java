@@ -11,7 +11,7 @@ import java.io.Serializable;
  * @since 2022-10-29 09:33:02
  */
 @Data
-public class OganizationMember implements Serializable {
+public class OrganizationMember implements Serializable {
     private static final long serialVersionUID = 845370379390237748L;
     /**
      * id

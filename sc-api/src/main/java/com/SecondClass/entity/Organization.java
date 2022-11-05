@@ -11,7 +11,7 @@ import java.io.Serializable;
  * @since 2022-10-29 09:33:02
  */
 @Data
-public class Oganization implements Serializable {
+public class Organization implements Serializable {
     private static final long serialVersionUID = -87442678176810533L;
     /**
      * 组织id
@@ -36,7 +36,7 @@ public class Oganization implements Serializable {
     /**
      * 上级单位
      */
-    private String superiorOganization;
+    private String superiorOrganization;
 
 
 }
