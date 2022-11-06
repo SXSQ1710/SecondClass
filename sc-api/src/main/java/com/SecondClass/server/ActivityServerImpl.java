@@ -26,6 +26,7 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.annotation.Resource;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
@@ -53,22 +54,21 @@ public class ActivityServerImpl implements IActivityServer{
             //1.生成活动描述
             //  将活动信息转换为json字符串存入申请表的活动描述
             Activity activity = BeanUtil.copyProperties(request, Activity.class);
-            System.out.println(activity);
+            //System.out.println(activity);
             String jsonStr_activity = JSONUtil.toJsonStr(activity);
 
             //2.添加活动申请表到数据库
             //  设置申请状态为1
-            ActivityApplication acticityApplication = ActivityApplication.builder().uid(activity.getAUid())
+            ActivityApplication activityApplication = ActivityApplication.builder().uid(activity.getAUid())
                     .aAppDescription(jsonStr_activity)
                     .aAppAttachment(request.getAAppAttachment())
                     .aAppStatus(1).build();
-            System.out.println(acticityApplication);
+            System.out.println(activityApplication);
             //  插入失败抛出异常
-            if (activityApplicationMapper.insert(acticityApplication) != 1) throw new IllegalArgumentException();
+            if (activityApplicationMapper.insert(activityApplication) != 1) throw new IllegalArgumentException();
 
             //将活动申请活动信息写入redis，以活动id作为hashKey
-            String jsonStr_acticityApplication = JSONUtil.toJsonStr(acticityApplication);
-            stringRedisTemplate.opsForHash().put("secondclass:activity:applyActivity",acticityApplication.getAAppId().toString(),jsonStr_acticityApplication);
+            redisUtils.setValue(RedisKeyName.ACTIVITY_APPLICATION + activityApplication.getAAppId().toString(), activityApplication, 10L, TimeUnit.DAYS);
             return Response.success(ResponseStatus.ACTIVITY_APPLY_SUCCESS);
         }catch (IllegalArgumentException i){
             //redis插入失败
@@ -92,11 +92,12 @@ public class ActivityServerImpl implements IActivityServer{
             //1.更新活动申请实体和活动实体的状态
             //1.1 获得活动实体
             String aAppIdStr = aAppId.toString();
-            ActivityApplication activityApplication = redisUtils.queryForHash(RedisKeyName.ACTIVITY_APPLICATION, aAppIdStr,ActivityApplication.class,5L, TimeUnit.MINUTES,
+            ActivityApplication activityApplication = redisUtils.queryForValue(RedisKeyName.ACTIVITY_APPLICATION, aAppIdStr,ActivityApplication.class,5L, TimeUnit.MINUTES,
                     (id) -> {
                         QueryWrapper<ActivityApplication> queryWrapper = new QueryWrapper<>();
                         queryWrapper.eq("a_app_id", aAppIdStr);
-                        return activityApplicationMapper.selectOne(queryWrapper);});
+                        return activityApplicationMapper.selectOne(queryWrapper);
+            });
 
             if (activityApplication == null) throw new IllegalArgumentException();
             //1.2修改活动申请状态   2表示通过 0：表示拒绝
@@ -115,7 +116,7 @@ public class ActivityServerImpl implements IActivityServer{
                 activity.setAstatus(status);
                 if(activityMapper.insert(activity) !=1)throw new IllegalArgumentException();
                 //2.2 缓存存入活动表中
-                redisUtils.setHash(RedisKeyName.ACTIVITY,activity.getAid().toString(),activity);
+                redisUtils.setValue(RedisKeyName.ACTIVITY + activity.getAid().toString(),activity,10L, TimeUnit.DAYS);
 
                 //2.3新的活动状态(多了一个aid）更新到活动描述中
                 String jsonStr_activity = JSONUtil.toJsonStr(activity);
@@ -127,8 +128,7 @@ public class ActivityServerImpl implements IActivityServer{
 
             //3.修改redis里面的数据
             //3.1 活动申请表
-            stringRedisTemplate.opsForHash().delete("secondclass:activity:applyActivity",activityApplication.getAAppId().toString());
-            //stringRedisTemplate.opsForHash().put("secondclass:activity:applyActivity",acticityApplication.getAAppId().toString(),JSONUtil.toJsonStr(acticityApplication));
+            stringRedisTemplate.delete(RedisKeyName.ACTIVITY_APPLICATION + activityApplication.getAAppId().toString());
 
             return Response.success(ResponseStatus.ADUIT_SUCCESS);
         } catch (IllegalArgumentException i) {
@@ -160,11 +160,12 @@ public class ActivityServerImpl implements IActivityServer{
 
     public Response findAppStatusByAid(Long aAppId) {
         String aAppIdStr = aAppId.toString();
-        ActivityApplication activityApplication = redisUtils.queryForHash(RedisKeyName.ACTIVITY_APPLICATION, aAppIdStr,ActivityApplication.class,5L, TimeUnit.MINUTES,
+        ActivityApplication activityApplication = redisUtils.queryForValue(RedisKeyName.ACTIVITY_APPLICATION, aAppIdStr,ActivityApplication.class,10L, TimeUnit.DAYS,
                 (id) -> {
                     QueryWrapper<ActivityApplication> queryWrapper = new QueryWrapper<>();
                     queryWrapper.eq("a_app_id", aAppIdStr);
-                    return activityApplicationMapper.selectOne(queryWrapper);});
+                    return activityApplicationMapper.selectOne(queryWrapper);
+        });
 
         if(activityApplication == null){
             return Response.success(ResponseStatus.ACTIVITY_APP_QUERY_FAIL,activityApplication);
@@ -192,9 +193,13 @@ public class ActivityServerImpl implements IActivityServer{
 
 
     public Response findActivityByAid(Long aid) {
-        QueryWrapper<Activity> queryWrapper = new QueryWrapper<>();
-        queryWrapper.eq("aid",aid);
-        Activity activity = activityMapper.selectOne(queryWrapper);
+        Activity activity = redisUtils.queryForValue(RedisKeyName.ACTIVITY, aid.toString(), Activity.class, 10L, TimeUnit.DAYS,
+                (id) -> {
+                    QueryWrapper<Activity> queryWrapper = new QueryWrapper<>();
+                    queryWrapper.eq("aid", aid);
+                    return activityMapper.selectOne(queryWrapper);
+        });
+
         return Response.success(ResponseStatus.ACTIVITY_QUERY_SUCCESS,activity);
     }
 
@@ -226,11 +231,17 @@ public class ActivityServerImpl implements IActivityServer{
 
     public Response getSignIn(Long aid,Long uid) {
         try {
-            QueryWrapper<Activity> queryWrapper = new QueryWrapper<>();
-            queryWrapper.eq("aid",aid);
-            queryWrapper.eq("a_uid",uid);
-            Activity activity = activityMapper.selectOne(queryWrapper);
-            if(Optional.ofNullable(activity).isPresent()){
+            Activity activity = redisUtils.queryForValue(RedisKeyName.ACTIVITY, aid.toString(), Activity.class, 10L, TimeUnit.DAYS,
+                    (id) -> {
+                        QueryWrapper<Activity> queryWrapper = new QueryWrapper<>();
+                        queryWrapper.eq("aid", aid);
+                        queryWrapper.eq("a_uid",uid);
+                        return activityMapper.selectOne(queryWrapper);
+            });
+
+            if (!Objects.equals(activity.getAUid(), uid)) throw new IllegalArgumentException();
+
+            if(BeanUtil.isNotEmpty(activity)){
                 //1.生成随机uuid保存在redis里并设置5分钟的TTL
                 String uuid = UUID.randomUUID().toString();
                 stringRedisTemplate.opsForValue().set(RedisKeyName.ACTIVITY_GET_SIGN_IN+uuid,aid.toString());
