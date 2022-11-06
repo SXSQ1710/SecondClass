@@ -34,45 +34,71 @@ public class RedisUtils {
         stringRedisTemplate.opsForHash().put(key, id, JSONUtil.toJsonStr(value));
     }
 
-    public <R,ID> R queryForHash (String key, ID id, Class<R> type, Long time, TimeUnit unit, Function<ID, R> dbFallback){
+    /**
+     * redis的hash查询
+     * @param key key前缀
+     * @param id hashKey
+     * @param type 查询的类
+     * @param time 缓存穿透保护生成的空类过期时间
+     * @param unit 过期时间单位
+     * @param dbFallback 缓存未命中的sql查询函数
+     * @param <R>  返回类型
+     * @return R
+     */
+    public <R> R queryForHash (String key, String id, Class<R> type, Long time, TimeUnit unit, Function<String, R> dbFallback){
+        //1.先查询redis缓存
         String json = (String) stringRedisTemplate.opsForHash().get(key, id);
         boolean isNotNull = StrUtil.isNotBlank(json);
         if (isNotNull){
+            //1.1.redis缓存命中，返回结果
             return  JSONUtil.toBean(json, type);
         }
-//        if (json != null){
-//            return null;
-//        }
-
+        //2.redis缓存未命中，查询数据库，查询数据库的代码通过函数传入
         R r = dbFallback.apply(id);
-
+        //2.1.数据库未查询到结果，在缓存中创建id对应的空值，防止缓存穿透
         if (r == null){
             stringRedisTemplate.opsForHash().put(key,id, "");
+            stringRedisTemplate.expire(key, 5L, TimeUnit.MINUTES);
             return null;
         }
 
-        setHash(key, id.toString(), r);
+        //2.2.将数据库查询结果存入缓存
+        setHash(key, id, r);
+        stringRedisTemplate.expire(key, time, unit);
         return r;
     }
 
-    public <R,ID> R queryForValue(String keyPrefix, ID id, Class<R> type, Function<ID, R> dbFallback, Long time, TimeUnit unit){
+    /**
+     * 
+     * @param keyPrefix
+     * @param id hashKey
+     * @param type 查询的类
+     * @param time 缓存穿透保护生成的空类过期时间
+     * @param unit 过期时间单位
+     * @param dbFallback 缓存未命中的sql查询函数
+     * @param <R>  返回类型
+     * @return R
+     */
+    public <R> R queryForValue(String keyPrefix, String id, Class<R> type, Long time, TimeUnit unit, Function<String, R> dbFallback){
+        //1.先查询redis缓存
         String key = keyPrefix + id;
         String json = stringRedisTemplate.opsForValue().get(key);
         boolean notBlank = StrUtil.isNotBlank(json);
         if (notBlank){
+            //1.1.redis缓存命中，返回结果
             return JSONUtil.toBean(json, type);
         }
         if (json != null){
             return null;
         }
-
+        //2.redis缓存未命中，查询数据库，查询数据库的代码通过函数传入
         R r = dbFallback.apply(id);
-
+        //2.1.数据库未查询到结果，在缓存中创建id对应的空值，防止缓存穿透
         if (r == null){
             stringRedisTemplate.opsForValue().set(key, "", 5, TimeUnit.MINUTES);
             return null;
         }
-
+        //2.2.将数据库查询结果存入缓存
         setValue(key, r, time, unit);
         return r;
     }
