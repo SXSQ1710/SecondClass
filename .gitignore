@@ -45,3 +45,4 @@ gen/
 logs/
 log
 temp/
+node_modules
