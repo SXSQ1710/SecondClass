@@ -9,6 +9,7 @@ import com.SecondClass.entity.R_entity.R_ActivityApplication;
 import com.SecondClass.entity.R_entity.R_SignIn;
 import com.SecondClass.entity.R_entity.R_Student;
 import com.SecondClass.mapper.*;
+import com.SecondClass.utils.DateUtils;
 import com.SecondClass.utils.QrCodeUtils;
 import com.SecondClass.utils.RedisUtils;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
@@ -24,10 +25,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 @Slf4j
@@ -113,6 +111,7 @@ public class ActivityServerImpl implements IActivityServer{
                 //2.1添加活动到活动表 并将状态设置为1（活动未开始）
                 String json = activityApplication.getAAppDescription();
                 Activity activity = JSONUtil.toBean(json, Activity.class);
+                //2.2设置活动状态：待开始报名状态 2
                 activity.setAstatus(status);
                 if(activityMapper.insert(activity) !=1)throw new IllegalArgumentException();
                 //2.2 缓存存入活动表中
@@ -199,7 +198,7 @@ public class ActivityServerImpl implements IActivityServer{
                     queryWrapper.eq("aid", aid);
                     return activityMapper.selectOne(queryWrapper);
         });
-
+        System.out.println(activity);
         return Response.success(ResponseStatus.ACTIVITY_QUERY_SUCCESS,activity);
     }
 
@@ -229,7 +228,7 @@ public class ActivityServerImpl implements IActivityServer{
     @Value("${myConfig.serveUrl}")
     private String serveUrl;
 
-    public Response getSignIn(Long aid,Long uid) {
+    public Response getSignIn(Long aid, Long uid, Integer type) {
         try {
             Activity activity = redisUtils.queryForValue(RedisKeyName.ACTIVITY, aid.toString(), Activity.class, 10L, TimeUnit.DAYS,
                     (id) -> {
@@ -238,27 +237,47 @@ public class ActivityServerImpl implements IActivityServer{
                         queryWrapper.eq("a_uid",uid);
                         return activityMapper.selectOne(queryWrapper);
             });
-
             if (!Objects.equals(activity.getAUid(), uid)) throw new IllegalArgumentException();
+            //判断活动状态是否为2(活动审核通过)
+            if (activity.getAstatus() != 2) return Response.error(ResponseStatus.ACTIVITY_GET_SIGN_IN_FAIL_3);
+            //判断活动是否正在申请的活动举办时间内,活动开始前15分钟结束后15分钟
+            Date start = activity.getAHoldStart();
+            Date end = activity.getAHoldEnd();
+            long startTime = start.getTime();
+            long endTime = end.getTime();
+            start.setTime(startTime - 1000*60*60*15);
+            end.setTime(endTime + 1000*60*60*15);
+
+            if (!DateUtils.isEffectiveDate(start, end)){
+                return Response.error(ResponseStatus.ACTIVITY_GET_SIGN_IN_FAIL_2);
+            }
 
             if(BeanUtil.isNotEmpty(activity)){
                 //1.生成随机uuid保存在redis里并设置5分钟的TTL
                 String uuid = UUID.randomUUID().toString();
-                stringRedisTemplate.opsForValue().set(RedisKeyName.ACTIVITY_GET_SIGN_IN+uuid,aid.toString());
-                stringRedisTemplate.expire(RedisKeyName.ACTIVITY_GET_SIGN_IN+uuid,5L, TimeUnit.MINUTES);
-
-                //2.签到扫描二维码的访问路径
-                String signInUrl = serveUrl + "/api/activity/signIn/" + uuid;
+                String signInUrl;
+                if (type == 1){
+                    stringRedisTemplate.opsForValue().set(RedisKeyName.ACTIVITY_GET_SIGN_IN+uuid,aid.toString());
+                    stringRedisTemplate.expire(RedisKeyName.ACTIVITY_GET_SIGN_IN+uuid,5L, TimeUnit.MINUTES);
+                    signInUrl = serveUrl + "/api/activity/signIn/" + uuid;
+                } else if (type == 0) {
+                    stringRedisTemplate.opsForValue().set(RedisKeyName.ACTIVITY_GET_SIGN_OFF+uuid,aid.toString());
+                    stringRedisTemplate.expire(RedisKeyName.ACTIVITY_GET_SIGN_IN+uuid,5L, TimeUnit.MINUTES);
+                    //2.签到扫描二维码的访问路径
+                    signInUrl = serveUrl + "/api/activity/signOff/" + uuid;
+                } else {
+                    return Response.error(ResponseStatus.ACTIVITY_GET_SIGN_IN_FAIL_1);
+                }
 
                 //3.生成二维码以base64返回响应
                 String qrCode = QrCodeUtils.createQRCode(signInUrl);
                 return Response.success(ResponseStatus.ACTIVITY_GET_SIGN_IN_SUCCESS,qrCode);
             }else {
-                return Response.error(ResponseStatus.ACTIVITY_GET_SIGN_IN_FAIL);
+                return Response.error(ResponseStatus.ACTIVITY_GET_SIGN_IN_FAIL_1);
             }
         } catch (Exception e) {
             e.printStackTrace();
-            return Response.error(ResponseStatus.ACTIVITY_GET_SIGN_IN_FAIL);
+            return Response.error(ResponseStatus.ACTIVITY_GET_SIGN_IN_FAIL_1);
         }
     }
 
