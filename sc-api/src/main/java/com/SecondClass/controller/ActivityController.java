@@ -62,9 +62,9 @@ public class ActivityController {
         return activityServer.register(participation);
     }
 
-    @GetMapping("/signIn/{aid}/{uid}")
-    public Response getSignIn(@PathVariable("aid")Long aid,@PathVariable("uid")Long uid){
-        return activityServer.getSignIn(aid,uid);
+    @GetMapping("/signIn/{aid}/{uid}/{type}")
+    public Response getSignIn(@PathVariable("aid")Long aid, @PathVariable("uid")Long uid, @PathVariable("type")Integer type){
+        return activityServer.getSignIn(aid, uid, type);
     }
 
     @PostMapping("/signIn")
