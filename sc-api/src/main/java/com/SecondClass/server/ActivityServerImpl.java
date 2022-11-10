@@ -11,6 +11,7 @@ import com.SecondClass.entity.R_entity.R_Student;
 import com.SecondClass.mapper.*;
 import com.SecondClass.utils.DateUtils;
 import com.SecondClass.utils.QrCodeUtils;
+import com.SecondClass.utils.RedisIdWorker;
 import com.SecondClass.utils.RedisUtils;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
@@ -19,8 +20,10 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import io.netty.util.internal.StringUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -45,6 +48,8 @@ public class ActivityServerImpl implements IActivityServer{
     StringRedisTemplate stringRedisTemplate;
     @Resource
     RedisUtils redisUtils;
+    @Resource
+    RedisIdWorker redisIdWorker;
 
     @Transactional
     public Response applyActivity(R_ActivityApplication request){
@@ -108,16 +113,18 @@ public class ActivityServerImpl implements IActivityServer{
 
             //2.如果活动通过的话，将活动存入活动表中
             if(status == 2){
-                //2.1添加活动到活动表 并将状态设置为1（活动未开始）
+                //2.1添加活动到活动表 并将状态设置为1（活动审核中）
                 String json = activityApplication.getAAppDescription();
                 Activity activity = JSONUtil.toBean(json, Activity.class);
-                //2.2设置活动状态：待开始报名状态 2
+                //2.2设置活动状态：审核通过 2
                 activity.setAstatus(status);
                 if(activityMapper.insert(activity) !=1)throw new IllegalArgumentException();
                 //2.2 缓存存入活动表中
                 redisUtils.setValue(RedisKeyName.ACTIVITY + activity.getAid().toString(),activity,10L, TimeUnit.DAYS);
+                //2.3 缓存存入活动报名限制人数
+                stringRedisTemplate.opsForValue().set(RedisKeyName.SECOND_KILL + activity.getAid().toString(),activity.getALimittedNumber().toString());
 
-                //2.3新的活动状态(多了一个aid）更新到活动描述中
+                //2.4 新的活动状态(多了一个aid）更新到活动描述中
                 String jsonStr_activity = JSONUtil.toJsonStr(activity);
                 activityApplication.setAAppDescription(jsonStr_activity);
 
@@ -198,30 +205,56 @@ public class ActivityServerImpl implements IActivityServer{
                     queryWrapper.eq("aid", aid);
                     return activityMapper.selectOne(queryWrapper);
         });
-        System.out.println(activity);
+
         return Response.success(ResponseStatus.ACTIVITY_QUERY_SUCCESS,activity);
     }
 
+    private static final DefaultRedisScript<Long> SECKILL_SCRIPT;
+    static {
+        SECKILL_SCRIPT = new DefaultRedisScript<>();
+        SECKILL_SCRIPT.setLocation(new ClassPathResource("seckill.lua"));
+        SECKILL_SCRIPT.setResultType(Long.class);
+    }
 
     public Response register(Participation participation){
-        try {
-            String UUID = java.util.UUID.randomUUID().toString().replaceAll("-", "");
-            participation.setPid(UUID);
-            participation.setParticipateStatus(0);
-            if(participationMapper.insert(participation) != 1) throw new IllegalArgumentException();
-
-            return Response.success(ResponseStatus.REGISTER_ACTIVITY_SUCCESS);
-        } catch (IllegalArgumentException i) {
-            i.printStackTrace();
-            return Response.error(ResponseStatus.REGISTER_ACTIVITY_FAIL);
-        } catch (DataIntegrityViolationException d) {
-            d.printStackTrace();
-            return Response.error(ResponseStatus.REGISTER_ACTIVITY_FAIL);
-        } catch (Exception e) {
-            //其他错误
-            e.printStackTrace();
-            return Response.success(ResponseStatus.ERROR);
+        //1. 执行lua脚本
+        Long result = stringRedisTemplate.execute(
+                SECKILL_SCRIPT,
+                Collections.emptyList(),
+                participation.getAid().toString(), participation.getUid().toString()
+        );
+        //2. 判断结果是否为0
+        int r = result.intValue();
+        if (r != 0){
+            //2.1. 不为0，表示没有报名资格
+            return Response.error(r == 1 ? ResponseStatus.REGISTER_ACTIVITY_FAIL_1:ResponseStatus.REGISTER_ACTIVITY_FAIL_2);
         }
+        long participationId = redisIdWorker.nextId("participation");
+
+
+        //TODO 保存阻塞队列 2.2.为0，表示有报名资格，保存阻塞队列
+
+        return Response.success(ResponseStatus.SUCCESS,participationId);
+
+
+//        try {
+//            String UUID = java.util.UUID.randomUUID().toString().replaceAll("-", "");
+//            participation.setPid(UUID);
+//            participation.setParticipateStatus(0);
+//            if(participationMapper.insert(participation) != 1) throw new IllegalArgumentException();
+//
+//            return Response.success(ResponseStatus.REGISTER_ACTIVITY_SUCCESS);
+//        } catch (IllegalArgumentException i) {
+//            i.printStackTrace();
+//            return Response.error(ResponseStatus.REGISTER_ACTIVITY_FAIL);
+//        } catch (DataIntegrityViolationException d) {
+//            d.printStackTrace();
+//            return Response.error(ResponseStatus.REGISTER_ACTIVITY_FAIL);
+//        } catch (Exception e) {
+//            //其他错误
+//            e.printStackTrace();
+//            return Response.success(ResponseStatus.ERROR);
+//        }
 
     }
 
@@ -262,7 +295,7 @@ public class ActivityServerImpl implements IActivityServer{
                     signInUrl = serveUrl + "/api/activity/signIn/" + uuid;
                 } else if (type == 0) {
                     stringRedisTemplate.opsForValue().set(RedisKeyName.ACTIVITY_GET_SIGN_OFF+uuid,aid.toString());
-                    stringRedisTemplate.expire(RedisKeyName.ACTIVITY_GET_SIGN_IN+uuid,5L, TimeUnit.MINUTES);
+                    stringRedisTemplate.expire(RedisKeyName.ACTIVITY_GET_SIGN_OFF+uuid,5L, TimeUnit.MINUTES);
                     //2.签到扫描二维码的访问路径
                     signInUrl = serveUrl + "/api/activity/signOff/" + uuid;
                 } else {
