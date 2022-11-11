@@ -35,7 +35,7 @@ public class ManageServerImpl implements ManageServer{
      * @param userMap
      * @return
      */
-    public Response login(Map userMap) {
+    public Response loginIn(Map userMap) {
         try{
             //查询登录信息
             List<User> user = userMapper.selectByMap(userMap);
@@ -47,6 +47,7 @@ public class ManageServerImpl implements ManageServer{
             return Response.success(ResponseStatus.ERROR);
         }
     }
+
 
     public Response createOrg(Organization org) {
         try{

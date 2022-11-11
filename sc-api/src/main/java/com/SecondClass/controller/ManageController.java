@@ -16,9 +16,9 @@ public class ManageController {
     @Resource
     ManageServerImpl manageServer;
 
-    @PostMapping("/login")
-    public Response login(@RequestBody Map<String, Object> userMap){
-        return manageServer.login(userMap);
+    @PostMapping("/loginIn")
+    public Response loginIn(@RequestBody Map<String, Object> userMap){
+        return manageServer.loginIn(userMap);
     }
 
     @PostMapping("/createOrg")

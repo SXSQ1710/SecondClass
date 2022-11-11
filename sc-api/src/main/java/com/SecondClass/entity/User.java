@@ -1,6 +1,7 @@
 package com.SecondClass.entity;
 
-import lombok.Builder;
+import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableId;
 import lombok.Data;
 
 import java.io.Serializable;
@@ -12,12 +13,12 @@ import java.io.Serializable;
  * @since 2022-10-29 09:33:02
  */
 @Data
-@Builder
 public class User implements Serializable {
     private static final long serialVersionUID = -32406263421502971L;
     /**
      * 用户id
      */
+    @TableId(value = "uid",type= IdType.AUTO)
     private Long uid;
     /**
      * 用户密码

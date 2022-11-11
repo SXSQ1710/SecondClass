@@ -21,7 +21,7 @@ public interface ManageServer {
      * @param userMap
      * @return
      */
-    Response login(Map userMap);
+    Response loginIn(Map userMap);
 
     /**
      * 创建组织
