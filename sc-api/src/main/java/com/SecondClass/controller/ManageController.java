@@ -8,7 +8,6 @@ import com.SecondClass.server.ManageServerImpl;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
-import java.util.Map;
 
 @RequestMapping(value = "/api/manage")
 @RestController
@@ -16,14 +15,14 @@ public class ManageController {
     @Resource
     ManageServerImpl manageServer;
 
-    @PostMapping("/loginIn")
-    public Response loginIn(@RequestBody Map<String, Object> userMap){
-        return manageServer.loginIn(userMap);
+    @PostMapping("/login")
+    public Response login(@RequestBody R_SignIn request){
+        return manageServer.login(request);
     }
 
     @PostMapping("/createOrg")
-    public Response createOrg(@RequestBody Organization org){
-        return manageServer.createOrg(org);
+    public Response createOrg(@RequestBody Organization request){
+        return manageServer.createOrg(request);
     }
 
     @PostMapping("/addAccount")
@@ -31,6 +30,14 @@ public class ManageController {
         return manageServer.addAccount(request);
     }
 
+    @GetMapping("/class/{cid}")
+    public Response getClassById(@PathVariable("cid")Long cid){
+        return manageServer.getClassById(cid);
+    }
 
+    @GetMapping("/user/{uid}")
+    public Response getUserById(@PathVariable("uid")Long uid){
+        return manageServer.getUserById(uid);
+    }
 
 }

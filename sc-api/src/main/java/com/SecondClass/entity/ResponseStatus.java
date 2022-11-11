@@ -55,7 +55,9 @@ public enum ResponseStatus {
     ACTIVITY_QUERY_SUCCESS("5-200","查询成功"),
     ACTIVITY_QUERY_FAIL("5-400","没有相关数据"),
     ACTIVITY_GET_SIGN_IN_SUCCESS("5-200","获取签到码成功"),
-    ACTIVITY_GET_SIGN_IN_FAIL("5-400","获取签到码失败，请查看信息是否正确"),
+    ACTIVITY_GET_SIGN_IN_FAIL_1("5-400","获取签到码失败，请查看信息是否正确"),
+    ACTIVITY_GET_SIGN_IN_FAIL_2("5-400","未在活动进行时间！"),
+    ACTIVITY_GET_SIGN_IN_FAIL_3("5-400","活动审核为通过，请耐心等待活动审核通过！"),
     ACTIVITY_SIGN_IN_SUCCESS("5-200","签到成功"),
     ACTIVITY_SIGN_IN_FAIL("5-400","签到失败"),
     ACTIVITY_SIGN_OFF_SUCCESS("5-200","签退成功"),
@@ -63,8 +65,15 @@ public enum ResponseStatus {
 
     //报名相关响应
     REGISTER_ACTIVITY_SUCCESS("6-200","报名成功"),
-    REGISTER_ACTIVITY_FAIL("6-400","报名失败");
+    REGISTER_ACTIVITY_FAIL("6-400","报名失败"),
+    REGISTER_ACTIVITY_FAIL_1("6-400","名额已满"),
+    REGISTER_ACTIVITY_FAIL_2("6-400","不能重复报名"),
 
+    //账号管理
+    MANAGE_CLASS_SUCCESS("7-200","班级信息获取成功"),
+    MANAGE_CLASS_FAIL("7-400","班级信息获取失败"),
+    MANAGE_USER_SUCCESS("7-200","用户信息获取成功"),
+    MANAGE_USER_FAIL("7-400","用户信息获取失败");
 
     private final String responseStatus;
 
