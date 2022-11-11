@@ -17,13 +17,13 @@ public class ManageController {
     ManageServerImpl manageServer;
 
     @PostMapping("/login")
-    public Response login(@RequestParam Map<String, String> userMap){
+    public Response login(@RequestBody Map<String, Object> userMap){
         return manageServer.login(userMap);
     }
 
     @PostMapping("/createOrg")
-    public Response createOrg(@RequestBody Organization request){
-        return manageServer.createOrg(request);
+    public Response createOrg(@RequestBody Organization org){
+        return manageServer.createOrg(org);
     }
 
     @PostMapping("/addAccount")
