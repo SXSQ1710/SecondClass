@@ -17,6 +17,7 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import io.lettuce.core.RedisCommandExecutionException;
 import io.netty.util.internal.StringUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -217,24 +218,36 @@ public class ActivityServerImpl implements IActivityServer{
     }
 
     public Response register(Participation participation){
-        //1. 执行lua脚本
-        Long result = stringRedisTemplate.execute(
-                SECKILL_SCRIPT,
-                Collections.emptyList(),
-                participation.getAid().toString(), participation.getUid().toString()
-        );
-        //2. 判断结果是否为0
-        int r = result.intValue();
-        if (r != 0){
-            //2.1. 不为0，表示没有报名资格
-            return Response.error(r == 1 ? ResponseStatus.REGISTER_ACTIVITY_FAIL_1:ResponseStatus.REGISTER_ACTIVITY_FAIL_2);
+        try{//1.判断是否为合法用户
+            String uid = participation.getUid().toString();
+            User userInfo = redisUtils.queryForValue(RedisKeyName.MANAGE_USER, uid, User.class, 60L, TimeUnit.DAYS,
+                    (id) -> {
+                        QueryWrapper<User> queryWrapper = new QueryWrapper<>();
+                        queryWrapper.eq("uid", uid);
+                        return userMapper.selectOne(queryWrapper);
+                    });
+            if (!BeanUtil.isNotEmpty(userInfo)) return Response.error(ResponseStatus.REGISTER_ACTIVITY_FAIL_3);
+            //2. 执行lua脚本
+            Long result = stringRedisTemplate.execute(
+                    SECKILL_SCRIPT,
+                    Collections.emptyList(),
+                    participation.getAid().toString(), participation.getUid().toString()
+            );
+            //3. 判断结果是否为0
+            int r = result.intValue();
+            if (r != 0) {
+                //2.1. 不为0，表示没有报名资格
+                return Response.error(r == 1 ? ResponseStatus.REGISTER_ACTIVITY_FAIL_1 : ResponseStatus.REGISTER_ACTIVITY_FAIL_2);
+            }
+            long participationId = redisIdWorker.nextId("participation");
+
+
+            //TODO 保存阻塞队列 2.2.为0，表示有报名资格，保存阻塞队列
+
+            return Response.success(ResponseStatus.SUCCESS, participationId);
+        }catch (Exception e){
+            return Response.error(ResponseStatus.REGISTER_ACTIVITY_FAIL);
         }
-        long participationId = redisIdWorker.nextId("participation");
-
-
-        //TODO 保存阻塞队列 2.2.为0，表示有报名资格，保存阻塞队列
-
-        return Response.success(ResponseStatus.SUCCESS,participationId);
 
 
 //        try {

@@ -65,9 +65,10 @@ public enum ResponseStatus {
 
     //报名相关响应
     REGISTER_ACTIVITY_SUCCESS("6-200","报名成功"),
-    REGISTER_ACTIVITY_FAIL("6-400","报名失败"),
+    REGISTER_ACTIVITY_FAIL("6-400","报名失败，请查看信息是否正确"),
     REGISTER_ACTIVITY_FAIL_1("6-400","名额已满"),
     REGISTER_ACTIVITY_FAIL_2("6-400","不能重复报名"),
+    REGISTER_ACTIVITY_FAIL_3("6-400","非法用户"),
 
     //账号管理
     MANAGE_CLASS_SUCCESS("7-200","班级信息获取成功"),
