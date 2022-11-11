@@ -5,12 +5,10 @@ import com.SecondClass.entity.R_entity.R_SignIn;
 import com.SecondClass.entity.Response;
 import com.SecondClass.entity.User;
 import com.SecondClass.server.ManageServerImpl;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
+import java.util.Map;
 
 @RequestMapping(value = "/api/manage")
 @RestController
@@ -19,13 +17,13 @@ public class ManageController {
     ManageServerImpl manageServer;
 
     @PostMapping("/loginIn")
-    public Response loginIn(@RequestBody User user){
-        return manageServer.loginIn(user);
+    public Response loginIn(@RequestBody Map<String, Object> userMap){
+        return manageServer.loginIn(userMap);
     }
 
     @PostMapping("/createOrg")
-    public Response createOrg(@RequestBody Organization request){
-        return manageServer.createOrg(request);
+    public Response createOrg(@RequestBody Organization org){
+        return manageServer.createOrg(org);
     }
 
     @PostMapping("/addAccount")

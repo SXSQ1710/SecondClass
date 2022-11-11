@@ -30,10 +30,6 @@ public class RedisUtils {
         stringRedisTemplate.opsForValue().set(redisKeyName, JSONUtil.toJsonStr(value),time,unit);
     }
 
-    public void setValue(String redisKeyName, Object value){
-        stringRedisTemplate.opsForValue().set(redisKeyName, JSONUtil.toJsonStr(value));
-    }
-
     public void setHash(String key, String id, Object value){
         stringRedisTemplate.opsForHash().put(key, id, JSONUtil.toJsonStr(value));
     }

@@ -85,8 +85,6 @@ public class Activity implements Serializable {
     private Date aHoldEnd;
     /**
      * 活动状态
-     * 1:活动审核中
-     * 2:活动审核通过
      */
     private Integer astatus;
     /**

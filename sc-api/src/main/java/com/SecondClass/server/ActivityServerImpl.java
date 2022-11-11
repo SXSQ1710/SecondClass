@@ -9,9 +9,7 @@ import com.SecondClass.entity.R_entity.R_ActivityApplication;
 import com.SecondClass.entity.R_entity.R_SignIn;
 import com.SecondClass.entity.R_entity.R_Student;
 import com.SecondClass.mapper.*;
-import com.SecondClass.utils.DateUtils;
 import com.SecondClass.utils.QrCodeUtils;
-import com.SecondClass.utils.RedisIdWorker;
 import com.SecondClass.utils.RedisUtils;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
@@ -20,15 +18,16 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import io.netty.util.internal.StringUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.io.ClassPathResource;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.redis.core.StringRedisTemplate;
-import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import java.util.*;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 @Slf4j
@@ -48,8 +47,6 @@ public class ActivityServerImpl implements IActivityServer{
     StringRedisTemplate stringRedisTemplate;
     @Resource
     RedisUtils redisUtils;
-    @Resource
-    RedisIdWorker redisIdWorker;
 
     @Transactional
     public Response applyActivity(R_ActivityApplication request){
@@ -113,18 +110,15 @@ public class ActivityServerImpl implements IActivityServer{
 
             //2.如果活动通过的话，将活动存入活动表中
             if(status == 2){
-                //2.1添加活动到活动表 并将状态设置为1（活动审核中）
+                //2.1添加活动到活动表 并将状态设置为1（活动未开始）
                 String json = activityApplication.getAAppDescription();
                 Activity activity = JSONUtil.toBean(json, Activity.class);
-                //2.2设置活动状态：审核通过 2
                 activity.setAstatus(status);
                 if(activityMapper.insert(activity) !=1)throw new IllegalArgumentException();
                 //2.2 缓存存入活动表中
                 redisUtils.setValue(RedisKeyName.ACTIVITY + activity.getAid().toString(),activity,10L, TimeUnit.DAYS);
-                //2.3 缓存存入活动报名限制人数
-                stringRedisTemplate.opsForValue().set(RedisKeyName.SECOND_KILL + activity.getAid().toString(),activity.getALimittedNumber().toString());
 
-                //2.4 新的活动状态(多了一个aid）更新到活动描述中
+                //2.3新的活动状态(多了一个aid）更新到活动描述中
                 String jsonStr_activity = JSONUtil.toJsonStr(activity);
                 activityApplication.setAAppDescription(jsonStr_activity);
 
@@ -209,59 +203,33 @@ public class ActivityServerImpl implements IActivityServer{
         return Response.success(ResponseStatus.ACTIVITY_QUERY_SUCCESS,activity);
     }
 
-    private static final DefaultRedisScript<Long> SECKILL_SCRIPT;
-    static {
-        SECKILL_SCRIPT = new DefaultRedisScript<>();
-        SECKILL_SCRIPT.setLocation(new ClassPathResource("seckill.lua"));
-        SECKILL_SCRIPT.setResultType(Long.class);
-    }
 
     public Response register(Participation participation){
-        //1. 执行lua脚本
-        Long result = stringRedisTemplate.execute(
-                SECKILL_SCRIPT,
-                Collections.emptyList(),
-                participation.getAid().toString(), participation.getUid().toString()
-        );
-        //2. 判断结果是否为0
-        int r = result.intValue();
-        if (r != 0){
-            //2.1. 不为0，表示没有报名资格
-            return Response.error(r == 1 ? ResponseStatus.REGISTER_ACTIVITY_FAIL_1:ResponseStatus.REGISTER_ACTIVITY_FAIL_2);
+        try {
+            String UUID = java.util.UUID.randomUUID().toString().replaceAll("-", "");
+            participation.setPid(UUID);
+            participation.setParticipateStatus(0);
+            if(participationMapper.insert(participation) != 1) throw new IllegalArgumentException();
+
+            return Response.success(ResponseStatus.REGISTER_ACTIVITY_SUCCESS);
+        } catch (IllegalArgumentException i) {
+            i.printStackTrace();
+            return Response.error(ResponseStatus.REGISTER_ACTIVITY_FAIL);
+        } catch (DataIntegrityViolationException d) {
+            d.printStackTrace();
+            return Response.error(ResponseStatus.REGISTER_ACTIVITY_FAIL);
+        } catch (Exception e) {
+            //其他错误
+            e.printStackTrace();
+            return Response.success(ResponseStatus.ERROR);
         }
-        long participationId = redisIdWorker.nextId("participation");
-
-
-        //TODO 保存阻塞队列 2.2.为0，表示有报名资格，保存阻塞队列
-
-        return Response.success(ResponseStatus.SUCCESS,participationId);
-
-
-//        try {
-//            String UUID = java.util.UUID.randomUUID().toString().replaceAll("-", "");
-//            participation.setPid(UUID);
-//            participation.setParticipateStatus(0);
-//            if(participationMapper.insert(participation) != 1) throw new IllegalArgumentException();
-//
-//            return Response.success(ResponseStatus.REGISTER_ACTIVITY_SUCCESS);
-//        } catch (IllegalArgumentException i) {
-//            i.printStackTrace();
-//            return Response.error(ResponseStatus.REGISTER_ACTIVITY_FAIL);
-//        } catch (DataIntegrityViolationException d) {
-//            d.printStackTrace();
-//            return Response.error(ResponseStatus.REGISTER_ACTIVITY_FAIL);
-//        } catch (Exception e) {
-//            //其他错误
-//            e.printStackTrace();
-//            return Response.success(ResponseStatus.ERROR);
-//        }
 
     }
 
     @Value("${myConfig.serveUrl}")
     private String serveUrl;
 
-    public Response getSignIn(Long aid, Long uid, Integer type) {
+    public Response getSignIn(Long aid,Long uid) {
         try {
             Activity activity = redisUtils.queryForValue(RedisKeyName.ACTIVITY, aid.toString(), Activity.class, 10L, TimeUnit.DAYS,
                     (id) -> {
@@ -270,47 +238,27 @@ public class ActivityServerImpl implements IActivityServer{
                         queryWrapper.eq("a_uid",uid);
                         return activityMapper.selectOne(queryWrapper);
             });
-            if (!Objects.equals(activity.getAUid(), uid)) throw new IllegalArgumentException();
-            //判断活动状态是否为2(活动审核通过)
-            if (activity.getAstatus() != 2) return Response.error(ResponseStatus.ACTIVITY_GET_SIGN_IN_FAIL_3);
-            //判断活动是否正在申请的活动举办时间内,活动开始前15分钟结束后15分钟
-            Date start = activity.getAHoldStart();
-            Date end = activity.getAHoldEnd();
-            long startTime = start.getTime();
-            long endTime = end.getTime();
-            start.setTime(startTime - 1000*60*60*15);
-            end.setTime(endTime + 1000*60*60*15);
 
-            if (!DateUtils.isEffectiveDate(start, end)){
-                return Response.error(ResponseStatus.ACTIVITY_GET_SIGN_IN_FAIL_2);
-            }
+            if (!Objects.equals(activity.getAUid(), uid)) throw new IllegalArgumentException();
 
             if(BeanUtil.isNotEmpty(activity)){
                 //1.生成随机uuid保存在redis里并设置5分钟的TTL
                 String uuid = UUID.randomUUID().toString();
-                String signInUrl;
-                if (type == 1){
-                    stringRedisTemplate.opsForValue().set(RedisKeyName.ACTIVITY_GET_SIGN_IN+uuid,aid.toString());
-                    stringRedisTemplate.expire(RedisKeyName.ACTIVITY_GET_SIGN_IN+uuid,5L, TimeUnit.MINUTES);
-                    signInUrl = serveUrl + "/api/activity/signIn/" + uuid;
-                } else if (type == 0) {
-                    stringRedisTemplate.opsForValue().set(RedisKeyName.ACTIVITY_GET_SIGN_OFF+uuid,aid.toString());
-                    stringRedisTemplate.expire(RedisKeyName.ACTIVITY_GET_SIGN_OFF+uuid,5L, TimeUnit.MINUTES);
-                    //2.签到扫描二维码的访问路径
-                    signInUrl = serveUrl + "/api/activity/signOff/" + uuid;
-                } else {
-                    return Response.error(ResponseStatus.ACTIVITY_GET_SIGN_IN_FAIL_1);
-                }
+                stringRedisTemplate.opsForValue().set(RedisKeyName.ACTIVITY_GET_SIGN_IN+uuid,aid.toString());
+                stringRedisTemplate.expire(RedisKeyName.ACTIVITY_GET_SIGN_IN+uuid,5L, TimeUnit.MINUTES);
+
+                //2.签到扫描二维码的访问路径
+                String signInUrl = serveUrl + "/api/activity/signIn/" + uuid;
 
                 //3.生成二维码以base64返回响应
                 String qrCode = QrCodeUtils.createQRCode(signInUrl);
                 return Response.success(ResponseStatus.ACTIVITY_GET_SIGN_IN_SUCCESS,qrCode);
             }else {
-                return Response.error(ResponseStatus.ACTIVITY_GET_SIGN_IN_FAIL_1);
+                return Response.error(ResponseStatus.ACTIVITY_GET_SIGN_IN_FAIL);
             }
         } catch (Exception e) {
             e.printStackTrace();
-            return Response.error(ResponseStatus.ACTIVITY_GET_SIGN_IN_FAIL_1);
+            return Response.error(ResponseStatus.ACTIVITY_GET_SIGN_IN_FAIL);
         }
     }
 

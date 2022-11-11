@@ -1,18 +1,20 @@
 package com.SecondClass.server;
 
-import cn.dev33.satoken.stp.StpUtil;
+import cn.hutool.core.bean.BeanUtil;
 import com.SecondClass.entity.Organization;
 import com.SecondClass.entity.R_entity.R_SignIn;
 import com.SecondClass.entity.Response;
 import com.SecondClass.entity.ResponseStatus;
 import com.SecondClass.entity.User;
 import com.SecondClass.mapper.UserMapper;
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
-import static com.SecondClass.entity.ResponseStatus.USER_LOGIN_SUCCESS;
+import javax.annotation.Resource;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @ClassName: ManageServerImpl
@@ -23,25 +25,42 @@ import static com.SecondClass.entity.ResponseStatus.USER_LOGIN_SUCCESS;
 
 @Slf4j
 @Service
-public class ManageServerImpl implements ManageServer {
-    @Autowired
-    private UserMapper userMapper;
+public class ManageServerImpl implements ManageServer{
 
-    public Response loginIn(User user) {
-        //1.查询是否有该账号
-        QueryWrapper<User> userQueryWrapper = new QueryWrapper<>();
-        userQueryWrapper.eq("uid",user.getUid());
-        userQueryWrapper.eq("upassword",user.getUpassword());
-        User user1 = userMapper.selectOne(userQueryWrapper);
-        if (user1 == null) {
-            return Response.error(ResponseStatus.USER_LOGIN_FAIL);
+    @Resource
+    UserMapper userMapper;
+
+    /**
+     * 登录系统
+     * @param userMap
+     * @return
+     */
+    public Response loginIn(Map userMap) {
+        try{
+            //查询登录信息
+            List<User> user = userMapper.selectByMap(userMap);
+            if(user == null) return Response.success(ResponseStatus.USER_LOGIN_FAIL);
+            return Response.success(ResponseStatus.USER_LOGIN_SUCCESS);
+        }catch(Exception e){
+            //其他错误
+            e.printStackTrace();
+            return Response.success(ResponseStatus.ERROR);
         }
-        //2.如果登录成功，授予权限
-        StpUtil.login(user1.getUid());
-        return Response.success(ResponseStatus.USER_LOGIN_SUCCESS);
     }
 
-    public Response createOrg(Organization request) {
+
+    public Response createOrg(Organization org) {
+        try{
+
+        }catch (DataIntegrityViolationException d){
+            //数据库插入失败
+            d.printStackTrace();
+            return Response.error(ResponseStatus.ACTIVITY_APPLY_FAIL);
+        }catch (Exception e){
+            //其他错误
+            e.printStackTrace();
+            return Response.success(ResponseStatus.ERROR);
+        }
         return null;
 
     }
@@ -50,6 +69,4 @@ public class ManageServerImpl implements ManageServer {
         return null;
 
     }
-
-
 }

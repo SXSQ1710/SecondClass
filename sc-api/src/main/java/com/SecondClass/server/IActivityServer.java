@@ -85,7 +85,7 @@ public interface IActivityServer {
      * @author: SXSQ
      * @date: 2022/11/03 13:46
      */
-    Response getSignIn(Long aid, Long uid, Integer type);
+    Response getSignIn(Long aid,Long uid);
 
     Response signIn(R_SignIn signIn);
 
