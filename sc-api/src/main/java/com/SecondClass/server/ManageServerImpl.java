@@ -7,6 +7,7 @@ import com.SecondClass.entity.Response;
 import com.SecondClass.entity.ResponseStatus;
 import com.SecondClass.entity.User;
 import com.SecondClass.mapper.UserMapper;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
