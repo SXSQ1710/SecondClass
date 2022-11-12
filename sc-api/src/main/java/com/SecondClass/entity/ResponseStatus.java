@@ -50,6 +50,8 @@ public enum ResponseStatus {
     //申请查询相关相应
     ACTIVITY_APP_QUERY_SUCCESS("4-200","查询成功"),
     ACTIVITY_APP_QUERY_FAIL("4-400","没有相关数据"),
+    ORGANIZATION_QUERY_SUCCESS("4-200","组织查询成功"),
+    ORGANIZATION_QUERY_FAIL("4-400","没有相关组织数据"),
 
     //活动相关相应
     ACTIVITY_QUERY_SUCCESS("5-200","查询成功"),
@@ -74,7 +76,13 @@ public enum ResponseStatus {
     MANAGE_CLASS_SUCCESS("7-200","班级信息获取成功"),
     MANAGE_CLASS_FAIL("7-400","班级信息获取失败"),
     MANAGE_USER_SUCCESS("7-200","用户信息获取成功"),
-    MANAGE_USER_FAIL("7-400","用户信息获取失败");
+    MANAGE_USER_FAIL("7-400","用户信息获取失败"),
+
+    //组织、学生账号创建与导入
+    CREATE_ORGANIZATION_SUCCESS("8-200","组织创建成功"),
+    CREATE_ORGANIZATION_FAIL("8-400","组织创建失败"),
+    CREATE_USER_SUCCESS("8-200","用户账号导入成功"),
+    CREATE_USER_FAIL("8-400","用户账号导入失败");
 
     private final String responseStatus;
 
