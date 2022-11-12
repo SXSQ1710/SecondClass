@@ -1,26 +1,36 @@
 package com.SecondClass.server;
 
+import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.util.IdUtil;
 import com.SecondClass.entity.Response;
 import com.SecondClass.entity.ResponseStatus;
 import com.SecondClass.entity.SelfApplication;
+import com.SecondClass.entity.Shichang;
 import com.SecondClass.mapper.SelfApplicationMapper;
+import com.SecondClass.mapper.ShiChangMapper;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import java.io.File;
 import java.io.IOException;
+import java.util.Date;
 
 @Service
 public class SelfApplicationServerImpl implements ISelfApplicationServer {
 
     @Resource
     private SelfApplicationMapper selfApplicationMapper;
+
+    @Resource
+    private ShiChangMapper shiChangMapper;
 
     @Value("${self-attachment}")
     private String basePath;
@@ -53,11 +63,22 @@ public class SelfApplicationServerImpl implements ISelfApplicationServer {
     }
 
     @Override
+    @Transactional
     public Response auditSelfApplication(Integer selfAppId, Integer statue) {
-        UpdateWrapper<SelfApplication> updateWrapper = new UpdateWrapper<>();
-        updateWrapper.eq("self_app_id",selfAppId)
-                     .set("self_app_statu",statue);
-        int update = selfApplicationMapper.update(null, updateWrapper);
+        LambdaQueryWrapper<SelfApplication> queryWrapper = Wrappers.<SelfApplication>lambdaQuery()
+                        .eq(SelfApplication::getSelfAppId,selfAppId);
+        SelfApplication selfApplication = selfApplicationMapper.selectOne(queryWrapper);
+        selfApplication.setSelfAppStatu(statue);
+        //如果审核通过则发放时长
+        if (statue==2) {
+            Shichang shichang = new Shichang();
+            shichang.setUid(selfApplication.getUid());
+            shichang.setSid(selfApplication.getSelfAppType());
+            shichang.setSnum(selfApplication.getSelfAppShiNum());
+            shichang.setAcquireTime(new Date());
+            shiChangMapper.insert(shichang);
+        }
+        int update = selfApplicationMapper.updateById(selfApplication);
         return update>0 ? Response.success(ResponseStatus.SUCCESS) : Response.error(ResponseStatus.ERROR);
     }
 

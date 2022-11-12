@@ -5,9 +5,9 @@ serveUrl: &serveUrl http://localhost:8081
 #文件存储地址（后面可能用到，不用修改）
 filePath: &filePath SecondClass/src/main/resources/static
 #数据库配置
-mysql-url: &url jdbc:mysql://localhost:3306/secondclass?useSSL=false&amp&serverTimezone=UTC&allowPublicKeyRetrieval=true
+mysql-url: &url jdbc:mysql://localhost:3306/secondClass?useSSL=false&amp&serverTimezone=UTC&allowPublicKeyRetrieval=true
 mysql-username: &username root
-mysql-password: &password 13824101958
+mysql-password: &password zlj
 #静态资源地址
 static-locations: &static file:D:/javaide/SecondClass/src/main/resources/static
 self-attachment: D:\software\IntelliJ IDEA 2022.2.3\IdeaProjects\SecondClass\sc-api\src\main\resources\selfEnclosure\
