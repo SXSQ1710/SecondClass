@@ -3,6 +3,8 @@
 local activityId = ARGV[1]
 -- 1.2用户id
 local userId = ARGV[2]
+-- 1.3报名id
+local participationId = ARGV[3]
 
 -- 2.数据key
 -- 2.1剩余名额key
@@ -25,4 +27,6 @@ end
 redis.call('incrby', stockKey, -1)
 --3.5.保存报名信息
 redis.call('sadd', participationKey, userId)
+--3.6.发生消息到队列中
+redis.call('xadd','stream.participation','*','uid',userId,'aid',activityId,'pid',participationId)
 return 0
