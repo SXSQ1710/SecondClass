@@ -23,13 +23,19 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.redis.connection.stream.*;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
+import javax.swing.plaf.IconUIResource;
+import java.time.Duration;
 import java.util.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 @Slf4j
@@ -211,11 +217,95 @@ public class ActivityServerImpl implements IActivityServer{
     }
 
     private static final DefaultRedisScript<Long> SECKILL_SCRIPT;
+    private static final ExecutorService SECKILL_EXECUTOR = Executors.newSingleThreadExecutor();
+
     static {
         SECKILL_SCRIPT = new DefaultRedisScript<>();
         SECKILL_SCRIPT.setLocation(new ClassPathResource("seckill.lua"));
         SECKILL_SCRIPT.setResultType(Long.class);
     }
+
+    @PostConstruct
+    private void init(){
+        SECKILL_EXECUTOR.submit(new VoucherParticipationHandler());
+        if (!stringRedisTemplate.hasKey("stream.participation")){
+            stringRedisTemplate.opsForStream().createGroup("stream.participation", "g1");
+        }
+    }
+
+    private class VoucherParticipationHandler implements Runnable{
+        String queueName = "stream.participation" ;
+
+        @Override
+        public void run() {
+            while (true){
+                try{
+                    //1.获取消息队列中的报名信息
+                    List<MapRecord<String, Object, Object>> list = stringRedisTemplate.opsForStream().read(
+                            Consumer.from("g1", "c1"),
+                            StreamReadOptions.empty().count(1).block(Duration.ofSeconds(2)),
+                            StreamOffset.create(queueName, ReadOffset.lastConsumed())
+                    );
+                    //2.判断消息获取是否成功
+                    if (list == null || list.isEmpty()){
+                        //2.1如果为空表示消息队列中没有消息，继续下一个循环
+                        continue;
+                    }
+                    //3.解析数据
+                    MapRecord<String, Object, Object> record = list.get(0);
+                    Map<Object, Object> value = record.getValue();
+                    Participation participation = BeanUtil.fillBeanWithMap(value, new Participation(), true);
+                    //4.写入数据库
+                    saveParticipation(participation);
+                    //5.ack确认
+                    stringRedisTemplate.opsForStream().acknowledge(queueName,"g1",record.getId());
+                }catch (Exception e){
+                    log.error("处理PendingList报名异常", e);
+                    handlePendingList();
+                }
+            }
+        }
+
+        private void handlePendingList(){
+            while (true){
+                try{
+                    //1.获取消息队列中的报名信息
+                    List<MapRecord<String, Object, Object>> list = stringRedisTemplate.opsForStream().read(
+                            Consumer.from("g1", "c1"),
+                            StreamReadOptions.empty().count(1),
+                            StreamOffset.create(queueName, ReadOffset.from("0"))
+                    );
+                    //2.判断消息获取是否成功
+                    if (list == null || list.isEmpty()){
+                        //2.1如果为空表示PendingList中没有异常消息了，继续下一个循环
+                        break;
+                    }
+                    //3.解析数据
+                    MapRecord<String, Object, Object> record = list.get(0);
+                    Map<Object, Object> value = record.getValue();
+                    Participation participation = BeanUtil.fillBeanWithMap(value, new Participation(), true);
+                    //4.写入数据库
+                    saveParticipation(participation);
+                    //5.ack确认
+                    stringRedisTemplate.opsForStream().acknowledge(queueName,"g1",record.getId());
+                }catch (Exception e){
+                    log.error("处理PendingList报名异常", e);
+                    try {
+                        Thread.sleep(20);
+                    } catch (InterruptedException interruptedException) {
+                        interruptedException.printStackTrace();
+                    }
+                }
+            }
+        }
+
+        private void saveParticipation(Participation participation){
+            participation.setParticipateStatus(0);
+            if(participationMapper.insert(participation) != 1) throw new IllegalArgumentException();
+        }
+    }
+
+
 
     public Response register(Participation participation){
         try{//1.判断是否为合法用户
@@ -228,10 +318,11 @@ public class ActivityServerImpl implements IActivityServer{
                     });
             if (!BeanUtil.isNotEmpty(userInfo)) return Response.error(ResponseStatus.REGISTER_ACTIVITY_FAIL_3);
             //2. 执行lua脚本
+            long pid = redisIdWorker.nextId("participation");
             Long result = stringRedisTemplate.execute(
                     SECKILL_SCRIPT,
                     Collections.emptyList(),
-                    participation.getAid().toString(), participation.getUid().toString()
+                    participation.getAid().toString(), participation.getUid().toString(),String.valueOf(pid)
             );
             //3. 判断结果是否为0
             int r = result.intValue();
@@ -239,16 +330,11 @@ public class ActivityServerImpl implements IActivityServer{
                 //2.1. 不为0，表示没有报名资格
                 return Response.error(r == 1 ? ResponseStatus.REGISTER_ACTIVITY_FAIL_1 : ResponseStatus.REGISTER_ACTIVITY_FAIL_2);
             }
-            long participationId = redisIdWorker.nextId("participation");
 
-
-            //TODO 保存阻塞队列 2.2.为0，表示有报名资格，保存阻塞队列
-
-            return Response.success(ResponseStatus.SUCCESS, participationId);
+            return Response.success(ResponseStatus.SUCCESS, pid);
         }catch (Exception e){
             return Response.error(ResponseStatus.REGISTER_ACTIVITY_FAIL);
         }
-
 
 //        try {
 //            String UUID = java.util.UUID.randomUUID().toString().replaceAll("-", "");

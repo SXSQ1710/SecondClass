@@ -26,7 +26,7 @@ public class Participation implements Serializable {
      * 参加活动id
      */
     @TableId(value = "pid",type= IdType.AUTO)
-    private String pid;
+    private Long pid;
     /**
      * 用户id
      */

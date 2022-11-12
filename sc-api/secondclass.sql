@@ -11,7 +11,7 @@
  Target Server Version : 80026
  File Encoding         : 65001
 
- Date: 05/11/2022 19:42:07
+ Date: 12/11/2022 16:42:49
 */
 
 SET NAMES utf8mb4;
@@ -32,7 +32,7 @@ CREATE TABLE `t_activity`  (
   `a_uid` bigint NULL DEFAULT NULL COMMENT '活动管理员（即活动申请人）',
   `a_hold_start` datetime NULL DEFAULT NULL COMMENT '举办开始时间',
   `a_hold_end` datetime NULL DEFAULT NULL COMMENT '举办结束时间',
-  `astatus` int NULL DEFAULT NULL COMMENT '活动状态',
+  `astatus` int NULL DEFAULT NULL COMMENT '活动状态\r\n1:活动审核中\r\n2:活动审核通过',
   `apic` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '活动图片路径',
   `a_shichang_num` int NULL DEFAULT NULL COMMENT '活动时长数量',
   `a_shichang_type` bigint NULL DEFAULT NULL COMMENT '活动时长类型',
@@ -43,12 +43,11 @@ CREATE TABLE `t_activity`  (
   INDEX `a_uid`(`a_uid`) USING BTREE,
   CONSTRAINT `t_activity_ibfk_1` FOREIGN KEY (`a_oid`) REFERENCES `t_organization` (`oid`) ON DELETE RESTRICT ON UPDATE RESTRICT,
   CONSTRAINT `t_activity_ibfk_2` FOREIGN KEY (`a_uid`) REFERENCES `t_user` (`uid`) ON DELETE RESTRICT ON UPDATE RESTRICT
-) ENGINE = InnoDB AUTO_INCREMENT = 10 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = DYNAMIC;
+) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Records of t_activity
 -- ----------------------------
-INSERT INTO `t_activity` VALUES (10, '测试讲座活动', '旨在测试接口', '2022-09-16 06:43:11', '2022-09-20 07:43:11', 100, 1, 1, '2022-10-16 02:00:00', '2022-10-16 04:00:00', 2, 'http://dummyimage.com/400x400', 2, 1, '龙洞校区教学楼101');
 
 -- ----------------------------
 -- Table structure for t_activity_application
@@ -64,12 +63,11 @@ CREATE TABLE `t_activity_application`  (
   `a_app_explain` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '审核说明',
   PRIMARY KEY (`a_app_id`) USING BTREE,
   INDEX `uid`(`uid`) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 17 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = DYNAMIC;
+) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Records of t_activity_application
 -- ----------------------------
-INSERT INTO `t_activity_application` VALUES (17, 1, NULL, '{\"aid\":10,\"aname\":\"测试讲座活动\",\"adescription\":\"旨在测试接口\",\"aRegisterOpen\":1663310591000,\"aRegisterClose\":1663659791000,\"aLimittedNumber\":100,\"aOid\":1,\"aUid\":1,\"aHoldStart\":1665885600000,\"aHoldEnd\":1665892800000,\"astatus\":2,\"apic\":\"http://dummyimage.com/400x400\",\"aShichangNum\":2,\"aShichangType\":1,\"aAddress\":\"龙洞校区教学楼101\"}', 'http://dummyimage.com/400x400', 2, '通过测试');
 
 -- ----------------------------
 -- Table structure for t_class
@@ -89,6 +87,7 @@ CREATE TABLE `t_class`  (
 -- Records of t_class
 -- ----------------------------
 INSERT INTO `t_class` VALUES (1, '信管1班', 2020, '信息管理与信息系统', '管理学院', '龙洞校区');
+INSERT INTO `t_class` VALUES (2, '信管1班', 2020, '信息管理与信息系统', '管理学院', '龙洞校区');
 
 -- ----------------------------
 -- Table structure for t_organization
@@ -103,7 +102,7 @@ CREATE TABLE `t_organization`  (
   `superior_organization` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '上级单位',
   PRIMARY KEY (`oid`) USING BTREE,
   INDEX `uid`(`uid`) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 2 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = DYNAMIC;
+) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Records of t_organization
@@ -124,7 +123,7 @@ CREATE TABLE `t_organization_app_shi`  (
   PRIMARY KEY (`shi_app_id`) USING BTREE,
   INDEX `uid`(`uid`) USING BTREE,
   INDEX `sid`(`sid`) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = DYNAMIC;
+) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Records of t_organization_app_shi
@@ -142,7 +141,7 @@ CREATE TABLE `t_organization_member`  (
   PRIMARY KEY (`id`) USING BTREE,
   INDEX `uid`(`uid`) USING BTREE,
   INDEX `oid`(`oid`) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = DYNAMIC;
+) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Records of t_organization_member
@@ -153,7 +152,7 @@ CREATE TABLE `t_organization_member`  (
 -- ----------------------------
 DROP TABLE IF EXISTS `t_participation`;
 CREATE TABLE `t_participation`  (
-  `pid` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '参加活动id，可能涉及高并发用自增不合适',
+  `pid` bigint NOT NULL COMMENT '参加活动id，可能涉及高并发用自增不合适',
   `uid` bigint NULL DEFAULT NULL COMMENT '用户id',
   `aid` bigint NULL DEFAULT NULL COMMENT '活动id',
   `participate_status` tinyint NULL DEFAULT NULL COMMENT '参与状态 0：等待审核 1：已报名 2：签到 3：签退 4：时长已发放 5:报名失败',
@@ -181,7 +180,7 @@ CREATE TABLE `t_self_application`  (
   PRIMARY KEY (`self_app_id`) USING BTREE,
   INDEX `uid`(`uid`) USING BTREE,
   INDEX `self_app_type`(`self_app_type`) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = DYNAMIC;
+) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Records of t_self_application
@@ -200,7 +199,7 @@ CREATE TABLE `t_shichang`  (
   PRIMARY KEY (`id`) USING BTREE,
   INDEX `uid`(`uid`) USING BTREE,
   INDEX `sid`(`sid`) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = DYNAMIC;
+) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Records of t_shichang
@@ -214,7 +213,7 @@ CREATE TABLE `t_shichang_type`  (
   `sid` bigint NOT NULL AUTO_INCREMENT COMMENT '时长id',
   `shichang_name` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '时长类型',
   PRIMARY KEY (`sid`) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 6 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = DYNAMIC;
+) ENGINE = InnoDB AUTO_INCREMENT = 5 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Records of t_shichang_type
@@ -241,7 +240,7 @@ CREATE TABLE `t_user`  (
   INDEX `oid`(`oid`) USING BTREE,
   CONSTRAINT `t_user_ibfk_1` FOREIGN KEY (`cid`) REFERENCES `t_class` (`cid`) ON DELETE RESTRICT ON UPDATE RESTRICT,
   CONSTRAINT `t_user_ibfk_2` FOREIGN KEY (`oid`) REFERENCES `t_organization` (`oid`) ON DELETE RESTRICT ON UPDATE RESTRICT
-) ENGINE = InnoDB AUTO_INCREMENT = 3 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = DYNAMIC;
+) ENGINE = InnoDB AUTO_INCREMENT = 2 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Records of t_user
