@@ -28,6 +28,6 @@ public interface ManageServer extends IService<User>{
 //    Response addAccountByBatch(List<User> userList);
 
     Response getAllOrg(int pageNo);
-
+    Response getOrg(Map orgMap);
     Response changePwd(Map pwdMap);
 }

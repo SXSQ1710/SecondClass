@@ -151,6 +151,33 @@ public class ManageServerImpl extends ServiceImpl<UserMapper,User> implements Ma
         return Response.success(ResponseStatus.ORGANIZATION_QUERY_SUCCESS,organizationList);
     }
 
+    /**
+     * @Author jiang
+     * @Description //根据提供的信息查询组织
+     * @Date 22:10 2022/11/12
+     * @Param [orgMap]
+     * @return com.SecondClass.entity.Response
+     **/
+    @Override
+    public Response getOrg(Map orgMap) {
+        try {
+            List<Organization> organizationList = userMapper.selectByMap(orgMap);
+            if (organizationList == null) return Response.success(ResponseStatus.ORGANIZATION_QUERY_FAIL);
+            return Response.success(ResponseStatus.ORGANIZATION_QUERY_SUCCESS,organizationList);
+        } catch (Exception e) {
+            //其他错误
+            e.printStackTrace();
+            return Response.success(ResponseStatus.ERROR);
+        }
+    }
+
+    /**
+     * @Author jiang
+     * @Description //修改密码
+     * @Date 22:35 2022/11/12
+     * @Param [pwdMap]
+     * @return com.SecondClass.entity.Response
+     **/
     @Override
     public Response changePwd(Map pwdMap) {
         try {

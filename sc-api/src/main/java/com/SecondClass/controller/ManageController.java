@@ -1,7 +1,6 @@
 package com.SecondClass.controller;
 
 import com.SecondClass.entity.Organization;
-import com.SecondClass.entity.R_entity.R_SignIn;
 import com.SecondClass.entity.Response;
 import com.SecondClass.entity.User;
 import com.SecondClass.server.ManageServerImpl;
@@ -34,15 +33,24 @@ public class ManageController {
     public Response addAccount(@RequestBody User user){
         return manageServer.addAccount(user);
     }
-    @GetMapping("/getAllOrg/{pageNo}}")
+    @GetMapping("/getAllOrg/{pageNo}")
     public Response getALlOrg(@PathVariable("pageNo")Integer pageNo){
         return manageServer.getAllOrg(pageNo);
     }
-    @PostMapping("/changePwd}")
+    @GetMapping("/getOrg")
+    public Response getOrg(@RequestBody Map<String,Object> orgMap) {
+        return manageServer.getOrg(orgMap);
+    }
+
+    @PostMapping("/applyOrg")
+    public Response applyOrg(@RequestBody Map<String,Object> OrgMap) {
+        return manageServer.getOrg(OrgMap);
+    }
+    @PostMapping("/changePwd")
     public Response changePwd(@RequestBody Map<String,Object> pwdMap){
         return manageServer.changePwd(pwdMap);
     }
-    @PostMapping("/addAccountByBatch")
+//    @PostMapping("/addAccountByBatch")
 //    public Response addAccountByBatch(@RequestBody List<User> userList){return manageServer.addAccountByBatch(userList);}
 
     @GetMapping("/class/{cid}")
