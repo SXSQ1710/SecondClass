@@ -3,7 +3,6 @@ package com.SecondClass.controller;
 import com.SecondClass.entity.Participation;
 import com.SecondClass.entity.Response;
 import com.SecondClass.server.IShiChangServer;
-import com.SecondClass.server.ShiChangTypeServer;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -24,16 +23,7 @@ import javax.annotation.Resource;
 public class ShiChangController {
 
     @Resource
-    ShiChangTypeServer shichangTypeServer;
-
-    @Resource
     private IShiChangServer shiChangServer;
-
-    @GetMapping(value = "test")
-    public Response test(){
-        System.out.println("123nknin123");
-        return shichangTypeServer.test();
-    }
 
     @GetMapping("/browseMyShiChang/{uid}")
     public Response browseMyShiChang(@PathVariable("uid") Integer uid){
