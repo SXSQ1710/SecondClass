@@ -1,6 +1,7 @@
 package com.SecondClass.controller;
 
 import com.SecondClass.entity.Organization;
+import com.SecondClass.entity.OrganizationApply;
 import com.SecondClass.entity.Response;
 import com.SecondClass.entity.User;
 import com.SecondClass.server.ManageServerImpl;
@@ -43,8 +44,8 @@ public class ManageController {
     }
 
     @PostMapping("/applyOrg")
-    public Response applyOrg(@RequestBody Map<String,Object> OrgMap) {
-        return manageServer.getOrg(OrgMap);
+    public Response applyOrg(@RequestBody OrganizationApply orgApply) {
+        return manageServer.applyOrg(orgApply);
     }
     @PostMapping("/changePwd")
     public Response changePwd(@RequestBody Map<String,Object> pwdMap){

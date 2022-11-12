@@ -187,17 +187,22 @@ public class ManageServerImpl extends ServiceImpl<UserMapper,User> implements Ma
                     eq("uid",pwdMap.get("uid"));
             int i =0;
             i = userMapper.update(null,updateWrapper);
-            if (i == 0) return Response.success(ResponseStatus.USER_LOGIN_FAIL);
-            return Response.success(ResponseStatus.USER_LOGIN_SUCCESS);
+            if (i == 0) return Response.success(ResponseStatus.CHANGE_USERPWD_FAIL);
+            return Response.success(ResponseStatus.CHANGE_USERPWD_SUCCESS);
         } catch (DataIntegrityViolationException d){
             //数据库插入失败
             d.printStackTrace();
-            return Response.error(ResponseStatus.CREATE_ORGANIZATION_FAIL);
+            return Response.error(ResponseStatus.CHANGE_USERPWD_FAIL);
         }catch (Exception e) {
             //其他错误
             e.printStackTrace();
             return Response.success(ResponseStatus.ERROR);
         }
+    }
+
+    @Override
+    public Response applyOrg(OrganizationApply orgApply) {
+        return null;
     }
 
 

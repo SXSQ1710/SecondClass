@@ -1,6 +1,7 @@
 package com.SecondClass.server;
 
 import com.SecondClass.entity.Organization;
+import com.SecondClass.entity.OrganizationApply;
 import com.SecondClass.entity.R_entity.R_SignIn;
 import com.SecondClass.entity.Response;
 import com.SecondClass.entity.User;
@@ -30,4 +31,5 @@ public interface ManageServer extends IService<User>{
     Response getAllOrg(int pageNo);
     Response getOrg(Map orgMap);
     Response changePwd(Map pwdMap);
+    Response applyOrg(OrganizationApply orgApply);
 }

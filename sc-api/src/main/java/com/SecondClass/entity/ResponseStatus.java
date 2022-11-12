@@ -82,7 +82,9 @@ public enum ResponseStatus {
     CREATE_ORGANIZATION_SUCCESS("8-200","组织创建成功"),
     CREATE_ORGANIZATION_FAIL("8-400","组织创建失败"),
     CREATE_USER_SUCCESS("8-200","用户账号导入成功"),
-    CREATE_USER_FAIL("8-400","用户账号导入失败");
+    CREATE_USER_FAIL("8-400","用户账号导入失败"),
+    CHANGE_USERPWD_SUCCESS("8-200","用户账号导入成功"),
+    CHANGE_USERPWD_FAIL("8-400","用户账号导入失败");
 
     private final String responseStatus;
 
