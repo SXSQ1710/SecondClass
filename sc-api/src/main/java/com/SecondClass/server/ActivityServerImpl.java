@@ -227,7 +227,7 @@ public class ActivityServerImpl implements IActivityServer{
 
     @PostConstruct
     private void init(){
-        SECKILL_EXECUTOR.submit(new VoucherParticipationHandler());
+//        SECKILL_EXECUTOR.submit(new VoucherParticipationHandler());
         if (!stringRedisTemplate.hasKey("stream.participation")){
             stringRedisTemplate.opsForStream().createGroup("stream.participation", "g1");
         }
