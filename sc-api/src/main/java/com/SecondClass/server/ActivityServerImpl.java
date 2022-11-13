@@ -6,6 +6,7 @@ import cn.hutool.json.JSONUtil;
 import com.SecondClass.entity.*;
 import com.SecondClass.entity.Class;
 import com.SecondClass.entity.R_entity.R_ActivityApplication;
+import com.SecondClass.entity.R_entity.R_Activity_Participation;
 import com.SecondClass.entity.R_entity.R_SignIn;
 import com.SecondClass.entity.R_entity.R_Student;
 import com.SecondClass.mapper.*;
@@ -619,10 +620,64 @@ public class ActivityServerImpl implements IActivityServer{
     }
 
     @Override
-    public Response searchByName(String aname) {
+    public Response searchByName(String aname,Page page) {
         QueryWrapper<Activity> queryWrapper = new QueryWrapper<>();
         queryWrapper.like("aname",aname);
-        List<Activity>  activityList = activityMapper.selectList(queryWrapper);
-        return Response.success(ResponseStatus.ACTIVITY_APP_QUERY_SUCCESS,activityList);
+        Page selectPage = activityMapper.selectPage(page, queryWrapper);
+        return Response.success(ResponseStatus.ACTIVITY_APP_QUERY_SUCCESS,selectPage);
+    }
+
+    /**
+     * @param uid
+     * @param page
+     * @return
+     */
+    @Override
+    public Response getParticipationByUid(String uid,Page page) {
+        QueryWrapper<Participation> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("uid",uid);
+        Page selectPage = participationMapper.selectPage(page, queryWrapper);
+        List records = selectPage.getRecords();
+        // 返回的数组
+        List<R_Activity_Participation> list = new LinkedList<>();
+        for (int i = 0; i < records.size(); i++) {
+            Participation participation = (Participation) records.get(i);
+            //1.通过参与表查看报名人员  根据uid查询到所有aid
+            //1.1先用uid查询redis得到cid
+            Long aid = participation.getAid();
+            Activity activity;
+            Object activityStr = stringRedisTemplate.opsForHash().get(RedisKeyName.ACTIVITY, aid.toString());
+            //1.2 如果redis没有，从数据库查询
+            if( activityStr != null){
+                System.out.println("从redis中查询");
+                activity = JSONUtil.toBean(activityStr.toString(), Activity.class);
+            }else{
+
+                QueryWrapper<Activity> activityQueryWrapper = new QueryWrapper<>();
+                activityQueryWrapper.eq("aid",aid);
+                System.out.println("从数据库中查询");
+                activity = activityMapper.selectOne(activityQueryWrapper);
+                //将数据库查询结果存入redis
+                stringRedisTemplate.opsForHash().put(RedisKeyName.ACTIVITY,aid.toString(),JSONUtil.toJsonStr(activity));
+            }
+
+
+            R_Activity_Participation activity_participation = R_Activity_Participation.builder().uid(uid)
+                    .aid(activity.getAid())
+                    .participateStatus(participation.getParticipateStatus())
+                    .aname(activity.getAname())
+                    .adescription(activity.getAdescription())
+                    .aRegisterOpen(activity.getARegisterOpen())
+                    .aRegisterClose(activity.getARegisterClose())
+                    .aHoldStart(activity.getAHoldStart())
+                    .aHoldEnd(activity.getAHoldEnd())
+                    .apic(activity.getApic())
+                    .aShichangNum(activity.getAShichangNum())
+                    .aShichangType(activity.getAShichangType()).build();
+
+            list.add(activity_participation);
+        }
+        page.setRecords(list);
+        return Response.success(ResponseStatus.SUCCESS,page);
     }
 }
