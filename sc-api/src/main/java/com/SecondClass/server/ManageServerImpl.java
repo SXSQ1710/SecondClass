@@ -1,6 +1,7 @@
 package com.SecondClass.server;
 
 import com.baomidou.mybatisplus.core.conditions.Wrapper;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.SecondClass.entity.*;
 import com.SecondClass.entity.Class;
@@ -18,6 +19,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -55,7 +57,10 @@ public class ManageServerImpl extends ServiceImpl<UserMapper,User> implements Ma
     public Response login(Map userMap) {
         try {
             //查询登录信息
-            List<User> user = userMapper.selectByMap(userMap);
+            LambdaQueryWrapper<User> queryWrapper = new LambdaQueryWrapper<>();
+            queryWrapper.eq(User::getUid,userMap.get("uid"))
+                    .eq(User::getUpassword,userMap.get("upassword"));
+            User user = userMapper.selectOne(queryWrapper);
             if (user == null) return Response.success(ResponseStatus.USER_LOGIN_FAIL);
             return Response.success(ResponseStatus.USER_LOGIN_SUCCESS);
         } catch (Exception e) {
@@ -75,8 +80,12 @@ public class ManageServerImpl extends ServiceImpl<UserMapper,User> implements Ma
      **/
     public Response createOrg(Organization organization) {
         try {
+            //查询负责人是否存在
+            User user = userMapper.selectById(organization.getUid());
             //数据库插入组织信息
-            int i = organizationMapper.insert(organization );
+            int i = 0;
+            if(user!= null) i = organizationMapper.insert(organization );
+            else return Response.success(ResponseStatus.CREATE_ORGANIZATION_FAIL);
             //更新user表中负责人的所属组织
             int i1 = 0;
             if(i==1){
@@ -147,7 +156,7 @@ public class ManageServerImpl extends ServiceImpl<UserMapper,User> implements Ma
         Page<Organization> page = new Page<>(pageNo,15);
         IPage<Organization> orgPage = organizationMapper.selectPage(page,null);
         List<Organization> organizationList = orgPage.getRecords();
-        if(organizationList==null)return Response.success(ResponseStatus.ORGANIZATION_QUERY_FAIL);
+        if(organizationList.size()==0)return Response.success(ResponseStatus.ORGANIZATION_QUERY_FAIL);
         return Response.success(ResponseStatus.ORGANIZATION_QUERY_SUCCESS,organizationList);
     }
 
@@ -161,8 +170,16 @@ public class ManageServerImpl extends ServiceImpl<UserMapper,User> implements Ma
     @Override
     public Response getOrg(Map orgMap) {
         try {
-            List<Organization> organizationList = userMapper.selectByMap(orgMap);
-            if (organizationList == null) return Response.success(ResponseStatus.ORGANIZATION_QUERY_FAIL);
+            LambdaQueryWrapper<Organization> queryWrapper = new LambdaQueryWrapper<>();
+            queryWrapper.or((item)->{
+                item.like(Organization::getOid,orgMap.get("oid"))
+                    .like(Organization::getOname,orgMap.get("oname"))
+                    .like(Organization::getSuperiorOrganization,orgMap.get("superiorOrganization"))
+                    .like(Organization::getOdescription,orgMap.get("odescription"))
+                    .like(Organization::getUid,orgMap.get("uid"))
+                    .like(Organization::getCampus,orgMap.get("campus"));});
+            List<Organization> organizationList = organizationMapper.selectList(queryWrapper);
+            if (organizationList.size()==0) return Response.success(ResponseStatus.ORGANIZATION_QUERY_FAIL);
             return Response.success(ResponseStatus.ORGANIZATION_QUERY_SUCCESS,organizationList);
         } catch (Exception e) {
             //其他错误

@@ -39,7 +39,7 @@ public class ManageController {
         return manageServer.getAllOrg(pageNo);
     }
     @GetMapping("/getOrg")
-    public Response getOrg(@RequestBody Map<String,Object> orgMap) {
+    public Response getOrg(@RequestParam Map<String,Object> orgMap) {
         return manageServer.getOrg(orgMap);
     }
 
@@ -51,8 +51,9 @@ public class ManageController {
     public Response changePwd(@RequestBody Map<String,Object> pwdMap){
         return manageServer.changePwd(pwdMap);
     }
-//    @PostMapping("/addAccountByBatch")
-//    public Response addAccountByBatch(@RequestBody List<User> userList){return manageServer.addAccountByBatch(userList);}
+
+    //    @PostMapping("/addAccountByBatch")
+    //    public Response addAccountByBatch(@RequestBody List<User> userList){return manageServer.addAccountByBatch(userList);}
 
     @GetMapping("/class/{cid}")
     public Response getClassById(@PathVariable("cid")Long cid){
