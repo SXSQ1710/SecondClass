@@ -26,7 +26,7 @@ public class Participation implements Serializable {
      * 参加活动id
      */
     @TableId(value = "pid",type= IdType.AUTO)
-    private Long pid;
+    private String pid;
     /**
      * 用户id
      */
@@ -36,7 +36,7 @@ public class Participation implements Serializable {
      */
     private Long aid;
     /**
-     * 参与状态 1：已报名 2：签到 3：签退 4：时长已发放
+     * 参与状态 1：已报名 2：签到 3：签退 4：时长有效，允许发放 5：时长无效，拒绝发放
      */
     @JsonProperty(value = "participate_status")
     private Integer participateStatus;

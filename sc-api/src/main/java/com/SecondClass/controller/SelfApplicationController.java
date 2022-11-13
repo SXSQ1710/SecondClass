@@ -18,7 +18,6 @@ public class SelfApplicationController {
 
     @PostMapping("/addSelfApplication")
     public Response applySelfApplication(@RequestBody SelfApplication selfApplication){
-        System.out.println(selfApplication.getSelfAppStatu());
         return selfApplicationServer.addSelfApplication(selfApplication);
     }
 
