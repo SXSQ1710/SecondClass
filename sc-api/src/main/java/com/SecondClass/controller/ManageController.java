@@ -34,19 +34,27 @@ public class ManageController {
     public Response addAccount(@RequestBody User user){
         return manageServer.addAccount(user);
     }
+
     @GetMapping("/getAllOrg/{pageNo}")
     public Response getALlOrg(@PathVariable("pageNo")Integer pageNo){
         return manageServer.getAllOrg(pageNo);
     }
+
     @GetMapping("/getOrg")
     public Response getOrg(@RequestParam Map<String,Object> orgMap) {
         return manageServer.getOrg(orgMap);
+    }
+
+    @GetMapping("/getOrgById/{oid}")
+    public Response getOrg(@PathVariable("oid")Long oid) {
+        return manageServer.getOrgById(oid);
     }
 
     @PostMapping("/applyOrg")
     public Response applyOrg(@RequestBody OrganizationApply orgApply) {
         return manageServer.applyOrg(orgApply);
     }
+
     @PostMapping("/changePwd")
     public Response changePwd(@RequestBody Map<String,Object> pwdMap){
         return manageServer.changePwd(pwdMap);

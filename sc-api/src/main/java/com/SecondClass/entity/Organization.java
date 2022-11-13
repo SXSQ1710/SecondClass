@@ -1,5 +1,7 @@
 package com.SecondClass.entity;
 
+import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableId;
 import lombok.Data;
 
 import java.io.Serializable;
@@ -16,6 +18,7 @@ public class Organization implements Serializable {
     /**
      * 组织id
      */
+    @TableId(value = "oid",type= IdType.AUTO)
     private Long oid;
     /**
      * 组织名字
@@ -37,7 +40,9 @@ public class Organization implements Serializable {
      * 上级单位
      */
     private String superiorOrganization;
-
-
+    /**
+     * 权限等级
+     */
+    private Integer permissionsLevel;
 }
 
