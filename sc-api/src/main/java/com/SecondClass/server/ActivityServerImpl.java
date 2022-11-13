@@ -23,9 +23,13 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.redis.connection.RedisConnection;
 import org.springframework.data.redis.connection.stream.*;
+import org.springframework.data.redis.core.Cursor;
+import org.springframework.data.redis.core.ScanOptions;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.script.DefaultRedisScript;
+import org.springframework.data.redis.serializer.RedisSerializer;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -612,5 +616,13 @@ public class ActivityServerImpl implements IActivityServer{
             list.add(student);
         }
         return Response.success(ResponseStatus.SUCCESS,list);
+    }
+
+    @Override
+    public Response searchByName(String aname) {
+        QueryWrapper<Activity> queryWrapper = new QueryWrapper<>();
+        queryWrapper.like("aname",aname);
+        List<Activity>  activityList = activityMapper.selectList(queryWrapper);
+        return Response.success(ResponseStatus.ACTIVITY_APP_QUERY_SUCCESS,activityList);
     }
 }
