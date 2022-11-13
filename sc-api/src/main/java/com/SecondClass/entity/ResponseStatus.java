@@ -37,6 +37,7 @@ public enum ResponseStatus {
     //用户登录响应
     USER_LOGIN_SUCCESS("1-200","登录成功！"),
     USER_LOGIN_FAIL("1-400","用户名或密码错误！"),
+    USER_NOT_LOGIN_FAIL("1-400","尚未登录，请先登录！"),
 
     //活动相关响应
     ACTIVITY_APPLY_SUCCESS("2-200","活动申请成功，请等待审核结果！"),
@@ -77,6 +78,7 @@ public enum ResponseStatus {
     MANAGE_CLASS_FAIL("7-400","班级信息获取失败"),
     MANAGE_USER_SUCCESS("7-200","用户信息获取成功"),
     MANAGE_USER_FAIL("7-400","用户信息获取失败"),
+    MANAGE_PERMISSION("7-400","缺少权限，请求拒绝"),
 
     //组织、学生账号创建与导入
     CREATE_ORGANIZATION_SUCCESS("8-200","组织创建成功"),
