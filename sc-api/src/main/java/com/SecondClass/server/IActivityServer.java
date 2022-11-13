@@ -112,4 +112,11 @@ public interface IActivityServer {
      * @return
      */
     Response getAllParticipatedMember(Long aid);
+
+    /**
+     * 模糊查询
+     * @param aname
+     * @return
+     */
+    Response searchByName(String aname);
 }

@@ -93,4 +93,9 @@ public class ActivityController {
         return activityServer.getAllParticipatedMember(aid);
     }
 
+    @GetMapping("/searchByName/{aname}")
+    public Response searchByName(@PathVariable("aname")String aname){
+        return activityServer.searchByName(aname);
+    }
+
 }
