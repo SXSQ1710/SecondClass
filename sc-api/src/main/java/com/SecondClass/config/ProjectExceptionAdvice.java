@@ -33,4 +33,10 @@ public class ProjectExceptionAdvice {
         log.error("全局异常捕获：NotPermissionException！");
         return Response.error(ResponseStatus.MANAGE_PERMISSION);
     }
+
+    @ExceptionHandler(cn.dev33.satoken.exception.NotRoleException.class)
+    public Response NotRoleException(Exception e){
+        log.error("全局异常捕获：NotRoleException！");
+        return Response.error(ResponseStatus.MANAGE_PERMISSION);
+    }
 }

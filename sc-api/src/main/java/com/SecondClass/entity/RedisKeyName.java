@@ -25,7 +25,9 @@ public class RedisKeyName {
 
     public final static String MANAGE_USER = "secondclass:manage:user:";
 
-    public final static String MANAGE_ORGANIZATION = "secondclass:manage:organization:oinfo";
+    public final static String MANAGE_ORGANIZATION = "secondclass:manage:organization:oinfo:";
+
+    public final static String MANAGE_ORGANIZATION_LEVEL = "secondclass:manage:organization:permissions:";
 
     public final static String MANAGE_ORGANIZATION_MEMBER = "secondclass:manage:omember:";
 

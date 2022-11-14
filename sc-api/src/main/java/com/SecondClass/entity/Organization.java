@@ -2,6 +2,7 @@ package com.SecondClass.entity;
 
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 
 import java.io.Serializable;
@@ -39,6 +40,7 @@ public class Organization implements Serializable {
     /**
      * 上级单位
      */
+    @JsonProperty(value = "superior_organization")
     private String superiorOrganization;
     /**
      * 权限等级
