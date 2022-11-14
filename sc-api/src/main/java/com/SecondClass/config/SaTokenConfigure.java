@@ -16,6 +16,7 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 @Configuration
 public class SaTokenConfigure implements WebMvcConfigurer {
+
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
         // 注册 Sa-Token 拦截器，定义详细认证规则
@@ -27,7 +28,11 @@ public class SaTokenConfigure implements WebMvcConfigurer {
                     .check(r -> StpUtil.checkLogin());        // 要执行的校验动作，可以写完整的 lambda 表达式
 
             // 根据路由划分模块，不同模块不同鉴权
-            //SaRouter.match("/api/manage/**", r -> StpUtil.checkPermission("manage"));
+            //角色划分：admin(校团委)、manage(普通组织)、user(学生)
+            SaRouter.match("/api/activity/**", r -> StpUtil.checkRole("user"));
+            SaRouter.match("/api/manage/createOrg", r -> StpUtil.checkRole("admin"));
+            SaRouter.match("/api/manage/addAccount", r -> StpUtil.checkRole("admin"));
+            SaRouter.match("/api/manage/addAccountByBatch", r -> StpUtil.checkRole("admin"));
 
         })).addPathPatterns("/**");
     }

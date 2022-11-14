@@ -60,8 +60,8 @@ public class ManageController {
         return manageServer.changePwd(pwdMap);
     }
 
-    //    @PostMapping("/addAccountByBatch")
-    //    public Response addAccountByBatch(@RequestBody List<User> userList){return manageServer.addAccountByBatch(userList);}
+//    @PostMapping("/addAccountByBatch")
+//    public Response addAccountByBatch(@RequestBody List<User> userList){return manageServer.addAccountByBatch(userList);}
 
     @GetMapping("/class/{cid}")
     public Response getClassById(@PathVariable("cid")Long cid){

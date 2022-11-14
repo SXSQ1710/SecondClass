@@ -1,5 +1,6 @@
 package com.SecondClass.server;
 
+import cn.dev33.satoken.stp.SaTokenInfo;
 import cn.dev33.satoken.stp.StpUtil;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.Wrapper;
@@ -25,6 +26,7 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.annotation.Resource;
 import java.beans.Transient;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -82,8 +84,12 @@ public class ManageServerImpl extends ServiceImpl<UserMapper,User> implements Ma
             StpUtil.login(uid);
             //2.2 saToken保存用户组织
             StpUtil.getSession(true).set("o", user.getOid());
+            SaTokenInfo tokenInfo = StpUtil.getTokenInfo();
+            Map<String, String> token = new HashMap<>();
+            token.put("tokenName",tokenInfo.tokenName);
+            token.put("tokenValue",tokenInfo.tokenValue);
 
-            return Response.success(ResponseStatus.USER_LOGIN_SUCCESS);
+            return Response.success(ResponseStatus.USER_LOGIN_SUCCESS,token);
         } catch (Exception e) {
             //其他错误
             e.printStackTrace();
@@ -151,6 +157,7 @@ public class ManageServerImpl extends ServiceImpl<UserMapper,User> implements Ma
      * @Param [user]
      * @return com.SecondClass.entity.Response
      **/
+    @Transactional
     public Response addAccount(User user) {
         try {
             //检查数据库是否已经存在账号
@@ -243,6 +250,7 @@ public class ManageServerImpl extends ServiceImpl<UserMapper,User> implements Ma
      * @return com.SecondClass.entity.Response
      **/
     @Override
+    @Transactional
     public Response changePwd(Map pwdMap) {
         try {
             UpdateWrapper<User > updateWrapper = new UpdateWrapper<>();

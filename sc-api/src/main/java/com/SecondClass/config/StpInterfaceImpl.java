@@ -3,11 +3,17 @@ package com.SecondClass.config;
 import cn.dev33.satoken.stp.SaTokenInfo;
 import cn.dev33.satoken.stp.StpInterface;
 import cn.dev33.satoken.stp.StpUtil;
+import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONUtil;
+import com.SecondClass.entity.Organization;
 import com.SecondClass.entity.RedisKeyName;
 import com.SecondClass.entity.User;
+import com.SecondClass.mapper.OrganizationMapper;
 import com.SecondClass.mapper.UserMapper;
 import com.SecondClass.utils.RedisUtils;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
@@ -29,26 +35,15 @@ public class StpInterfaceImpl implements StpInterface {
     RedisUtils redisUtils;
     @Resource
     UserMapper userMapper;
+    @Resource
+    OrganizationMapper organizationMapper;
+    @Resource
+    StringRedisTemplate stringRedisTemplate;
     /**
      * 返回一个账号所拥有的权限码集合
      */
     @Override
     public List<String> getPermissionList(Object loginId, String loginType) {
-
-        Long oid = (Long) StpUtil.getSession().get("o");
-
-
-        if(loginId.toString().equals("1")){
-            // 本list仅做模拟，实际项目中要根据具体业务逻辑来查询权限
-            List<String> list = new ArrayList<String>();
-            list.add("101");
-
-            return list;
-        }else if(loginId.toString().equals("2")){
-            List<String> list = new ArrayList<String>();
-            list.add("102");
-            return list;
-        }
         return null;
     }
 
@@ -57,11 +52,49 @@ public class StpInterfaceImpl implements StpInterface {
      */
     @Override
     public List<String> getRoleList(Object loginId, String loginType) {
-        // 本list仅做模拟，实际项目中要根据具体业务逻辑来查询角色
-        List<String> list = new ArrayList<String>();
-        list.add("admin");
-        list.add("super-admin");
-        return list;
+
+        String oidListStr = (String) StpUtil.getSession().get("o");
+        List<Integer> oidList = JSONUtil.toList(oidListStr, Integer.class);
+        int level = 999;
+        for (int i = 0; i < oidList.size(); i++) {
+            String oid = String.valueOf(oidList.get(i));
+            //1.先查询redis缓存
+            int permission;
+            String json = stringRedisTemplate.opsForValue().get(RedisKeyName.MANAGE_ORGANIZATION_LEVEL + oid);
+            boolean notBlank = StrUtil.isNotBlank(json);
+            if (notBlank){
+                //1.1.redis缓存命中，返回结果
+                permission = Integer.parseInt(json);
+                level = (level > permission ? permission:level);
+                continue;
+            }
+
+            //2.redis缓存未命中，查询数据库，查询数据库的代码通过函数传入
+            LambdaQueryWrapper<Organization> queryWrapper = new LambdaQueryWrapper<>();
+            queryWrapper.eq(Organization::getOid, oid);
+            permission = organizationMapper.selectOne(queryWrapper).getPermissionsLevel();
+            if (permission < level) level = permission;
+        }
+
+        //角色划分：admin(校团委)、manage(普通组织)、user(学生)
+        if(level == 1){
+            // 本list仅做模拟，实际项目中要根据具体业务逻辑来查询权限
+            List<String> list = new ArrayList<String>();
+            list.add("user");
+            list.add("manage");
+            list.add("admin");
+            return list;
+        }else if(level == 2){
+            List<String> list = new ArrayList<String>();
+            list.add("user");
+            list.add("manage");
+            return list;
+        }else {
+            List<String> list = new ArrayList<String>();
+            list.add("user");
+            return list;
+        }
+
     }
 
 }
