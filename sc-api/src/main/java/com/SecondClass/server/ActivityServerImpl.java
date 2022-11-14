@@ -107,7 +107,7 @@ public class ActivityServerImpl implements IActivityServer{
             //1.更新活动申请实体和活动实体的状态
             //1.1 获得活动实体
             String aAppIdStr = aAppId.toString();
-            ActivityApplication activityApplication = redisUtils.queryForValue(RedisKeyName.ACTIVITY_APPLICATION, aAppIdStr,ActivityApplication.class,5L, TimeUnit.MINUTES,
+            ActivityApplication activityApplication = redisUtils.queryForValue(RedisKeyName.ACTIVITY_APPLICATION, aAppIdStr,ActivityApplication.class,5L, TimeUnit.MINUTES, true,
                     (id) -> {
                         QueryWrapper<ActivityApplication> queryWrapper = new QueryWrapper<>();
                         queryWrapper.eq("a_app_id", aAppIdStr);
@@ -178,7 +178,7 @@ public class ActivityServerImpl implements IActivityServer{
 
     public Response findAppStatusByAid(Long aAppId) {
         String aAppIdStr = aAppId.toString();
-        ActivityApplication activityApplication = redisUtils.queryForValue(RedisKeyName.ACTIVITY_APPLICATION, aAppIdStr,ActivityApplication.class,10L, TimeUnit.DAYS,
+        ActivityApplication activityApplication = redisUtils.queryForValue(RedisKeyName.ACTIVITY_APPLICATION, aAppIdStr,ActivityApplication.class,10L, TimeUnit.DAYS, true,
                 (id) -> {
                     QueryWrapper<ActivityApplication> queryWrapper = new QueryWrapper<>();
                     queryWrapper.eq("a_app_id", aAppIdStr);
@@ -211,7 +211,7 @@ public class ActivityServerImpl implements IActivityServer{
 
 
     public Response findActivityByAid(Long aid) {
-        Activity activity = redisUtils.queryForValue(RedisKeyName.ACTIVITY, aid.toString(), Activity.class, 10L, TimeUnit.DAYS,
+        Activity activity = redisUtils.queryForValue(RedisKeyName.ACTIVITY, aid.toString(), Activity.class, 10L, TimeUnit.DAYS, true,
                 (id) -> {
                     QueryWrapper<Activity> queryWrapper = new QueryWrapper<>();
                     queryWrapper.eq("aid", aid);
@@ -232,7 +232,7 @@ public class ActivityServerImpl implements IActivityServer{
 
     @PostConstruct
     private void init(){
-//        SECKILL_EXECUTOR.submit(new VoucherParticipationHandler());
+        SECKILL_EXECUTOR.submit(new VoucherParticipationHandler());
         if (!stringRedisTemplate.hasKey("stream.participation")){
             stringRedisTemplate.opsForStream().createGroup("stream.participation", "g1");
         }
@@ -315,7 +315,7 @@ public class ActivityServerImpl implements IActivityServer{
     public Response register(Participation participation){
         try{//1.判断是否为合法用户
             String uid = participation.getUid().toString();
-            User userInfo = redisUtils.queryForValue(RedisKeyName.MANAGE_USER, uid, User.class, 60L, TimeUnit.DAYS,
+            User userInfo = redisUtils.queryForValue(RedisKeyName.MANAGE_USER, uid, User.class, 60L, TimeUnit.DAYS, true,
                     (id) -> {
                         QueryWrapper<User> queryWrapper = new QueryWrapper<>();
                         queryWrapper.eq("uid", uid);
@@ -367,7 +367,7 @@ public class ActivityServerImpl implements IActivityServer{
 
     public Response getSignIn(Long aid, Long uid, Integer type) {
         try {
-            Activity activity = redisUtils.queryForValue(RedisKeyName.ACTIVITY, aid.toString(), Activity.class, 10L, TimeUnit.DAYS,
+            Activity activity = redisUtils.queryForValue(RedisKeyName.ACTIVITY, aid.toString(), Activity.class, 10L, TimeUnit.DAYS, true,
                     (id) -> {
                         QueryWrapper<Activity> queryWrapper = new QueryWrapper<>();
                         queryWrapper.eq("aid", aid);

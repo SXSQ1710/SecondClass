@@ -1,5 +1,7 @@
 package com.SecondClass.server;
 
+import cn.dev33.satoken.stp.StpUtil;
+import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.Wrapper;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -15,10 +17,13 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.beans.Transient;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -44,9 +49,13 @@ public class ManageServerImpl extends ServiceImpl<UserMapper,User> implements Ma
     UserMapper userMapper;
     @Resource
     OrganizationMapper organizationMapper;
+    @Resource
+    StringRedisTemplate stringRedisTemplate;
+//    @Resource
+//    ManageServer manageserver;
 
 
-    ManageServer manageserver;
+
     /**
      * @Author jiang
      * @Description //登录
@@ -56,12 +65,24 @@ public class ManageServerImpl extends ServiceImpl<UserMapper,User> implements Ma
      **/
     public Response login(Map userMap) {
         try {
-            //查询登录信息
-            LambdaQueryWrapper<User> queryWrapper = new LambdaQueryWrapper<>();
-            queryWrapper.eq(User::getUid,userMap.get("uid"))
-                    .eq(User::getUpassword,userMap.get("upassword"));
-            User user = userMapper.selectOne(queryWrapper);
-            if (user == null) return Response.success(ResponseStatus.USER_LOGIN_FAIL);
+            //1.查询登录信息
+            String uid = userMap.get("uid").toString();
+            User user = redisUtils.queryForValue(RedisKeyName.MANAGE_USER, uid, User.class, 60L, TimeUnit.DAYS, false,
+                    (id) -> {
+                        LambdaQueryWrapper<User> queryWrapper = new LambdaQueryWrapper<>();
+                        queryWrapper.eq(User::getUid, userMap.get("uid"))
+                                .eq(User::getUpassword, userMap.get("upassword"));
+                        return userMapper.selectOne(queryWrapper);
+                    });
+
+            //1.1查询失败返回错误信息
+            if (user == null || !user.getUpassword().equals(userMap.get("upassword").toString())) return Response.success(ResponseStatus.USER_LOGIN_FAIL);
+            //2.登录成功
+            //2.1 saToke登记用户信息
+            StpUtil.login(uid);
+            //2.2 saToken保存用户组织
+            StpUtil.getSession(true).set("o", user.getOid());
+
             return Response.success(ResponseStatus.USER_LOGIN_SUCCESS);
         } catch (Exception e) {
             //其他错误
@@ -78,26 +99,36 @@ public class ManageServerImpl extends ServiceImpl<UserMapper,User> implements Ma
      * @Param [organization]
      * @return com.SecondClass.entity.Response
      **/
+    @Transactional
     public Response createOrg(Organization organization) {
         try {
             //查询负责人是否存在
-            User user = userMapper.selectById(organization.getUid());
+            String uid = organization.getUid().toString();
+            User user = redisUtils.queryForValue(RedisKeyName.MANAGE_USER, uid, User.class, 60L, TimeUnit.DAYS, false,
+                    (id) -> {
+                        LambdaQueryWrapper<User> queryWrapper = new LambdaQueryWrapper<>();
+                        queryWrapper.eq(User::getUid, uid);
+                        return userMapper.selectOne(queryWrapper);
+                    });
+            //设置权限为2(普通组织)
+            organization.setPermissionsLevel(2);
+
             //数据库插入组织信息
             int i = 0;
-            if(user!= null) i = organizationMapper.insert(organization );
+            if(user != null) i = organizationMapper.insert(organization);
             else return Response.success(ResponseStatus.CREATE_ORGANIZATION_FAIL);
             //更新user表中负责人的所属组织
             int i1 = 0;
-            if(i==1){
-                //获取新建的组织的id
-                QueryWrapper<Organization > queryWrapper = new QueryWrapper<>();
-                queryWrapper.eq("oname",organization.getOname()).
-                        eq("uid",organization.getUid());
-                Organization org = organizationMapper.selectOne(queryWrapper);
-                UpdateWrapper<User> updateWrapper = new UpdateWrapper<>();
-                updateWrapper.set("oid",org.getOid())
-                        .eq("uid",organization.getUid());
-                i1 = userMapper.update(null, updateWrapper);
+            if(i == 1){
+                //更新新的组织负责人所属组织字段
+                System.out.println(organization.getOid());
+                String jsonStr = user.getOid();
+                List<Integer> oidList = JSONUtil.toList(jsonStr, Integer.class);
+                oidList.add(organization.getOid().intValue());
+                user.setOid(JSONUtil.toJsonStr(oidList));
+                i1 = userMapper.updateById(user);
+                //删除redis相应的用户缓存
+                stringRedisTemplate.delete(RedisKeyName.MANAGE_USER + uid);
             }else return Response.success(ResponseStatus.CREATE_ORGANIZATION_FAIL);
 
             if(i1 == 1) return Response.success(ResponseStatus.CREATE_ORGANIZATION_SUCCESS);
@@ -189,6 +220,22 @@ public class ManageServerImpl extends ServiceImpl<UserMapper,User> implements Ma
     }
 
     /**
+     *
+     * @param oid
+     * @return
+     */
+    public Response getOrgById(Long oid){
+        Organization organization = redisUtils.queryForValue(RedisKeyName.MANAGE_ORGANIZATION, oid.toString(), Organization.class, 60L, TimeUnit.DAYS, true,
+                (id) -> {
+                    LambdaQueryWrapper<Organization> queryWrapper = new LambdaQueryWrapper<>();
+                    queryWrapper.eq(Organization::getOid, oid.toString());
+                    return organizationMapper.selectOne(queryWrapper);
+                });
+
+        return Response.success(ResponseStatus.ORGANIZATION_QUERY_SUCCESS, organization);
+    }
+
+    /**
      * @Author jiang
      * @Description //修改密码
      * @Date 22:35 2022/11/12
@@ -264,7 +311,7 @@ public class ManageServerImpl extends ServiceImpl<UserMapper,User> implements Ma
 
     public Response getClassById(Long cid) {
         String cIdStr = cid.toString();
-        Class classInfo = redisUtils.queryForValue(RedisKeyName.MANAGE_CLASS, cIdStr, Class.class, 60L, TimeUnit.DAYS,
+        Class classInfo = redisUtils.queryForValue(RedisKeyName.MANAGE_CLASS, cIdStr, Class.class, 60L, TimeUnit.DAYS, true,
                 (id) -> {
                     QueryWrapper<Class> queryWrapper = new QueryWrapper<>();
                     queryWrapper.eq("cid", cIdStr);
@@ -276,7 +323,7 @@ public class ManageServerImpl extends ServiceImpl<UserMapper,User> implements Ma
 
     public Response getUserById(Long uid) {
         String uIdStr = uid.toString();
-        User userInfo = redisUtils.queryForValue(RedisKeyName.MANAGE_USER, uIdStr, User.class, 60L, TimeUnit.DAYS,
+        User userInfo = redisUtils.queryForValue(RedisKeyName.MANAGE_USER, uIdStr, User.class, 60L, TimeUnit.DAYS, true,
                 (id) -> {
                     QueryWrapper<User> queryWrapper = new QueryWrapper<>();
                     queryWrapper.eq("uid", uIdStr);

@@ -41,7 +41,7 @@ public class User implements Serializable {
     /**
      * 所属组织（为空时代表没有加入组织）
      */
-    private Long oid;
+    private String oid;
     /**
      * 用户姓名
      */
