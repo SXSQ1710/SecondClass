@@ -62,9 +62,9 @@ public class ActivityController {
         return activityServer.register(participation);
     }
 
-    @GetMapping("/signIn/{aid}/{uid}")
-    public Response getSignIn(@PathVariable("aid")Long aid,@PathVariable("uid")Long uid){
-        return activityServer.getSignIn(aid,uid);
+    @GetMapping("/signIn/{aid}/{uid}/{type}")
+    public Response getSignIn(@PathVariable("aid")Long aid, @PathVariable("uid")Long uid, @PathVariable("type")Integer type){
+        return activityServer.getSignIn(aid, uid, type);
     }
 
     @PostMapping("/signIn")
@@ -91,6 +91,24 @@ public class ActivityController {
     @GetMapping("/getAllParticipatedMember/{aid}")
     public Response getAllParticipatedMember(@PathVariable("aid")Long aid){
         return activityServer.getAllParticipatedMember(aid);
+    }
+
+    @GetMapping("/searchByName/{aname}/{pageNo}/{pageSize}")
+    public Response searchByName(@PathVariable("aname")String aname,@PathVariable("pageNo")Integer pageNo,@PathVariable("pageSize")Integer pageSize){
+        Page<Activity> page = new Page<>(pageNo,pageSize);
+        return activityServer.searchByName(aname,page);
+    }
+
+    /**
+     * @param uid
+     * @param pageNo
+     * @param pageSize
+     * @return
+     */
+    @GetMapping("/getParticipationByUid/{uid}/{pageNo}/{pageSize}")
+    public Response getParticipationByUid(@PathVariable("uid")String uid,@PathVariable("pageNo")Integer pageNo,@PathVariable("pageSize")Integer pageSize){
+        Page<Participation> page = new Page<>(pageNo,pageSize);
+        return activityServer.getParticipationByUid(uid,page);
     }
 
 }

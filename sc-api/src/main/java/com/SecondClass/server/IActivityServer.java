@@ -85,7 +85,7 @@ public interface IActivityServer {
      * @author: SXSQ
      * @date: 2022/11/03 13:46
      */
-    Response getSignIn(Long aid,Long uid);
+    Response getSignIn(Long aid, Long uid, Integer type);
 
     Response signIn(R_SignIn signIn);
 
@@ -112,4 +112,18 @@ public interface IActivityServer {
      * @return
      */
     Response getAllParticipatedMember(Long aid);
+
+    /**
+     * 模糊查询
+     * @param aname
+     * @return
+     */
+    Response searchByName(String aname,Page page);
+
+    /**
+     * 传入uid查询用户所有活动（所有状态）
+     * @param uid
+     * @return
+     */
+    Response getParticipationByUid(String uid,Page page);
 }

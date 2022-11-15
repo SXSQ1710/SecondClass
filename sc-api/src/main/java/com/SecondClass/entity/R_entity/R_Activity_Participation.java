@@ -1,4 +1,4 @@
-package com.SecondClass.entity;
+package com.SecondClass.entity.R_entity;
 
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
@@ -11,29 +11,35 @@ import lombok.NoArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 
 import java.util.Date;
-import java.io.Serializable;
+
 
 /**
- * (TActivity)实体类
- *
- * @author makejava
- * @since 2022-10-29 09:33:01
+ * 查询自己报名参加的所有活动 包括活动参与状态、活动名字、活动图片等
  */
-
 @Data
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class Activity implements Serializable {
-    private static final long serialVersionUID = -56724925718894306L;
+public class R_Activity_Participation {
+
+    /**
+     * 用户id
+     */
+    private String uid;
     /**
      * 活动id
      */
-    @TableId(value = "aid",type= IdType.AUTO)
     private Long aid;
     /**
-     * 活动名字
+     * 参与状态 1：已报名 2：签到 3：签退 4：时长有效，允许发放 5：时长无效，拒绝发放
      */
+    @JsonProperty(value = "participate_status")
+    private Integer participateStatus;
+
+    /**
+     * 活动id
+     */
+
     private String aname;
     /**
      * 活动描述
@@ -108,6 +114,4 @@ public class Activity implements Serializable {
      */
     @JsonProperty(value = "a_address")
     private String aAddress;
-
 }
-
