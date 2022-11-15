@@ -2,6 +2,7 @@ package com.SecondClass.server;
 
 import com.SecondClass.entity.Organization;
 import com.SecondClass.entity.OrganizationApply;
+import com.SecondClass.entity.R_entity.R_Login;
 import com.SecondClass.entity.R_entity.R_SignIn;
 import com.SecondClass.entity.Response;
 import com.SecondClass.entity.User;
@@ -18,9 +19,9 @@ import java.util.concurrent.LinkedTransferQueue;
  * @Author jiang
  * @Date 2022/11/5 19:04
  **/
-public interface ManageServer extends IService<User>{
+public interface IManageServer extends IService<User>{
 
-    Response login(Map userMap);
+    Response login(R_Login rLogin);
 
     Response createOrg(Organization organization );
 

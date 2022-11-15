@@ -37,6 +37,7 @@ public enum ResponseStatus {
     //用户登录响应
     USER_LOGIN_SUCCESS("1-200","登录成功！"),
     USER_LOGIN_FAIL("1-400","用户名或密码错误！"),
+    USER_LOGIN_FAIL_1("1-400","您没有相应的管理权限！"),
     USER_NOT_LOGIN_FAIL("1-400","尚未登录，请先登录！"),
 
     //活动相关响应
@@ -63,6 +64,8 @@ public enum ResponseStatus {
     ACTIVITY_GET_SIGN_IN_FAIL_3("5-400","活动审核为通过，请耐心等待活动审核通过！"),
     ACTIVITY_SIGN_IN_SUCCESS("5-200","签到成功"),
     ACTIVITY_SIGN_IN_FAIL("5-400","签到失败"),
+    ACTIVITY_SIGN_IN_FAIL_1("5-400","签到失败，没有报名记录"),
+    ACTIVITY_SIGN_IN_FAIL_2("5-400","签到失败，活动密钥失效"),
     ACTIVITY_SIGN_OFF_SUCCESS("5-200","签退成功"),
     ACTIVITY_SIGN_OFF_FAIL("5-400","签退失败"),
 
@@ -72,6 +75,7 @@ public enum ResponseStatus {
     REGISTER_ACTIVITY_FAIL_1("6-400","名额已满"),
     REGISTER_ACTIVITY_FAIL_2("6-400","不能重复报名"),
     REGISTER_ACTIVITY_FAIL_3("6-400","非法用户"),
+    REGISTER_ACTIVITY_FAIL_4("6-400","未在报名时间内"),
 
     //账号管理
     MANAGE_CLASS_SUCCESS("7-200","班级信息获取成功"),
