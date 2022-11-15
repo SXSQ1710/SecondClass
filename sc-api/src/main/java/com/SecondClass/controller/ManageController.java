@@ -2,6 +2,7 @@ package com.SecondClass.controller;
 
 import com.SecondClass.entity.Organization;
 import com.SecondClass.entity.OrganizationApply;
+import com.SecondClass.entity.R_entity.R_Login;
 import com.SecondClass.entity.Response;
 import com.SecondClass.entity.User;
 import com.SecondClass.server.ManageServerImpl;
@@ -21,8 +22,8 @@ public class ManageController {
     ManageServerImpl manageServer;
 
     @PostMapping("/login")
-    public Response login(@RequestBody Map<String,Object> userMap){
-        return manageServer.login(userMap);
+    public Response login(@RequestBody R_Login rLogin){
+        return manageServer.login(rLogin);
     }
 
     @PostMapping("/createOrg")

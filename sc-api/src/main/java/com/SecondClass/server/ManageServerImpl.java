@@ -2,8 +2,9 @@ package com.SecondClass.server;
 
 import cn.dev33.satoken.stp.SaTokenInfo;
 import cn.dev33.satoken.stp.StpUtil;
+import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
-import com.baomidou.mybatisplus.core.conditions.Wrapper;
+import com.SecondClass.entity.R_entity.R_Login;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.SecondClass.entity.*;
@@ -24,8 +25,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import java.beans.Transient;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -41,7 +40,7 @@ import java.util.concurrent.TimeUnit;
 @Slf4j
 @Service
 @Component
-public class ManageServerImpl extends ServiceImpl<UserMapper,User> implements ManageServer{
+public class ManageServerImpl extends ServiceImpl<UserMapper,User> implements IManageServer {
 
     @Resource
     RedisUtils redisUtils;
@@ -65,20 +64,46 @@ public class ManageServerImpl extends ServiceImpl<UserMapper,User> implements Ma
      * @Param [userMap]
      * @return com.SecondClass.entity.Response
      **/
-    public Response login(Map userMap) {
+    public Response login(R_Login rLogin) {
         try {
             //1.查询登录信息
-            String uid = userMap.get("uid").toString();
+            String uid = rLogin.getUid().toString();
+            String upassword = rLogin.getUpassword().toString();
+
             User user = redisUtils.queryForValue(RedisKeyName.MANAGE_USER, uid, User.class, 60L, TimeUnit.DAYS, false,
                     (id) -> {
                         LambdaQueryWrapper<User> queryWrapper = new LambdaQueryWrapper<>();
-                        queryWrapper.eq(User::getUid, userMap.get("uid"))
-                                .eq(User::getUpassword, userMap.get("upassword"));
+                        queryWrapper.eq(User::getUid, uid)
+                                .eq(User::getUpassword, upassword);
                         return userMapper.selectOne(queryWrapper);
                     });
 
             //1.1查询失败返回错误信息
-            if (user == null || !user.getUpassword().equals(userMap.get("upassword").toString())) return Response.success(ResponseStatus.USER_LOGIN_FAIL);
+            if (user == null || !user.getUpassword().equals(upassword)) return Response.success(ResponseStatus.USER_LOGIN_FAIL);
+
+            List<Integer> oidList = JSONUtil.toList(user.getOid(), Integer.class);
+            int level = 999;
+            for (int i = 0; i < oidList.size(); i++) {
+                String oid = String.valueOf(oidList.get(i));
+                //1.先查询redis缓存
+                int permission;
+                String json = stringRedisTemplate.opsForValue().get(RedisKeyName.MANAGE_ORGANIZATION_LEVEL + oid);
+                boolean notBlank = StrUtil.isNotBlank(json);
+                if (notBlank){
+                    //1.1.redis缓存命中，返回结果
+                    permission = Integer.parseInt(json);
+                    level = (level > permission ? permission:level);
+                    continue;
+                }
+
+                //2.redis缓存未命中，查询数据库，查询数据库的代码通过函数传入
+                LambdaQueryWrapper<Organization> queryWrapper = new LambdaQueryWrapper<>();
+                queryWrapper.eq(Organization::getOid, oid);
+                permission = organizationMapper.selectOne(queryWrapper).getPermissionsLevel();
+                if (permission < level) level = permission;
+            }
+
+            if (rLogin.getRole() == 1 && !(level <= 2)) return Response.error(ResponseStatus.USER_LOGIN_FAIL_1);
             //2.登录成功
             //2.1 saToke登记用户信息
             StpUtil.login(uid);

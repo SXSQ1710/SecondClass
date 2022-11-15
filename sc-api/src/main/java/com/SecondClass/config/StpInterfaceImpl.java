@@ -73,6 +73,7 @@ public class StpInterfaceImpl implements StpInterface {
             LambdaQueryWrapper<Organization> queryWrapper = new LambdaQueryWrapper<>();
             queryWrapper.eq(Organization::getOid, oid);
             permission = organizationMapper.selectOne(queryWrapper).getPermissionsLevel();
+            redisUtils.setValue(RedisKeyName.MANAGE_ORGANIZATION_LEVEL + oid, permission+"");
             if (permission < level) level = permission;
         }
 
