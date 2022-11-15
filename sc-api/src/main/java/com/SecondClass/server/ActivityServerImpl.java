@@ -1,6 +1,5 @@
 package com.SecondClass.server;
 
-import cn.dev33.satoken.config.SaTokenConfig;
 import cn.dev33.satoken.stp.StpUtil;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.lang.UUID;
@@ -17,29 +16,19 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import io.lettuce.core.RedisCommandExecutionException;
 import io.netty.util.internal.StringUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.data.redis.connection.RedisConnection;
-import org.springframework.data.redis.connection.stream.*;
-import org.springframework.data.redis.core.Cursor;
-import org.springframework.data.redis.core.ScanOptions;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.script.DefaultRedisScript;
-import org.springframework.data.redis.serializer.RedisSerializer;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
-import javax.swing.plaf.IconUIResource;
-import java.time.Duration;
+import java.beans.Transient;
 import java.util.*;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 @Slf4j
@@ -135,7 +124,9 @@ public class ActivityServerImpl implements IActivityServer{
                 //2.2 缓存存入活动表中
                 redisUtils.setValue(RedisKeyName.ACTIVITY + activity.getAid().toString(),activity,10L, TimeUnit.DAYS);
                 //2.3 缓存存入活动报名限制人数
-                stringRedisTemplate.opsForValue().set(RedisKeyName.SECOND_KILL + activity.getAid().toString(),activity.getALimittedNumber().toString());
+                stringRedisTemplate.opsForValue().set(RedisKeyName.SECOND_KILL_STOCK + activity.getAid().toString(),activity.getALimittedNumber().toString());
+                //2.4 缓存存入活动报名人员信息列表
+                stringRedisTemplate.opsForZSet().add(RedisKeyName.SECOND_KILL_PARTICIPATION + activity.getAid().toString(),activity.getAname(),0);
 
                 //2.4 新的活动状态(多了一个aid）更新到活动描述中
                 String jsonStr_activity = JSONUtil.toJsonStr(activity);
@@ -223,7 +214,6 @@ public class ActivityServerImpl implements IActivityServer{
     }
 
     private static final DefaultRedisScript<Long> SECKILL_SCRIPT;
-    private static final ExecutorService SECKILL_EXECUTOR = Executors.newSingleThreadExecutor();
 
     static {
         SECKILL_SCRIPT = new DefaultRedisScript<>();
@@ -231,91 +221,27 @@ public class ActivityServerImpl implements IActivityServer{
         SECKILL_SCRIPT.setResultType(Long.class);
     }
 
-    @PostConstruct
-    private void init(){
-        SECKILL_EXECUTOR.submit(new VoucherParticipationHandler());
-        if (!stringRedisTemplate.hasKey("stream.participation")){
-            stringRedisTemplate.opsForStream().createGroup("stream.participation", "g1");
-        }
-    }
-
-    private class VoucherParticipationHandler implements Runnable{
-        String queueName = "stream.participation" ;
-
-        @Override
-        public void run() {
-            while (true){
-                try{
-                    //1.获取消息队列中的报名信息
-                    List<MapRecord<String, Object, Object>> list = stringRedisTemplate.opsForStream().read(
-                            Consumer.from("g1", "c1"),
-                            StreamReadOptions.empty().count(1).block(Duration.ofSeconds(2)),
-                            StreamOffset.create(queueName, ReadOffset.lastConsumed())
-                    );
-                    //2.判断消息获取是否成功
-                    if (list == null || list.isEmpty()){
-                        //2.1如果为空表示消息队列中没有消息，继续下一个循环
-                        continue;
-                    }
-                    //3.解析数据
-                    MapRecord<String, Object, Object> record = list.get(0);
-                    Map<Object, Object> value = record.getValue();
-                    Participation participation = BeanUtil.fillBeanWithMap(value, new Participation(), true);
-                    //4.写入数据库
-                    saveParticipation(participation);
-                    //5.ack确认
-                    stringRedisTemplate.opsForStream().acknowledge(queueName,"g1",record.getId());
-                }catch (Exception e){
-                    log.error("处理PendingList报名异常", e);
-                    handlePendingList();
-                }
-            }
-        }
-
-        private void handlePendingList(){
-            while (true){
-                try{
-                    //1.获取消息队列中的报名信息
-                    List<MapRecord<String, Object, Object>> list = stringRedisTemplate.opsForStream().read(
-                            Consumer.from("g1", "c1"),
-                            StreamReadOptions.empty().count(1),
-                            StreamOffset.create(queueName, ReadOffset.from("0"))
-                    );
-                    //2.判断消息获取是否成功
-                    if (list == null || list.isEmpty()){
-                        //2.1如果为空表示PendingList中没有异常消息了，继续下一个循环
-                        break;
-                    }
-                    //3.解析数据
-                    MapRecord<String, Object, Object> record = list.get(0);
-                    Map<Object, Object> value = record.getValue();
-                    Participation participation = BeanUtil.fillBeanWithMap(value, new Participation(), true);
-                    //4.写入数据库
-                    saveParticipation(participation);
-                    //5.ack确认
-                    stringRedisTemplate.opsForStream().acknowledge(queueName,"g1",record.getId());
-                }catch (Exception e){
-                    log.error("处理PendingList报名异常", e);
-                    try {
-                        Thread.sleep(20);
-                    } catch (InterruptedException interruptedException) {
-                        interruptedException.printStackTrace();
-                    }
-                }
-            }
-        }
-
-        private void saveParticipation(Participation participation){
-            participation.setParticipateStatus(0);
-            if(participationMapper.insert(participation) != 1) throw new IllegalArgumentException();
-        }
-    }
-
-
-
     public Response register(Participation participation){
-        try{//1.判断是否为合法用户
-            String uid = participation.getUid().toString();
+        try{
+            //1.判断是否为合法用户
+            //String uid = participation.getUid().toString(); //压力测试用
+            String uid = (String) StpUtil.getLoginId();
+            String aid = participation.getAid().toString();
+            //2.判断活动是否正在申请的活动举办时间内,活动开始前15分钟结束后15分钟
+            Activity activity = redisUtils.queryForValue(RedisKeyName.ACTIVITY, aid, Activity.class, 10L, TimeUnit.DAYS, true,
+                    (id) -> {
+                        QueryWrapper<Activity> queryWrapper = new QueryWrapper<>();
+                        queryWrapper.eq("aid", aid);
+                        queryWrapper.eq("a_uid",uid);
+                        return activityMapper.selectOne(queryWrapper);
+                    });
+            Date start = activity.getARegisterOpen();
+            Date end = activity.getARegisterClose();
+
+            if (!DateUtils.isEffectiveDate(start, end)){
+                return Response.error(ResponseStatus.REGISTER_ACTIVITY_FAIL_4);
+            }
+
             User userInfo = redisUtils.queryForValue(RedisKeyName.MANAGE_USER, uid, User.class, 60L, TimeUnit.DAYS, true,
                     (id) -> {
                         QueryWrapper<User> queryWrapper = new QueryWrapper<>();
@@ -328,7 +254,7 @@ public class ActivityServerImpl implements IActivityServer{
             Long result = stringRedisTemplate.execute(
                     SECKILL_SCRIPT,
                     Collections.emptyList(),
-                    participation.getAid().toString(), participation.getUid().toString(),String.valueOf(pid)
+                    aid, uid,String.valueOf(pid),"0"
             );
             //3. 判断结果是否为0
             int r = result.intValue();
@@ -339,28 +265,9 @@ public class ActivityServerImpl implements IActivityServer{
 
             return Response.success(ResponseStatus.SUCCESS, pid);
         }catch (Exception e){
+            e.printStackTrace();
             return Response.error(ResponseStatus.REGISTER_ACTIVITY_FAIL);
         }
-
-//        try {
-//            String UUID = java.util.UUID.randomUUID().toString().replaceAll("-", "");
-//            participation.setPid(UUID);
-//            participation.setParticipateStatus(0);
-//            if(participationMapper.insert(participation) != 1) throw new IllegalArgumentException();
-//
-//            return Response.success(ResponseStatus.REGISTER_ACTIVITY_SUCCESS);
-//        } catch (IllegalArgumentException i) {
-//            i.printStackTrace();
-//            return Response.error(ResponseStatus.REGISTER_ACTIVITY_FAIL);
-//        } catch (DataIntegrityViolationException d) {
-//            d.printStackTrace();
-//            return Response.error(ResponseStatus.REGISTER_ACTIVITY_FAIL);
-//        } catch (Exception e) {
-//            //其他错误
-//            e.printStackTrace();
-//            return Response.success(ResponseStatus.ERROR);
-//        }
-
     }
 
     @Value("${myConfig.serveUrl}")
@@ -379,16 +286,16 @@ public class ActivityServerImpl implements IActivityServer{
             //判断活动状态是否为2(活动审核通过)
             if (activity.getAstatus() != 2) return Response.error(ResponseStatus.ACTIVITY_GET_SIGN_IN_FAIL_3);
             //判断活动是否正在申请的活动举办时间内,活动开始前15分钟结束后15分钟
-            Date start = activity.getAHoldStart();
-            Date end = activity.getAHoldEnd();
-            long startTime = start.getTime();
-            long endTime = end.getTime();
-            start.setTime(startTime - 1000*60*60*15);
-            end.setTime(endTime + 1000*60*60*15);
-
-            if (!DateUtils.isEffectiveDate(start, end)){
-                return Response.error(ResponseStatus.ACTIVITY_GET_SIGN_IN_FAIL_2);
-            }
+//            Date start = activity.getAHoldStart();
+//            Date end = activity.getAHoldEnd();
+//            long startTime = start.getTime();
+//            long endTime = end.getTime();
+//            start.setTime(startTime - 1000*60*60*15);
+//            end.setTime(endTime + 1000*60*60*15);
+//
+//            if (!DateUtils.isEffectiveDate(start, end)){
+//                return Response.error(ResponseStatus.ACTIVITY_GET_SIGN_IN_FAIL_2);
+//            }
 
             if(BeanUtil.isNotEmpty(activity)){
                 //1.生成随机uuid保存在redis里并设置5分钟的TTL
@@ -419,18 +326,41 @@ public class ActivityServerImpl implements IActivityServer{
         }
     }
 
+
+    private static final DefaultRedisScript<Long> SIGNIN;
+
+    static {
+        SIGNIN = new DefaultRedisScript<>();
+        SIGNIN.setLocation(new ClassPathResource("signIn.lua"));
+        SIGNIN.setResultType(Long.class);
+    }
+
     @Override
+    @Transactional
     public Response signIn(R_SignIn signIn) {
         try {
+            //1.从redis中查找临时密钥对应的活动id
+            String uid = signIn.getUid().toString();
             String aid = stringRedisTemplate.opsForValue().get(RedisKeyName.ACTIVITY_GET_SIGN_IN + signIn.getUuid());
             if (StringUtil.isNullOrEmpty(aid)){
-                throw new IllegalArgumentException();
+                return Response.error(ResponseStatus.ACTIVITY_SIGN_IN_FAIL_2);
             }else {
-                Participation participation = BeanUtil.copyProperties(signIn, Participation.class);
-                UpdateWrapper<Participation> updateWrapper = new UpdateWrapper<>();
-                updateWrapper.eq("aid",aid).eq("uid",participation.getUid());
-                updateWrapper.set("participate_status",2);
-                if (participationMapper.update(null,updateWrapper) != 1) throw new IllegalArgumentException();
+
+                //2. 执行lua脚本
+                Long result = stringRedisTemplate.execute(
+                        SIGNIN,
+                        Collections.emptyList(),
+                        aid, uid,"2"
+                );
+
+                //3. 判断结果是否为0
+                int r = result.intValue();
+                if (r != 0) {
+                    //2.1. 不为0，表示没有报名记录
+                    return Response.error(ResponseStatus.ACTIVITY_SIGN_IN_FAIL_1);
+                }
+
+
                 return Response.success(ResponseStatus.ACTIVITY_SIGN_IN_SUCCESS);
             }
         } catch (IllegalArgumentException i) {
