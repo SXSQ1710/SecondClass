@@ -1,14 +1,15 @@
 <template>
   <div class="topmenu">
-    <span>{{ toptip }}</span>
+    <span class="leftTip">{{ toptip }}</span>
     <span class="rightBtn">
-      <p class="exit" @click="open" >退出登录</p>
-      <p>当前登录时间为：{{ nowtime }}</p>
+      <p class="exit" @click="open">退出登录</p>
+      <p>当前登录时间为：{{ sdf }}</p>
     </span>
   </div>
 </template>
 <script>
 import { ElMessage, ElMessageBox } from 'element-plus'
+import {getNowTime} from '../../server/api/time'
 
 export default {
 
@@ -19,57 +20,50 @@ export default {
   },
   data() {
     return {
-      nowtime: Date
+      sdf: Date
     }
   },
-  setup(){
+  setup() {
     var that = this
     const goToForm = (path) => {
       router.push({
         path: path,
       })
     }
-  const open = () => {
-    ElMessageBox.confirm(
-      '确定要退出登录吗?',
-      '退出登录',
-      {
-        confirmButtonText: '退出',
-        cancelButtonText: '取消',
-        type: 'warning',
-      }
-    )
-      .then(() => {
-        ElMessage({
-          type: 'success',
-          message: '您已退出系统，请重新登录'
+    const open = () => {
+      ElMessageBox.confirm(
+        '确定要退出登录吗?',
+        '退出登录',
+        {
+          confirmButtonText: '退出',
+          cancelButtonText: '取消',
+          type: 'warning',
+        }
+      )
+        .then(() => {
+          ElMessage({
+            type: 'success',
+            message: '您已退出系统，请重新登录'
+          })
+          // console.log("that.$router=" , window.getCurrentTime)
+          // that.$router.push({path:'/home ', selected:"2" })
         })
-        // console.log("that.$router=" , window.getCurrentTime)
-        // that.$router.push({path:'/home ', selected:"2" })
-      })
-      .catch(() => {
-        ElMessage({
-          type: 'info',
-          message: '您的退出操作已撤回',
+        .catch(() => {
+          ElMessage({
+            type: 'info',
+            message: '您的退出操作已撤回',
+          })
         })
-      })
-      }
-      // 如果没有’{}‘中括号包围open，会默认在页面打开时调用一次该方法
-      return {open,goToForm}
+    }
+    // 如果没有’{}‘中括号包围open，会默认在页面打开时调用一次该方法
+    return { open, goToForm }
   }
   ,
   methods: {
-    getCurrentTime() {
-      var _this = this;
-      let yy = new Date().getFullYear();
-      let mm = new Date().getMonth() + 1;
-      let dd = new Date().getDate();
-      let hh = new Date().getHours();
-      let mf = new Date().getMinutes() < 10 ? '0' + new Date().getMinutes() : new Date().getMinutes();
-      let ss = new Date().getSeconds() < 10 ? '0' + new Date().getSeconds() : new Date().getSeconds();
-      _this.gettime = yy + '/' + mm + '/' + dd + ' ' + hh + ':' + mf + ':' + ss;
-      _this.nowtime = _this.gettime
-    }
+        getCurrentTime() {
+            var _this = this;
+            this.sdf = getNowTime(new Date().getTime())     
+        }
   },
   created() {
     this.getCurrentTime()
@@ -100,10 +94,10 @@ export default {
   user-select: none;
 }
 
-#topMenu {
+.topmenu {
   display: flex;
   align-items: center;
-  flex-direction: column;
+  justify-content: space-between;
 }
 
 .exit {
@@ -117,6 +111,11 @@ export default {
 
 .exit:active {
   color: rgba(80, 17, 17, 0.6);
+}
+
+.leftTip {
+  font-size: 2vw;
+  margin-left: 2%;
 }
 </style>
   

@@ -10,14 +10,19 @@
 					<div class="transition-box"> 
 						<a href="user">学生登录</a> 
 					</div>
-                    <div class="transition-box"> 
+                    <div class="transition-box">   
+						 <a href="admin">管理员登录</a> 
+					</div>
+                  
+                     <div class="transition-box"> 
 						<a href="home">后台界面</a> 
 					</div>
+                    <div class="transition-box">   
+						 <a href="home2">学生中心</a> 
+					</div>
+                    
                     <div class="transition-box"> 
 						<a href="about">test</a> 
-					</div>
-					<div class="transition-box">   
-						 <a href="admin">管理员登录</a> 
 					</div>
 				</div>
 			</el-collapse-transition>

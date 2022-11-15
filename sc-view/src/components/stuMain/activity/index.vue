@@ -23,7 +23,12 @@
                 </el-button>
             </div>
         </div>
-
+        <!-- 介绍 -->
+        <el-tooltip placement="right" content="查看详情点击报名">
+            <div class="intro_btn">
+                <span class="myicon  iconfont icon-9"></span>
+            </div>
+        </el-tooltip>
         <!-- 刷新数据 -->
         <el-tooltip content="更新列表数据">
             <div class="refresh_btn" @click="all">
@@ -59,13 +64,11 @@
             <el-table-column prop="a_register_open" label="报名时间" sortable width="200" header-align="center" />
             <el-table-column prop="a_hold_start" label="举办时间" sortable width="200" header-align="center" />
             <el-table-column prop="a_address" label="举办地点" width="250" header-align="center" />
-            <el-table-column prop="a_shichang_type" label="时长类型" sortable width="120" header-align="center" />
+            <el-table-column prop="a_shichang_type" label="活动时长类型" width="120" header-align="center" />
             <el-table-column prop="a_shichang_num" label="时长" sortable width="120" header-align="center" />
-            <el-table-column fixed="right" label="操作" width="180" header-align="center">
+            <el-table-column fixed="right" label="操作" width="100" align="center" header-align="center">
                 <template #default="scope">
                     <el-button link type="primary" size="small" @click="handleDetail(scope.row)">详情</el-button>
-                    <el-button link type="primary" size="small" @click="handleEdit(scope.row)">编辑</el-button>
-                    <el-button link type="danger" size="small" @click="handleDelete(scope.row)">删除</el-button>
                 </template>
             </el-table-column>
         </el-table>
@@ -173,7 +176,7 @@
             <template #footer>
                 <span class="dialog-footer">
                     <!-- <el-button type="primary" @click="dialogFormVisible = false"> -->
-                    <el-button text type="primary" v-if="dialogType != 'detail'" @click="handleReset">
+                    <el-button text type="primary" v-if="dialogType != 'detail'" @click="resetField">
                         重置
                     </el-button>
                     <el-button type="primary" v-if="dialogType == 'add'" v-on:submit.prevent="submitAddForm"
@@ -398,10 +401,8 @@ let handleDetail = (row) => {
     dialogFormVisible = true
 }
 
-// 重置
-const handleReset = () => {
-    form = []
-}
+// 重置(使用element-plus的resetField方法)
+
 // 多选
 const handleSelectionChange = (val) => {
     multipleSelection = []
@@ -592,7 +593,13 @@ const submitAddForm = async (formEl) => {
     background: #adc2d22e;
 }
 
-
+.intro_btn {
+    padding: 0;
+    position: fixed;
+    z-index: 3;
+    right: 66px;
+    top: 200px;
+}
 .refresh_btn {
     padding: 20px 0;
     position: fixed;

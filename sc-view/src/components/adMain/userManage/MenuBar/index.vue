@@ -21,13 +21,13 @@
     </el-tabs>
   </template>
   <script>
-  import defaultPage from "./adMain/defaultPage.vue";
-  import activeManage from "./adMain/activeManage/index.vue";
-  import notification from "./adMain/notification/index.vue";
-  import orgManage from "./adMain/orgManage/index.vue";
-  import todoForm from "./adMain/todoForm/index.vue";
-  import userManage from "./adMain/userManage/index.vue";
-  import wode from "./adMain/wode/index.vue";
+  import defaultPage from "../../../adMain/defaultPage.vue";
+  import activeManage from "../../../adMain/activeManage/index.vue";
+  import notification from "../../../adMain/notification/index.vue";
+  import orgManage from "../../../adMain/orgManage/index.vue";
+  import todoForm from "../../../adMain/todoForm/index.vue";
+  import userManage from "../../../adMain/userManage/index.vue";
+  import wode from "../../../adMain/wode/index.vue";
   
   export default {
     name: "MenuBar",

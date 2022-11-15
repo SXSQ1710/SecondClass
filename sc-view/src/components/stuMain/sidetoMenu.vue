@@ -6,20 +6,20 @@
 
 <script>
 import defaultPage from "./defaultPage.vue";
-import activeManage from "./activeManage/index.vue";
+import activity from "./activity/index.vue";
 import notification from "./notification/index.vue";
-import orgManage from "./orgManage/index.vue";
+import organization from "./organization/index.vue";
 import todoForm from "./todoForm/index.vue";
 import userManage from "./userManage/index.vue";
 import wode from "./wode/index.vue";
 
 const routes = {
     '/': defaultPage,
-    '/userManage': userManage,
-    '/orgManage': orgManage,
+    '/userInfo': userManage,
+    '/organization': organization,
     '/todoForm': todoForm,
     '/wode': wode,
-    '/activeManage': activeManage,
+    '/activity': activity,
     '/notification': notification
 }
 

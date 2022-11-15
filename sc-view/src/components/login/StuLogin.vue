@@ -1,82 +1,83 @@
 <template>
-    <div class="box">
-       <h2>登 录 中 心</h2>
-       <div class="loginItem">
-       <loginitem></loginitem>
+   <div class="box">
+      <h2>登 录 中 心</h2>
+      <div class="loginItem">
+         <loginitem></loginitem>
       </div>
-       <form action="#" >
-       <div class="formrow">
-           <div class="inline-input-icon">
+      <form action="#">
+         <div class="formrow">
+            <div class="inline-input-icon">
                <span class="myicon iconfont icon-yonghu"></span>
-           </div>
-           <div class="inputBox">
-               <input type="text" required="required">
+            </div>
+            <div class="inputBox">
+               <input type="text" autocomplete="username" required="required">
                <span>学号</span>
-           </div>
-       </div>
-       <div class="formrow">
-           <div class="inline-input-icon">
+            </div>
+         </div>
+         <div class="formrow">
+            <div class="inline-input-icon">
                <span class="myicon  iconfont icon-suo"></span>
-           </div>
+            </div>
 
-           <div class="inputBox">
-               <input type="password" required="required">
+            <div class="inputBox">
+               <input type="password" autocomplete="current-password" required="required">
                <span>密码</span>
-           </div>
-       </div>
-       <div class="formrow">
-           <div class="inline-input-icon">
+            </div>
+         </div>
+         <div class="formrow">
+            <div class="inline-input-icon">
                <span class="myicon myicon2 iconfont icon-9"></span>
-           </div>
-           <div class="inputBox yanzheng">
+            </div>
+            <div class="inputBox yanzheng">
                <input type="text" maxlength="4">
                <span>验证码</span>
-               <img :src="sdf" @click="changeImage()" alt="点我更换图片" title="刷新图片"/>
+               <img :src="sdf" @click="changeImage()" alt="点我更换图片" title="刷新图片" />
                <!-- https://jxfw.gdut.edu.cn/yzm?d=1666938986151 -->
-           </div>
-       </div>
-   </form>
-       <div class="buttonBox">
-           <button>登录</button>
-       </div>
-   </div> 
+            </div>
+         </div>
+      </form>
+      <div class="buttonBox">
+         <button>登录</button>
+      </div>
+   </div>
 </template>
 
 <script>
-   import loginitem from "./LoginItem.vue"
-   export default {
-      name: 'StuLogin',
-      props: {
-         msg: String
-      },
-      components:{loginitem} ,
-      data() {
-         return {
-         sdf: "https://jxfw.gdut.edu.cn/yzm?d=" +new Date().getTime()
-         }
-      },
-      methods: {
-         changeImage(){
-            console.log("changeImage")
-            this.sdf = "https://jxfw.gdut.edu.cn/yzm?d=" +new Date().getTime()
-            // this.sdf.value =ref( "https://jxfw.gdut.edu.cn/yzm?d=" +new Date().getTime())
-         }
-      },
-      // lifecycle hooks
-      mounted() {
-         document.title = "学生登录"
-         console.log(`图片已刷新`)
+import loginitem from "./LoginItem.vue"
+export default {
+   name: 'StuLogin',
+   props: {
+      msg: String
+   },
+   components: { loginitem },
+   data() {
+      return {
+         sdf: "https://jxfw.gdut.edu.cn/yzm?d=" + new Date().getTime()
       }
+   },
+   methods: {
+      changeImage() {
+         console.log("changeImage")
+         this.sdf = "https://jxfw.gdut.edu.cn/yzm?d=" + new Date().getTime()
+         // this.sdf.value =ref( "https://jxfw.gdut.edu.cn/yzm?d=" +new Date().getTime())
+      }
+   },
+   // lifecycle hooks
+   mounted() {
+      document.title = "学生登录"
+      console.log(`图片已刷新`)
    }
+}
 </script>
-<style>
+<style >
 * {
    margin: 0;
    padding: 0;
    /* 添加内间距不扩大div */
    box-sizing: border-box;
 }
-.loginItem{
+
+.loginItem {
    position: fixed;
    left: 3%;
    top: 0%;
@@ -85,17 +86,18 @@
    align-items: baseline;
 }
 
-form{
+form {
    transform: scale(1.5);
 }
-.yanzheng > img{
+
+.yanzheng>img {
    height: 40px;
    position: absolute;
    right: 3px;
    top: 5px;
 }
 
-.inline-input-icon{
+.inline-input-icon {
    line-height: 49.6px;
    color: #0d4e61;
    text-align: left;
@@ -103,9 +105,10 @@ form{
    text-indent: 4px;
 }
 
-.formrow{
+.formrow {
    margin-top: 20px;
 }
+
 .box {
    height: 100vh;
    background: #09203f;
@@ -171,9 +174,10 @@ form{
    letter-spacing: 0.2em;
 }
 
-.formrow:focus-within>.inline-input-icon{
-  color: white;
+.formrow:focus-within>.inline-input-icon {
+   color: white;
 }
+
 .inputBox:nth-child(3) input:valid~span,
 .inputBox:nth-child(3) input:focus~span {
    background: #50c9c3;
@@ -184,19 +188,23 @@ form{
 .inputBox input:focus {
    border: 1px solid #50c9c3;
 }
+
 .inputBox input:focus {
    border: 1px solid #50c9c3;
 }
+
 /* 给图标写样式 */
-.myicon{
+.myicon {
    z-index: 3;
    position: absolute;
    font-size: 18px !important;
 }
-.myicon2{
+
+.myicon2 {
    font-size: 30px !important;
-    text-indent: 0;
+   text-indent: 0;
 }
+
 /* 给按钮写样式 */
 .buttonBox button {
    padding: 12px 35px;
@@ -213,11 +221,10 @@ form{
    color: #50c9c3;
    border: 1px solid #50c9c3;
 }
+
 .buttonBox button:active {
    color: #1e625f;
    font-weight: bold;
    border: 1px solid #1e625f;
 }
-
-
 </style>

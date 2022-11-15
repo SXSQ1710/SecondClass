@@ -4,7 +4,7 @@
             <header>
                 <div class="image-text">
                     <span class="image">
-                        <img :src="uImage" alt="头像">
+                        <img :src="uImage" alt="">
                     </span>
                     <div class="text logo-text">
                         <span class="name">{{ uname }}</span>
@@ -64,6 +64,7 @@
         </section>
     </menu>
 </template>
+
 <style type="text/css">
 * {
     margin: 0;
@@ -494,3 +495,4 @@ export default {
     }
 }
 </script>
+
