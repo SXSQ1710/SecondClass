@@ -207,7 +207,7 @@ onMounted(() => {
 // 数据
 let queryInput = $ref("")
 let multipleSelection = $ref([])     // 多选
-const dialogFormVisible = $ref(false)
+let dialogFormVisible = $ref(false)
 let formLabelWidth = $ref('20vw')
 let dialogType = $ref('add')
 
@@ -299,8 +299,9 @@ const all = () => {
     axios.get('http://localhost/select_activity').then(res => {
         let _tableData = res.data
         // 以下2行代码是连接spingboot的操作 
-        // axios.get('http://localhost:8080/api/activity/getAll/1/10').then(res => {
-        //     let _tableData = res.data.data.records
+    // axios.get('http://localhost:8083/api/activity/getAll/1/10').then(res => {
+    //     console.log(res.data)
+    //     let _tableData = res.data.data.records
         console.log("数据查询成功", _tableData)
         let _nowTime = getNowTime()
         for (let i = 0; i < _tableData.length; i++) {

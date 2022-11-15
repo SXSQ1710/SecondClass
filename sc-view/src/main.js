@@ -6,7 +6,9 @@ import zhCn from 'element-plus/es/locale/lang/zh-cn'
 import  'element-plus/dist/index.css'       // 引入样式文件
 // 引入阿里巴巴矢量图标css配置
 import "./assets/iconfonts/iconfont.css"
-
+// 引入vuex
+import store from './store/store'
+// 引入路由配置
 import router from './router'
 
 const Vue = createApp(App)
@@ -16,5 +18,6 @@ Vue.use(ElementPlus, {
     locale: zhCn,
   })
 Vue.use(router)
+Vue.use(store)
 
 Vue.mount('#app')

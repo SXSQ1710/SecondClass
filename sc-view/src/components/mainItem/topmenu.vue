@@ -45,6 +45,7 @@ export default {
             type: 'success',
             message: '您已退出系统，请重新登录'
           })
+          sessionStorage.clear("access_token") //清空sessionStorage中名为userData的值 
           // console.log("that.$router=" , window.getCurrentTime)
           // that.$router.push({path:'/home ', selected:"2" })
         })

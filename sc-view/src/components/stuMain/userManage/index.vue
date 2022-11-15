@@ -44,7 +44,7 @@
                             修改密码
                             <el-form label-position="left" label-width="100px" style="max-width: 460px">
                                 <el-form-item label="旧密码">
-                                    <el-input v-model="upwd" />
+                                    <el-input :placeholder="upwd"  readonly/>
                                 </el-form-item>
                                 <el-form-item label="新密码">
                                     <el-input v-model="formData.newPassword" />

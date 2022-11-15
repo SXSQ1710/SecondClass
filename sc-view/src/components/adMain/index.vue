@@ -149,7 +149,8 @@ menu.dark {
     font-size: 20px;
 }
 
-.sidebar .text,section,
+.sidebar .text,
+section,
 .sidebar .icon {
     color: var(--text-color);
     transition: var(--tran-03);
@@ -268,7 +269,7 @@ menu.dark .sidebar header .toggle {
     transition: var(--tran-03);
 }
 
-.dashbord{
+.dashbord {
     padding: 0 3vw;
 }
 
@@ -407,7 +408,7 @@ menu.dark .home .text {
 <script>
 import { ElMessage, ElMessageBox } from 'element-plus'
 import Commons from './sidetoMenu.vue'
-import {getNowTime} from '../../server/api/time'
+import { getNowTime } from '../../server/api/time'
 
 export default {
     name: 'HomePage',
@@ -415,7 +416,7 @@ export default {
         uname: { type: String, default: "AdminName" },
         uImage: { type: String, default: "#" },
         ulevel: { type: String, default: "Administrator" },
-        sideBar:{type:Object, default: ""}
+        sideBar: { type: Object, default: "" }
     },
     components: { Commons },
     data() {
@@ -425,10 +426,11 @@ export default {
             unfold: true,
             selected: 0,
             sdf: Date,
-            
+
         }
     },
     setup() {
+
         const open = () => {
             ElMessageBox.confirm(
                 '确定要退出登录吗?',
@@ -444,14 +446,10 @@ export default {
                         type: 'success',
                         message: '您已退出系统，请重新登录'
                     })
-                    // console.log("that.$router=" , window.getCurrentTime)
-                    // that.$router.push({path:'/home ', selected:"2" })
+                    sessionStorage.clear("access_token") //清空sessionStorage中名为userData的值 
                 })
-                .catch(() => {
-                    ElMessage({
-                        type: 'info',
-                        message: '您的退出操作已撤回',
-                    })
+                .catch((error) => {
+                    console.log(error)
                 })
         }
         return { open }
@@ -486,7 +484,7 @@ export default {
         },
         getCurrentTime() {
             var _this = this;
-            this.sdf = getNowTime(new Date().getTime())     
+            this.sdf = getNowTime(new Date().getTime())
         }
     },
     // lifecycle hooks
