@@ -68,26 +68,26 @@ const router = createRouter({
   routes,
 });
 
-router.beforeEach((to, from, next) => {
-  // 判断该路由是否需要登录权限
-  if (to.meta.requireAuth) {
-    //如果token不存在，就跳到首页
-    if (sessionStorage.getItem("access_token")) next();
-    else {
-      next("/user");
-      ElMessage("您未登录！");
-    }
-  } else {
-    // 登录过一次后无需再次登录，直至用户退出登录
-    if (sessionStorage.getItem("access_token")) {
-      if (to.path == "/admin") {
-        next("/home");
-      }
-      if (to.path == "/user") {
-        next("/home2");
-      }
-    } else next();
-  }
-});
+// router.beforeEach((to, from, next) => {
+//   // 判断该路由是否需要登录权限
+//   if (to.meta.requireAuth) {
+//     //如果token不存在，就跳到首页
+//     if (sessionStorage.getItem("access_token")) next();
+//     else {
+//       next("/user");
+//       ElMessage("您未登录！");
+//     }
+//   } else {
+//     // 登录过一次后无需再次登录，直至用户退出登录
+//     if (sessionStorage.getItem("access_token")) {
+//       if (to.path == "/admin") {
+//         next("/home");
+//       }
+//       if (to.path == "/user") {
+//         next("/home2");
+//       }
+//     } else next();
+//   }
+// });
 
 export default router;

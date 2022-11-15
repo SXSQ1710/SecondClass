@@ -135,7 +135,7 @@ onMounted(() => {
 // 数据
 let queryInput = $ref("")
 let multipleSelection = $ref([])     // 多选
-const dialogFormVisible = $ref(false)
+let dialogFormVisible = $ref(false)
 let formLabelWidth = $ref('20vw')
 let dialogType = $ref('add')
 
