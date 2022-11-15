@@ -7,14 +7,12 @@
 </template>
 
 <script>
-// import NavBar from './components/NavBar.vue'
 
 export default {
   name: 'App',
   data() {
     return {}
   },
-  // components:{NavBar},
   mounted() {
   }
 }
@@ -29,7 +27,7 @@ header {
   margin: 0;
 }
 
-/*定义一个区别于手机的尺寸，宽小于1024px*/
+/* 定义一个区别于手机的尺寸，宽小于800px
 @media (max-width: 1024px) {
   header {
     display: flex;
@@ -42,5 +40,5 @@ header {
     place-items: flex-start;
     flex-wrap: wrap;
   }
-}
+} */
 </style>
