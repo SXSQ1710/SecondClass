@@ -1,14 +1,13 @@
 package com.SecondClass.server;
 
+import cn.dev33.satoken.config.SaTokenConfig;
+import cn.dev33.satoken.stp.StpUtil;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.lang.UUID;
 import cn.hutool.json.JSONUtil;
 import com.SecondClass.entity.*;
 import com.SecondClass.entity.Class;
-import com.SecondClass.entity.R_entity.R_ActivityApplication;
-import com.SecondClass.entity.R_entity.R_Activity_Participation;
-import com.SecondClass.entity.R_entity.R_SignIn;
-import com.SecondClass.entity.R_entity.R_Student;
+import com.SecondClass.entity.R_entity.*;
 import com.SecondClass.mapper.*;
 import com.SecondClass.utils.DateUtils;
 import com.SecondClass.utils.QrCodeUtils;
@@ -56,6 +55,8 @@ public class ActivityServerImpl implements IActivityServer{
     UserMapper userMapper;
     @Resource
     ClassMapper classMapper;
+    @Resource
+    OrganizationAppShiMapper organizationAppShiMapper;
     @Resource
     StringRedisTemplate stringRedisTemplate;
     @Resource
@@ -679,5 +680,41 @@ public class ActivityServerImpl implements IActivityServer{
         }
         page.setRecords(list);
         return Response.success(ResponseStatus.SUCCESS,page);
+    }
+
+
+    @Override
+    public Response sendInfoToOrganization(R_ShiAppInfo info) {
+        //1.获得具体某场活动的Aid来判断时长类型
+        //1.1 通过aid查询活动
+        Long aid = info.getAid();
+
+        Activity activity = redisUtils.queryForValue(RedisKeyName.ACTIVITY, aid.toString(),Activity.class,5L, TimeUnit.MINUTES, true,
+                (id) -> {
+                    QueryWrapper<Activity> queryWrapper = new QueryWrapper<>();
+                    queryWrapper.eq("aid", aid);
+                    return activityMapper.selectOne(queryWrapper);
+                });
+        //1。2 获得市场类型
+        Long sid = activity.getAShichangType();
+
+        //2.存入组织申请时长表
+//        Long uid =(Long) StpUtil.getLoginId();
+
+        OrganizationAppShi  organizationAppShi = OrganizationAppShi.builder().uid(1L)
+                .sid(sid)
+                .shiAppDescription(info.getShiAppDescription())
+                .shiAppAttachment(info.getShiAppAttachment())
+                .shiAppStatus(0).build();
+
+
+        int i = organizationAppShiMapper.insert(organizationAppShi);
+
+        if(i != 1) throw new IllegalArgumentException();
+
+        /**
+         * todo 这里状态码晚点改
+         */
+        return Response.success(ResponseStatus.SUCCESS);
     }
 }
