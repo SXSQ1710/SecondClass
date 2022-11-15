@@ -695,13 +695,16 @@ public class ActivityServerImpl implements IActivityServer{
                     queryWrapper.eq("aid", aid);
                     return activityMapper.selectOne(queryWrapper);
                 });
+
+        if(activity == null) throw new IllegalArgumentException();
+
         //1。2 获得市场类型
         Long sid = activity.getAShichangType();
 
         //2.存入组织申请时长表
-//        Long uid =(Long) StpUtil.getLoginId();
 
-        OrganizationAppShi  organizationAppShi = OrganizationAppShi.builder().uid(1L)
+        Long uid = Long.valueOf((String) StpUtil.getLoginId());
+        OrganizationAppShi  organizationAppShi = OrganizationAppShi.builder().uid(uid)
                 .sid(sid)
                 .shiAppDescription(info.getShiAppDescription())
                 .shiAppAttachment(info.getShiAppAttachment())
@@ -712,9 +715,6 @@ public class ActivityServerImpl implements IActivityServer{
 
         if(i != 1) throw new IllegalArgumentException();
 
-        /**
-         * todo 这里状态码晚点改
-         */
-        return Response.success(ResponseStatus.SUCCESS);
+        return Response.success(ResponseStatus.SUBMIT_SHIAPPINFO_SUCCESS);
     }
 }

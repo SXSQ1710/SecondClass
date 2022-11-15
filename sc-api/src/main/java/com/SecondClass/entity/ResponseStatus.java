@@ -86,7 +86,10 @@ public enum ResponseStatus {
     CREATE_USER_SUCCESS("8-200","用户账号导入成功"),
     CREATE_USER_FAIL("8-400","用户账号导入失败"),
     CHANGE_USERPWD_SUCCESS("8-200","用户密码修改成功"),
-    CHANGE_USERPWD_FAIL("8-400","用户密码修改失败");
+    CHANGE_USERPWD_FAIL("8-400","用户密码修改失败"),
+
+    SUBMIT_SHIAPPINFO_SUCCESS("9-200","提交有效信息给校团委成功"),
+    SUBMIT_SHIAPPINFO_FAIL("9-400","提交有效信息给校团委失败");
 
     private final String responseStatus;
 
