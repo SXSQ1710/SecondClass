@@ -4,6 +4,7 @@ package com.SecondClass.controller;
 import com.SecondClass.entity.*;
 import com.SecondClass.entity.R_entity.R_ActivityApplication;
 
+import com.SecondClass.entity.R_entity.R_ShiAppInfo;
 import com.SecondClass.entity.R_entity.R_SignIn;
 import com.SecondClass.server.ActivityServerImpl;
 
@@ -111,4 +112,9 @@ public class ActivityController {
         return activityServer.getParticipationByUid(uid,page);
     }
 
+    @PostMapping("/sendInfoToOrganization")
+    public Response sendInfoToOrganization(@RequestBody R_ShiAppInfo info){
+
+        return activityServer.sendInfoToOrganization(info);
+    }
 }

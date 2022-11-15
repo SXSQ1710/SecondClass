@@ -2,6 +2,7 @@ package com.SecondClass.server;
 
 import com.SecondClass.entity.Participation;
 import com.SecondClass.entity.R_entity.R_ActivityApplication;
+import com.SecondClass.entity.R_entity.R_ShiAppInfo;
 import com.SecondClass.entity.R_entity.R_SignIn;
 import com.SecondClass.entity.Response;
 import com.SecondClass.entity.User;
@@ -126,4 +127,11 @@ public interface IActivityServer {
      * @return
      */
     Response getParticipationByUid(String uid,Page page);
+
+    /**
+     * 组织提交有效参与人员的信息给校团委。
+     * @param info
+     * @return
+     */
+    Response sendInfoToOrganization(R_ShiAppInfo info);
 }
