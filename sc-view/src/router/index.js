@@ -1,6 +1,6 @@
 import { ElMessage } from "element-plus";
 import { createRouter, createWebHistory } from "vue-router";
-
+import NotFound from '@/components/404.vue'
 const routes = [
   {
     path: "/",
@@ -60,6 +60,11 @@ const routes = [
         },
       },
     ],
+  },
+  {
+    path:'/:pathMatch(.*)*',
+    name: 'NotFound',
+    component:NotFound
   },
 ];
 
