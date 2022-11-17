@@ -8,7 +8,7 @@
         <div class="query-box">
             <div class="query-btn">
                 <!-- <i class="bx bx-search"></i> -->
-                <el-input v-model="queryInput" placeholder="请输入XX名称查询" @input="handleQueryInput"></el-input>
+                <el-input v-model="queryInput" placeholder="请输入组织ID或名称" @input="handleQueryInput"></el-input>
                 <el-button class="box_btn" type="primary" text @click="handleQueryName(queryInput)">
                     搜索
                 </el-button>
@@ -23,21 +23,30 @@
                 </el-button>
             </div>
         </div>
+
+        <!-- 刷新数据 -->
+        <div class="refresh_btn">
+            <!-- 当前共有多少条数据 -->
+            <el-tooltip content="更新列表数据">
+                <i class='bx bx-refresh bx-flip-vertical' @click="all"></i>
+            </el-tooltip>
+            <span>当前共有{{ totalValue }}条数据</span>
+
+        </div>
+
         <!-- 表格 -->
         <el-scrollbar max-height="55vh">
             <el-table border stripe :data="tableData" ref="mutipleTableRef" style="width: 100%"
-                
                 @selection-change="handleSelectionChange">
                 <!-- 多行选择器 -->
                 <el-table-column type="selection" width="55" />
                 <!-- fixed 属性配置，固定列-->
                 <el-table-column prop="oid" label="组织ID" width="120" :header-row-style="headerCellStyle" />
-                <el-table-column prop="oname" label="组织名字" width="120" />
+                <el-table-column prop="oname" label="组织名称" width="200" />
                 <el-table-column prop="uid" label="负责人ID" width="120" />
-                <el-table-column prop="uname" label="负责人姓名" width="120" />
-                <el-table-column prop="ocampus" label="所属校区" width="120" />
-                <el-table-column prop="odescription" label="组织概述" width="200" />
-                <el-table-column prop="superior_organization" label="单位" width="200" />
+                <el-table-column prop="campus" label="所属校区" width="120" />
+                <el-table-column prop="odescription" label="组织概述" width="300" />
+                <el-table-column prop="superior_organization" label="上级单位" width="300" />
                 <el-table-column fixed="right" label="操作" width="180">
                     <template #default="scope">
                         <el-button link type="primary" size="small" @click="handleDetail(scope.row)">详情</el-button>
@@ -48,12 +57,6 @@
             </el-table>
         </el-scrollbar>
 
-        <!-- 刷新数据 -->
-        <el-tooltip content="更新列表数据">
-            <div class="refresh_btn" @click="all">
-                <i class='bx bx-refresh bx-flip-vertical'></i>
-            </div>
-        </el-tooltip>
 
         <!-- 弹窗 -->
         <el-dialog v-model="dialogFormVisible" :title="dialogType == 'add' ? '新增' : dialogType == 'edit' ? '编辑' : '详情'"
@@ -75,8 +78,8 @@
                 <el-form-item class="once" label="联系方式" prop="phone">
                     <el-input @keyup.native.enter v-model="form.phone" />
                 </el-form-item>
-                <el-form-item label="所属校区" prop="ocampus">
-                    <el-select v-model="form.ocampus" placeholder="所属校区">
+                <el-form-item label="所属校区" prop="campus">
+                    <el-select v-model="form.campus" placeholder="所属校区">
                         <el-option label="龙洞校区" value="龙洞校区" />
                         <el-option label="大学城校区" value="大学城校区" />
                         <el-option label="东风路校区" value="东风路校区" />
@@ -134,6 +137,7 @@ let queryInput = $ref("")
 let multipleSelection = $ref([])     // 多选
 const dialogFormVisible = $ref(false)
 let formLabelWidth = $ref('20vw')
+let totalValue = $ref("0")
 let dialogType = $ref('add')
 
 let form = $ref({
@@ -142,20 +146,19 @@ let form = $ref({
     phone: '',
     oid: '',
     oname: '',
-    ocampus: '',
+    campus: '',
     odescription: '',
     superior_organization: '',
 })
 
 let tableData = $ref([
     {
-        id: '1',
         uid: '',
         uname: '',
         phone: '',
         oid: '',
         oname: '篮球俱乐部',
-        ocampus: '龙洞校区',
+        campus: '龙洞校区',
         odescription: 'welcome to join us！',
         superior_organization: '体育部',
     }
@@ -165,17 +168,18 @@ let tableDataCopy = Object.assign(tableData)
 
 // 方法
 const all = () => {
-    axios.get('http://localhost/select_org').then(res => {
-        tableData = res.data;//数据传递到页面数组
+    axios.get('http://localhost:8083/api/manage/getAllOrg/1').then(res => {
+        tableData = res.data.data;//数据传递到页面数组
+        totalValue = tableData.length
+
         tableDataCopy = Object.assign(tableData)
-        console.log("数据查询成功" + res.data)
     }).catch(err => {
         console.log("获取数据失败" + err);
     })
 }
 // 删除按钮
-let handleDelete = ({ id }) => {
-    let index = tableData.findIndex(item => item.id == id)
+let handleDelete = (row) => {
+    let index = tableData.findIndex(item => item.oid == row.oid)
     // 从index位置开始删除tableData中的1个元素
     tableData.splice(index, 1)
 }
@@ -186,14 +190,13 @@ let handelCheckDelete = () => {
 //搜索，模糊查询
 let handleQueryInput = (val) => {
     queryInput = val
-    tableData = tableDataCopy.filter(item => (item.oname).toLowerCase().match(val.toLowerCase()) || (item.oid).toLowerCase().match(val.toLowerCase()))
+    tableData = tableDataCopy.filter(item => (item.oname).toString().match(val.toLowerCase()) || (item.oid).toString().match(val.toLowerCase()))
 }
 //搜索，模糊查询
-let handleQueryName = (val) => {
+let handleQueryName = () => {
     // 浅拷贝一层tableData，防止数据搜索匹配不上
-    tableData = tableDataCopy.filter(item => (item.oname).toLowerCase().match(val.toLowerCase()) || (item.oid).toLowerCase().match(val.toLowerCase()))
+    tableData = tableDataCopy.filter(item => (item.oname).toString().match(val.toLowerCase()) || (item.oid).toString().match(val.toLowerCase()))
 }
-
 // 新增提交
 let handleCheckAdd = (_res) => {
     dialogFormVisible = false // 关闭弹窗
@@ -210,7 +213,7 @@ let handleCheckEdit = () => {
     //1. 拿到数据 form = { ...row }
     //2. 添加到table
     let index = tableData.findIndex(item => item.id == form.id)
-    // 从index位置开始删除tableData中的1个元素
+    // 修改表格数据
     tableData[index] = form
 }
 
@@ -243,7 +246,6 @@ const handleSelectionChange = (val) => {
     val.forEach(element => {
         multipleSelection.push(element)
     });
-    console.log(val)
 }
 // 多选删除
 let handleMultiDelete = () => {
@@ -274,7 +276,7 @@ const rules = $ref({
         { min: 11, max: 11, message: '请正确填写13位手机号' }
         // 限制联系方式为11位手机号
     ],
-    ocampus: [
+    campus: [
         {
             message: '请选择您的所属校区',
             trigger: 'change',
@@ -383,6 +385,13 @@ const headerCellStyle = ({ row, rowIndex }) => {
     bottom: 10vh;
     cursor: pointer;
     z-index: 1;
+    display: flex;
+    flex-direction: row-reverse;
+}
+
+.refresh_btn>span {
+    transform: translate(-50px, 0);
+    cursor: initial;
 }
 
 .bx-refresh {

@@ -4,17 +4,19 @@
 </template>
   
 <script>
-  import AdHome from '../adMain/index.vue'
-  import TopMenu from '../mainItem/topmenu.vue'
+import AdHome from '../adMain/index.vue'
+import TopMenu from '../mainItem/topmenu.vue'
+import { ElMessage } from "element-plus";
 
-  export default {
+import axios from 'axios'
+export default {
     name: 'pageHome',
     data() {
         return {
-            uname : "小张",
-            ulevel: "管理员",
+            uname: "",
+            ulevel: "",
             uImage: "/src/assets/img.png",
-            toptip:"后台管理系统",
+            toptip: "后台管理系统",
             sideBar: {
                 list: [{
                     pagePath: '/wode',
@@ -44,13 +46,30 @@
             }
         }
     },
-    components:{AdHome,TopMenu},
+    components: { AdHome, TopMenu },
     computed: {
     },
     mounted() {
+        let _this = this;
+        let _uid = sessionStorage.getItem("uid")
+        axios.get('http://localhost:8083/api/manage/user/' + _uid)
+            .then((res) => {
+                if (res.data['code'] == '7-200') {//这个data 是接收的resolve参数--
+                    _this.uname = res.data.data.uname
+                    if (res.data.data.oid[1] == 1)
+                        _this.ulevel = "管理员"
+                    else {
+                        _this.ulevel = "学生";
+                        _this.$router.push("/home2")
+                    }
+                }
+            }).catch((err) => {
+                console.log(err)
+                ElMessage({ message: err.response.data.msg, type: 'error' })
+            })
     }
-  }
-  </script>
-  <style>
-  
-  </style>
+}
+</script>
+<style>
+
+</style>

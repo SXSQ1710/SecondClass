@@ -59,7 +59,7 @@
                 <Commons :selected=selected></Commons>
             </div>
             <div class="text">
-                当前时间为：{{ sdf }}
+                当前时间：{{ sdf }}
             </div>
         </section>
     </menu>
