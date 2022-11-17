@@ -8,6 +8,9 @@ import  'element-plus/dist/index.css'       // 引入样式文件
 import "./assets/iconfonts/iconfont.css"
 // // 引入vuex
 // import store from './store/store'
+// // 引入windi.css清除默认样式
+// import 'virtual:windi.css'
+
 // 引入路由配置
 import router from './router'
 
@@ -18,7 +21,6 @@ Vue.config.productionTip = false
 Vue.use(ElementPlus, {
     locale: zhCn,
   })
-import 'virtual:windi.css'
 Vue.use(router)
 // Vue.use(store)
 
