@@ -18,6 +18,7 @@ Vue.config.productionTip = false
 Vue.use(ElementPlus, {
     locale: zhCn,
   })
+import 'virtual:windi.css'
 Vue.use(router)
 // Vue.use(store)
 
