@@ -1,6 +1,8 @@
 package com.SecondClass.server;
 
+import cn.dev33.satoken.stp.StpUtil;
 import com.SecondClass.entity.*;
+import com.SecondClass.entity.R_entity.R_ShiChang;
 import com.SecondClass.mapper.ActivityMapper;
 import com.SecondClass.mapper.ParticipationMapper;
 import com.SecondClass.mapper.ShiChangMapper;
@@ -80,4 +82,17 @@ public class ShiChangServerImpl implements IShiChangServer {
         return Response.success(ResponseStatus.SUCCESS,ret);
     }
 
+    @Override
+    public Response queryAllGroupBySid() {
+        Long uid = Long.valueOf((String) StpUtil.getLoginId());
+        List<R_ShiChang>  list = shiChangMapper.queryAllGroupBySid(uid);
+        return Response.success(ResponseStatus.SUCCESS,list);
+    }
+
+    @Override
+    public Response queryAllGroupBySidAndTime(Date startTime, Date endTime) {
+        Long uid = Long.valueOf((String) StpUtil.getLoginId());
+        List<R_ShiChang>  list = shiChangMapper.queryAllGroupBySidAndTime(uid,startTime,endTime);
+        return Response.success(ResponseStatus.SUCCESS,list);
+    }
 }

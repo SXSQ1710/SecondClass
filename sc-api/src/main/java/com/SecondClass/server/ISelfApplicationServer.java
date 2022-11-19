@@ -36,4 +36,11 @@ public interface ISelfApplicationServer{
      * @return Response
      */
     Response getMySelfApplication(Integer uid, Page<SelfApplication> page);
+
+    /**
+     * 修改表格
+     * @param selfApplication
+     * @return
+     */
+    Response updateSelfApplication(SelfApplication selfApplication);
 }

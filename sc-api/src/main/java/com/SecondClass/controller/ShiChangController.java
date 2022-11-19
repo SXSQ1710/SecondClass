@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
+import java.util.Date;
 
 /**
  * @title: ShiChangController
@@ -42,5 +43,16 @@ public class ShiChangController {
                                          @PathVariable("pageSize") Integer pageSize) {
         Page<Participation> page = new Page<>(pageNo,pageSize);
         return shiChangServer.getMyParticipation(uid,page);
+    }
+
+    @GetMapping("/queryAllGroupBySid")
+    public Response queryAllGroupBySid() {
+        return shiChangServer.queryAllGroupBySid();
+    }
+
+    @GetMapping("/queryAllGroupBySidAndTime/{startTime}/{endTime}")
+    public Response queryAllGroupBySidAndTime(@PathVariable("startTime") Date startTime,
+                                              @PathVariable("endTime") Date endTime) {
+        return shiChangServer.queryAllGroupBySidAndTime(startTime,endTime);
     }
 }
