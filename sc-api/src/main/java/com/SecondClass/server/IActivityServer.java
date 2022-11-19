@@ -88,9 +88,7 @@ public interface IActivityServer {
      */
     Response getSignIn(Long aid, Long uid, Integer type);
 
-    Response signIn(R_SignIn signIn);
-
-    Response signOff(Participation participation);
+    Response signInOrOff(R_SignIn signIn);
 
     /**
      * 查询所有未审核报名人员

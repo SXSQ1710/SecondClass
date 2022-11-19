@@ -55,7 +55,8 @@ export default {
             var _this = this
             var formdata = {
                 uid: this.username,
-                upassword: this.password
+                upassword: this.password,
+                role: 1
             };
             axios.post('http://localhost:8083/api/manage/login', formdata).then((res) => {
                 //处理成功后的逻辑

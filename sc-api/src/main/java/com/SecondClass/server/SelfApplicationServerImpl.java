@@ -89,4 +89,13 @@ public class SelfApplicationServerImpl implements ISelfApplicationServer {
         Page<SelfApplication> ret = selfApplicationMapper.selectPage(page,queryWrapper);
         return Response.success(ResponseStatus.SUCCESS,ret);
     }
+
+    @Override
+    public Response updateSelfApplication(SelfApplication selfApplication) {
+        selfApplication.setSelfAppStatu(1);
+        int i = selfApplicationMapper.updateById(selfApplication);
+
+        if(i != 1) return Response.success(ResponseStatus.ERROR);
+        return Response.success(ResponseStatus.SUCCESS);
+    }
 }

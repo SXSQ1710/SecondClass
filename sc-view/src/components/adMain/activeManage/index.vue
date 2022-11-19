@@ -78,7 +78,7 @@
         </el-scrollbar>
 
         <!-- 弹窗 -->
-        <el-dialog v-model="dialogFormVisible"
+        <el-dialog v-model=dialogFormVisible
             :title="dialogType == 'add' ? '新增' : (dialogType == 'edit' ? '编辑' : '详情')">
             <el-form ref="ruleFormRef" :model="form" :rules="rules" label-width="120px" class="elform-input"
                 size="dafault" status-icon @submit.native.prevent>

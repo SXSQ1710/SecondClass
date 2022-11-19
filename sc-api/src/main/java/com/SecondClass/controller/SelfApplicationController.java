@@ -40,4 +40,11 @@ public class SelfApplicationController {
         return selfApplicationServer.getMySelfApplication(uid,page);
     }
 
+    @PostMapping("/updateSelfApplication")
+    public Response updateSelfApplication(@RequestBody SelfApplication selfApplication){
+        return selfApplicationServer.updateSelfApplication(selfApplication);
+    }
+
+
+
 }
