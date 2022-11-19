@@ -6,7 +6,7 @@ const routes = [
     path: "/",
     name: "default",
     component: () => import("../App.vue"),
-    redirect: "/user",
+    redirect: "/welcome",
     meta: {
       title: "登录页",
     },
@@ -34,9 +34,17 @@ const routes = [
           import("../components/adMain/userManage/MenuBar/index.vue"),
       },
       {
+        path: "/welcome",
+        name: "Welcome",
+        component: () => import("../components/Welcome.vue"),
+        meta: {
+          title: "首页",
+        },
+      },
+      {
         path: "/about",
-        name: "TestItem",
-        component: () => import("../components/Test.vue"),
+        name: "test",
+        component: () => import("../components/mainItem/test.vue"),
         meta: {
           title: "测试",
         },
@@ -73,26 +81,29 @@ const router = createRouter({
   routes,
 });
 
-// router.beforeEach((to, from, next) => {
-//   // 判断该路由是否需要登录权限
-//   if (to.meta.requireAuth) {
-//     //如果token不存在，就跳到首页
-//     if (sessionStorage.getItem("access_token")) next();
-//     else {
-//       next("/user");
-//       ElMessage("您未登录！");
-//     }
-//   } else {
-//     // 登录过一次后无需再次登录，直至用户退出登录
-//     if (sessionStorage.getItem("access_token")) {
-//       if (to.path == "/admin") {
-//         next("/home");
-//       }
-//       if (to.path == "/user") {
-//         next("/home2");
-//       }
-//     } else next();
-//   }
-// });
+router.beforeEach(async (to, from, next) => {
+  const title = to.meta.title ? to.meta.title : "default";
+  document.title = title;
+
+  // 判断该路由是否需要登录权限
+  if (to.meta.requireAuth) {
+    //如果token不存在，就跳到首页
+    if (sessionStorage.getItem("access_token")) next();
+    else {
+      next("/");
+      ElMessage("您未登录！");
+    }
+  } else {
+    // 登录过一次后无需再次登录，直至用户退出登录
+    if (sessionStorage.getItem("access_token")) {
+      if (to.path == "/admin") {
+        next("/home");
+      }
+      if (to.path == "/user") {
+        next("/home2");
+      }
+    } else next();
+  }
+});
 
 export default router;

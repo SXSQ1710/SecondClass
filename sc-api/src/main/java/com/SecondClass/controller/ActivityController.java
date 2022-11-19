@@ -68,14 +68,9 @@ public class ActivityController {
         return activityServer.getSignIn(aid, uid, type);
     }
 
-    @PostMapping("/signIn")
-    public Response signIn(@RequestBody R_SignIn signIn){
-        return activityServer.signIn(signIn);
-    }
-
-    @PostMapping("/signOff")
-    public Response signOff(@RequestBody Participation participation){
-        return activityServer.signOff(participation);
+    @PostMapping("/signInOrOff")
+    public Response signInOrOff(@RequestBody R_SignIn signIn){
+        return activityServer.signInOrOff(signIn);
     }
 
     @GetMapping("/getAllRegisteredUser/{aid}/{pageNo}/{pageSize}")

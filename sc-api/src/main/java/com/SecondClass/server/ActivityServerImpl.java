@@ -12,6 +12,7 @@ import com.SecondClass.utils.DateUtils;
 import com.SecondClass.utils.QrCodeUtils;
 import com.SecondClass.utils.RedisIdWorker;
 import com.SecondClass.utils.RedisUtils;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -27,7 +28,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import java.beans.Transient;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
@@ -327,30 +327,43 @@ public class ActivityServerImpl implements IActivityServer{
     }
 
 
-    private static final DefaultRedisScript<Long> SIGNIN;
+    private static final DefaultRedisScript<Long> SIGN;
 
     static {
-        SIGNIN = new DefaultRedisScript<>();
-        SIGNIN.setLocation(new ClassPathResource("signIn.lua"));
-        SIGNIN.setResultType(Long.class);
+        SIGN = new DefaultRedisScript<>();
+        SIGN.setLocation(new ClassPathResource("signIn.lua"));
+        SIGN.setResultType(Long.class);
     }
 
-    @Override
     @Transactional
-    public Response signIn(R_SignIn signIn) {
+    public Response signInOrOff(R_SignIn signInfo) {
         try {
             //1.从redis中查找临时密钥对应的活动id
-            String uid = signIn.getUid().toString();
-            String aid = stringRedisTemplate.opsForValue().get(RedisKeyName.ACTIVITY_GET_SIGN_IN + signIn.getUuid());
+            String uid = signInfo.getUid().toString();
+            String type = signInfo.getType();
+            String aid;
+            String oldStatus;
+            String status;
+            String typeStr;
+            if (type.equals("1")){
+                aid = stringRedisTemplate.opsForValue().get(RedisKeyName.ACTIVITY_GET_SIGN_IN + signInfo.getUuid());
+                oldStatus = "1"; status = "2"; typeStr = "i";
+            }else if(type.equals("0")){
+                aid = stringRedisTemplate.opsForValue().get(RedisKeyName.ACTIVITY_GET_SIGN_OFF + signInfo.getUuid());
+                oldStatus = "2"; status = "3"; typeStr = "o";
+            }else {
+                return Response.error(ResponseStatus.ACTIVITY_SIGN_FAIL);
+            }
+
             if (StringUtil.isNullOrEmpty(aid)){
                 return Response.error(ResponseStatus.ACTIVITY_SIGN_IN_FAIL_2);
             }else {
 
                 //2. 执行lua脚本
                 Long result = stringRedisTemplate.execute(
-                        SIGNIN,
+                        SIGN,
                         Collections.emptyList(),
-                        aid, uid,"2"
+                        aid, uid, oldStatus, status, typeStr
                 );
 
                 //3. 判断结果是否为0
@@ -361,35 +374,8 @@ public class ActivityServerImpl implements IActivityServer{
                 }
 
 
-                return Response.success(ResponseStatus.ACTIVITY_SIGN_IN_SUCCESS);
+                return Response.success(type.equals("1") ? ResponseStatus.ACTIVITY_SIGN_IN_SUCCESS : ResponseStatus.ACTIVITY_SIGN_OFF_SUCCESS);
             }
-        } catch (IllegalArgumentException i) {
-            i.printStackTrace();
-            return Response.error(ResponseStatus.ACTIVITY_SIGN_IN_FAIL);
-        } catch (DataIntegrityViolationException d) {
-            d.printStackTrace();
-            return Response.error(ResponseStatus.ACTIVITY_SIGN_IN_FAIL);
-        } catch (Exception e) {
-            //其他错误
-            e.printStackTrace();
-            return Response.success(ResponseStatus.ERROR);
-
-        }
-    }
-
-    public Response signOff(Participation participation) {
-        try {
-            UpdateWrapper<Participation> updateWrapper = new UpdateWrapper<>();
-            updateWrapper.eq("aid",participation.getAid()).eq("uid",participation.getUid());
-            updateWrapper.set("participate_status",3);
-            if (participationMapper.update(null,updateWrapper) != 1) throw new IllegalArgumentException();
-            return Response.success(ResponseStatus.ACTIVITY_SIGN_OFF_SUCCESS);
-        } catch (IllegalArgumentException i) {
-            i.printStackTrace();
-            return Response.error(ResponseStatus.ACTIVITY_SIGN_OFF_FAIL);
-        } catch (DataIntegrityViolationException d) {
-            d.printStackTrace();
-            return Response.error(ResponseStatus.ACTIVITY_SIGN_OFF_FAIL);
         } catch (Exception e) {
             //其他错误
             e.printStackTrace();
@@ -466,15 +452,41 @@ public class ActivityServerImpl implements IActivityServer{
         return Response.success(ResponseStatus.SUCCESS,page);
     }
 
+    private static final DefaultRedisScript<Long> modifyRegisterStatusByUid;
 
-    @Override
+    static {
+        modifyRegisterStatusByUid = new DefaultRedisScript<>();
+        modifyRegisterStatusByUid.setLocation(new ClassPathResource("modifyRegisterStatusByUid.lua"));
+        modifyRegisterStatusByUid.setResultType(Long.class);
+    }
+
+    @Transactional
     public Response modifyRegisterStatusByUid(Participation participation) {
         try {
             //审核通过
+            String aid = participation.getAid().toString();
+            String uid = participation.getUid().toString();
+            String status = participation.getParticipateStatus().toString();
             UpdateWrapper<Participation> updateWrapper = new UpdateWrapper<>();
-            updateWrapper.eq("aid",participation.getAid()).eq("uid",participation.getUid());
-            updateWrapper.set("participate_status",participation.getParticipateStatus());
+            updateWrapper.eq("aid",aid).eq("uid",uid);
+            updateWrapper.set("participate_status",status);
             if (participationMapper.update(null,updateWrapper) != 1) throw new IllegalArgumentException();
+
+            //执行lua脚本
+            Long result = stringRedisTemplate.execute(
+                    modifyRegisterStatusByUid,
+                    Collections.emptyList(),
+                    aid, uid,"1"
+            );
+
+            //3. 判断结果是否为0
+            int r = result.intValue();
+            if (r != 0) {
+                //2.1. 不为0，表示没有报名记录
+                return Response.error(ResponseStatus.ADUIT_FAIL);
+            }
+
+
             return Response.success(ResponseStatus.ADUIT_SUCCESS);
         } catch (IllegalArgumentException i) {
             i.printStackTrace();
@@ -491,62 +503,48 @@ public class ActivityServerImpl implements IActivityServer{
 
     @Override
     public Response getAllParticipatedMember(Long aid) {
-        QueryWrapper<Participation> queryWrapper = new QueryWrapper<>();
-        queryWrapper.eq("aid",aid);
-        queryWrapper.eq("participate_status",3);
-        List<Participation> records = participationMapper.selectList(queryWrapper);
 
+        //1.从redis中获取对应活动所有报名人员列表
+        Set<String> userSet = stringRedisTemplate.opsForZSet().range(RedisKeyName.SECOND_KILL_PARTICIPATION + aid, 1, -1);
         List<R_Student> list = new LinkedList<>();
 
-        for (int i = 0; i < records.size(); i++) {
-            Participation participation = (Participation) records.get(i);
-            //1.通过参与表查看报名人员  得到uid后再查询cid
-            //1.1先用uid查询redis得到cid
-            Long uid = participation.getUid();
-            User user;
-            Object userStr = stringRedisTemplate.opsForHash().get("secondclass:user:userList", uid.toString());
-            //1.2 如果redis没有，从数据库查询
-            if( userStr != null){
-                System.out.println("从redis中查询");
-                user = JSONUtil.toBean(userStr.toString(), User.class);
-            }else{
+        Object[] userList = userSet.toArray();
+        for (Object data : userList){
+            //报名人员id
+            String uid = data.toString().split("-")[0];
+            //报名人员活动参与状态
+            String status = data.toString().split("-")[1];
+            //2.参与状态不为3时（签退）跳过，即完成签到签退的人员
+            if (!status.equals("3")) continue;
 
-                QueryWrapper<User> userQueryWrapper = new QueryWrapper<>();
-                userQueryWrapper.eq("uid",uid);
-                System.out.println("从数据库中查询");
-                user = userMapper.selectOne(userQueryWrapper);
-                //将数据库查询结果存入redis
-                stringRedisTemplate.opsForHash().put("secondclass:user:userList",uid.toString(),JSONUtil.toJsonStr(user));
-            }
+            //3.根据uid获取用户信息
+            User user = redisUtils.queryForValue(RedisKeyName.MANAGE_USER, uid, User.class, 60L, TimeUnit.DAYS, false,
+                    (id) -> {
+                        LambdaQueryWrapper<User> userQueryWrapper = new LambdaQueryWrapper<>();
+                        userQueryWrapper.eq(User::getUid, uid);
+                        return userMapper.selectOne(userQueryWrapper);
+                    });
 
-            //2.通过cid查询班级、校区等信息
-            //2.1用cid查询redis中班级信息
-            Long cid = user.getCid();
-            Class aClass;
-            //2.2 从redis中查询,如果没有的话就查询数据库
+            //4.根据cid获取用户的班级信息
+            String cIdStr = user.getCid().toString();
+            Class classInfo = redisUtils.queryForValue(RedisKeyName.MANAGE_CLASS, cIdStr, Class.class, 60L, TimeUnit.DAYS, true,
+                    (id) -> {
+                        QueryWrapper<Class> classQueryWrapper = new QueryWrapper<>();
+                        classQueryWrapper.eq("cid", cIdStr);
+                        return classMapper.selectOne(classQueryWrapper);
+                    });
 
-            String classJson = (String) stringRedisTemplate.opsForHash().get("secondclass:class:classList", cid.toString());
-            if(classJson != null){
-                System.out.println("从redis中查询");
-                aClass = JSONUtil.toBean(classJson, Class.class);
-            }else {
-                QueryWrapper<Class> classQueryWrapper = new QueryWrapper<>();
-                classQueryWrapper.eq("cid",cid);
-                System.out.println("从数据库中查询");
-                aClass = classMapper.selectOne(classQueryWrapper);
-                stringRedisTemplate.opsForHash().put("secondclass:class:classList",cid.toString(),JSONUtil.toJsonStr(aClass));
-            }
             R_Student student = R_Student.builder().uid(user.getUid())
                     .uname(user.getUname())
                     .phone(user.getPhone())
-                    .cname(aClass.getCname())
-                    .grade(aClass.getGrade())
-                    .major(aClass.getMajor())
-                    .college(aClass.getCollege())
-                    .campus(aClass.getCampus()).build();
-
+                    .cname(classInfo.getCname())
+                    .grade(classInfo.getGrade())
+                    .major(classInfo.getMajor())
+                    .college(classInfo.getCollege())
+                    .campus(classInfo.getCampus()).build();
             list.add(student);
         }
+
         return Response.success(ResponseStatus.SUCCESS,list);
     }
 

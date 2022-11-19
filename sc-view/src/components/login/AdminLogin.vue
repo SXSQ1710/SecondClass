@@ -26,7 +26,6 @@
                 <input type="submit" value="登录">
             </div>
         </form>
-
     </div>
 </template>
 
@@ -35,6 +34,9 @@ import { ElMessage } from "element-plus";
 import { h } from 'vue'
 import loginitem from "./LoginItem.vue"
 import axios from "axios"
+import { setUser } from '../../server/api/login'
+import cookies from 'js-cookie'
+
 export default {
     name: 'StuLogin',
     props: {
@@ -45,26 +47,18 @@ export default {
         return {
             username: "",
             password: "",
-            sdf: "https://jxfw.gdut.edu.cn/yzm?d=" + new Date().getTime()
         }
     },
 
     methods: {
         submit() {
             var _this = this
-            let data = {
+            var formdata = {
                 uid: this.username,
-                upassword: this.password
+                upassword: this.password,
+                role: 1
             };
-            _this.$store.dispatch("setUser", JSON.stringify(data));
-
-            axios.get('http://localhost:8083/api/manage/user/' + data.uid).then((res) => {
-                if (res.data['code'] == '7-200') {//这个data 是接收的resolve参数--
-                    sessionStorage.setItem("user", res.data.data)
-                }
-            }).catch((err) => { console.log(err) })
-
-            axios.post('http://localhost:8083/api/manage/login', data).then((res) => {
+            axios.post('http://localhost:8083/api/manage/login', formdata).then((res) => {
                 //处理成功后的逻辑
                 if (res.data['code'] == '1-200') {//这个data 是接收的resolve参数--
                     ElMessage({
@@ -72,16 +66,12 @@ export default {
                             h('span', null, res.data.msg),
                         ]), type: 'success'
                     })
-                    //存储数据到本地
-
-
-                    //将用户名放入sessionStorage中
+                    
+                    cookies.set("satoken",res.data.data.tokenValue,'7d')
                     sessionStorage.setItem("access_token", res.data.data.tokenValue)
-                    //将用户名放入vuex中
-                    _this.$store.dispatch("setToken", res.data.data.tokenValue);
-                    //打印login状态
-                    console.log(_this.$store.state.isLogin);
-                    this.$router.push('/home')
+                    
+                    setUser(formdata)
+                    _this.$router.push("/home#/wode");
                 } else {
                     ElMessage({ message: res.data.msg, type: 'error' })
                 }
@@ -89,9 +79,6 @@ export default {
                 console.log(err);
                 ElMessage('请求错误！')
             })
-
-
-
         }
     },
     // lifecycle hooks

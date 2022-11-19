@@ -25,53 +25,61 @@
         </div>
 
         <!-- 刷新数据 -->
-        <el-tooltip content="更新列表数据">
-            <div class="refresh_btn" @click="all">
-                <i class='bx bx-refresh bx-flip-vertical'></i>
-            </div>
-        </el-tooltip>
+        <div class="refresh_btn">
+            <!-- 当前共有多少条数据 -->
+            <el-tooltip content="更新列表数据">
+                <i class='bx bx-refresh bx-flip-vertical' @click="all"></i>
+            </el-tooltip>
+            <span>当前共有{{ totalValue }}条数据</span>
+        </div>
 
-        <!-- 表格 -->
-        <el-table border :data="tableData" ref="mutipleTableRef" style="width: 100%"
-            @selection-change="handleSelectionChange">
-            <!-- 多行选择器 -->
-            <el-table-column type="selection" width="55" />
-            <!-- fixed 属性配置，固定列-->
-            <el-table-column prop="aid" label="活动ID" sortable width="120" align="center" header-align="center"/>
+        <el-scrollbar max-height="55vh" always>
 
-            <el-table-column prop="apic" label="封面图" sortable width="120" align="center" header-align="center">
-                <!-- <template #default="scope"> -->
-                <template v-slot="scope">
-                    <el-image style="width: 100%; height: 100px" :src="scope.row.apic" preview-teleported="true"
-                        :preview-src-list="[scope.row.apic]" :key="scope.row.aid">
-                        <div slot="error" class="image-slot">
-                            <i class="el-icon-picture-outline"></i>
-                        </div>
-                    </el-image>
-                </template>
-            </el-table-column>
+            <!-- 表格 -->
+            <el-table border :data="tableData" ref="mutipleTableRef" style="width: 100%"
+                @selection-change="handleSelectionChange">
+                <!-- 多行选择器 -->
+                <el-table-column type="selection" width="55" />
+                <!-- fixed 属性配置，固定列-->
+                <el-table-column prop="aid" label="活动ID" sortable width="120" align="center" header-align="center" />
 
-            <el-table-column prop="aname" label="活动名称" sortable width="200" header-align="center" />
-            <el-table-column prop="a_oid" label="举办单位ID" width="100" header-align="center" />
-            <el-table-column prop="oname" label="举办单位" sortable width="200" header-align="center" />
-            <el-table-column prop="astatus" label="活动状态" width="200" header-align="center" />
-            <el-table-column prop="a_uid" label="申请人" sortable width="120" header-align="center" />
-            <el-table-column prop="a_register_open" label="报名时间" sortable width="200" header-align="center" />
-            <el-table-column prop="a_hold_start" label="举办时间" sortable width="200" header-align="center" />
-            <el-table-column prop="a_address" label="举办地点" width="250" header-align="center" />
-            <el-table-column prop="a_shichang_type" label="时长类型" sortable width="120" header-align="center" />
-            <el-table-column prop="a_shichang_num" label="时长" sortable width="120" header-align="center" />
-            <el-table-column fixed="right" label="操作" width="180" header-align="center">
-                <template #default="scope">
-                    <el-button link type="primary" size="small" @click="handleDetail(scope.row)">详情</el-button>
-                    <el-button link type="primary" size="small" @click="handleEdit(scope.row)">编辑</el-button>
-                    <el-button link type="danger" size="small" @click="handleDelete(scope.row)">删除</el-button>
-                </template>
-            </el-table-column>
-        </el-table>
+                <el-table-column prop="apic" label="封面图" sortable width="120" align="center" header-align="center">
+                    <!-- <template #default="scope"> -->
+                    <template v-slot="scope">
+                        <el-image style="width: 100%; height: 100px" :src="scope.row.apic" preview-teleported="true"
+                            :preview-src-list="[scope.row.apic]" :key="scope.row.aid">
+                            <div slot="error" class="image-slot">
+                                <i class="el-icon-picture-outline"></i>
+                            </div>
+                        </el-image>
+                    </template>
+                </el-table-column>
+
+                <el-table-column prop="aname" label="活动名称" sortable width="200" header-align="center" />
+                <el-table-column prop="a_oid" label="组织ID" sortable width="100" header-align="center" />
+                <el-table-column prop="astatus" label="活动状态" sortable width="200" header-align="center" />
+                <el-table-column prop="a_uid" label="申请人" sortable width="120" header-align="center" />
+                <el-table-column prop="a_register_open" label="报名时间" sortable width="200" header-align="center" />
+                <el-table-column prop="a_hold_start" label="举办时间" sortable width="200" header-align="center" />
+                <el-table-column prop="a_address" label="举办地点" width="250" header-align="center" />
+                <el-table-column prop="A_shichang_type" label="时长类型" sortable width="120" header-align="center" />
+                <el-table-column prop="a_shichang_num" label="时长" sortable width="120" header-align="center" />
+                <el-table-column prop="adescription" label="活动介绍" width="200" header-align="center" />
+
+                <el-table-column fixed="right" label="操作" width="180" header-align="center">
+                    <template #default="scope">
+                        <el-button link type="primary" size="small" @click="handleDetail(scope.row)">详情</el-button>
+                        <el-button link type="primary" size="small" @click="handleEdit(scope.row)">编辑</el-button>
+                        <el-button link type="danger" size="small" @click="handleDelete(scope.row)">删除</el-button>
+                    </template>
+                </el-table-column>
+            </el-table>
+
+        </el-scrollbar>
+
         <!-- 弹窗 -->
-        <el-dialog v-model="dialogFormVisible"
-            :title="dialogType == 'add' ? '新增' : (dialogType == 'edit' ? '编辑' : '详情')" >
+        <el-dialog v-model=dialogFormVisible
+            :title="dialogType == 'add' ? '新增' : (dialogType == 'edit' ? '编辑' : '详情')">
             <el-form ref="ruleFormRef" :model="form" :rules="rules" label-width="120px" class="elform-input"
                 size="dafault" status-icon @submit.native.prevent>
                 <el-form-item class="once" label="活动ID" prop="aid">
@@ -82,15 +90,12 @@
                     <el-input @keyup.native.enter v-model="form.aname" />
                 </el-form-item>
                 <el-form-item class="once" label="活动状态" prop="astatus">
-                    <el-select v-model="form.astatus" placeholder="">
-                        <el-option label="等待报名" value="等待报名" />
-                        <el-option label="报名中" value="报名中" />
-                        <el-option label="待开始" value="待开始" />
-                        <el-option label="已结束" value="已结束" />
+                    <el-select v-model="form.astatus" placeholder=" " :disabled="true">
                     </el-select>
                 </el-form-item>
                 <el-form-item class="once" label="举办单位" prop="oname">
-                    <el-input @keyup.native.enter v-model="form.oname" />
+                    <el-select v-model="form.oname" placeholder=" " :disabled="true">
+                    </el-select>
                 </el-form-item>
                 <el-form-item class="once" label="申请人" prop="a_uid" placeholder="请填写用户ID">
                     <el-input @keyup.native.enter v-model="form.a_uid" />
@@ -148,28 +153,24 @@
                     <el-switch v-model="form.delivery" title="不勾选则默认保存为草稿" />
                 </el-form-item>
 
-                <el-form-item label="活动类型" prop="a_shichang_type">
-                    <el-radio-group v-model="form.a_shichang_type">
-                        <el-radio label="文体艺术" name="a_shichang_type" />
-                        <el-radio label="双创实训" name="a_shichang_type" />
-                        <el-radio label="理想信念" name="a_shichang_type" />
-                        <el-radio label="实践志愿" name="a_shichang_type" />
+                <el-form-item label="活动类型" prop="A_shichang_type">
+                    <el-radio-group v-model="form.A_shichang_type">
+                        <el-radio label="文体艺术" name="A_shichang_type" value="1" />
+                        <el-radio label="双创实训" name="A_shichang_type" value="2" />
+                        <el-radio label="理想信念" name="A_shichang_type" value="3" />
+                        <el-radio label="实践志愿" name="A_shichang_type" value="4" />
                     </el-radio-group>
                 </el-form-item>
 
-                <el-form-item label="有无宣传用品" prop="resource">
-                    <el-radio-group v-model="form.resource">
-                        <el-radio label="有" title="如：宣传单、喷画、横幅等" />
-                        <el-radio label="无" />
-                    </el-radio-group>
+                <el-form-item label="发放时长数目" class="once" prop="a_shichang_num">
+                    <el-input v-model.number="form.a_shichang_num" autocomplete="off" />
                 </el-form-item>
 
                 <el-form-item class="once" label="活动简介" prop="adescription">
                     <el-input v-model="form.adescription" type="textarea" />
                 </el-form-item>
             </el-form>
-
-
+            <!-- 底部按钮 -->
             <template #footer>
                 <span class="dialog-footer">
                     <!-- <el-button type="primary" @click="dialogFormVisible = false"> -->
@@ -207,8 +208,10 @@ onMounted(() => {
 // 数据
 let queryInput = $ref("")
 let multipleSelection = $ref([])     // 多选
+let totalValue = $ref("0")
 let dialogFormVisible = $ref(false)
 let formLabelWidth = $ref('20vw')
+
 let dialogType = $ref('add')
 
 let form = $ref({
@@ -225,60 +228,12 @@ let form = $ref({
     delivery: false,
     astatus: '',
     a_shichang_num: '',
-    a_shichang_type: '',
+    A_shichang_type: '',
     a_address: ''
 })
 
 let tableData = $ref([
-    {
-        aid: '1',
-        aname: '11.04核酸志愿服务活动1',
-        adescription: '你好我好大家好。包餐。',
-        astatus: '1',
-        a_register_open: '2022-11-03 10:00:00',
-        a_register_close: '2022-11-03 23:59:59',
-        a_limitted_number: '120',
-        oname: '青年志愿者协会',
-        a_uid: '3220003600',
-        a_hold_start: '2022-11-04 8:00:00',
-        a_hold_end: '2022-11-04 12:00:00',
-        delivery: true,
-        a_shichang_num: '2',
-        a_shichang_type: '1',
-        a_address: '龙洞校区行政楼',
-    }, {
-        aid: '2',
-        aname: '11.04核酸志愿服务活动2',
-        adescription: '你好我好大家好。包餐。',
-        astatus: '3',
-        a_register_open: '2022-11-03 18:00:00',
-        a_register_close: '2022-11-03 23:59:59',
-        a_limitted_number: '12',
-        oname: '青年志愿者协会',
-        a_uid: '3220003600',
-        a_hold_start: '2022-11-04 14:00:00',
-        a_hold_end: '2022-11-04 16:00:00',
-        delivery: true,
-        a_shichang_num: '2',
-        a_shichang_type: '2',
-        a_address: '龙洞校区行政楼',
-    }, {
-        aid: '3',
-        aname: '11.05核酸志愿服务活动3',
-        adescription: '你好我好大家好。包餐。',
-        astatus: '4',
-        a_register_open: '2022-11-04 10:00:00',
-        a_register_close: '2022-11-04 23:59:59',
-        a_limitted_number: '10',
-        oname: '青年志愿者协会',
-        a_uid: '3220003600',
-        a_hold_start: '2022-11-05 8:00:00',
-        a_hold_end: '2022-11-05 12:00:00',
-        delivery: true,
-        a_shichang_num: '2',
-        a_shichang_type: '4',
-        a_address: '龙洞校区行政楼',
-    },
+
 ])
 
 let tableDataCopy = []
@@ -295,15 +250,11 @@ const tableHeaderColor = ({ row, column, rowIndex, columnIndex }) => {
 }
 
 const all = () => {
-    // 以下2行代码是连接本地数据库sql的操作 
-    axios.get('http://localhost/select_activity').then(res => {
-        let _tableData = res.data
-        // 以下2行代码是连接spingboot的操作 
-    // axios.get('http://localhost:8083/api/activity/getAll/1/10').then(res => {
-    //     console.log(res.data)
-    //     let _tableData = res.data.data.records
-        console.log("数据查询成功", _tableData)
+    axios.get('http://localhost:8083/api/activity/getAll/1/10').then(res => {
+        let _tableData = res.data.data.records
         let _nowTime = getNowTime()
+        totalValue = _tableData.length
+
         for (let i = 0; i < _tableData.length; i++) {
             // 匹配活动Status
             if (_tableData[i].astatus == 2) {
@@ -319,29 +270,27 @@ const all = () => {
                 _tableData[i].astatus = '拒绝申请'
             }
             // 匹配活动时长Type
-            if (_tableData[i].a_shichang_type == 1) {
-                _tableData[i].a_shichang_type = '文体艺术'
-            } else if (_tableData[i].a_shichang_type == 2) {
-                _tableData[i].a_shichang_type = '双创实训'
-            } else if (_tableData[i].a_shichang_type == 3) {
-                _tableData[i].a_shichang_type = '理想信念'
-            } else if (_tableData[i].a_shichang_type == 4) {
-                _tableData[i].a_shichang_type = '实践志愿'
+            if (_tableData[i].A_shichang_type == 1) {
+                _tableData[i].A_shichang_type = '文体艺术'
+            } else if (_tableData[i].A_shichang_type == 2) {
+                _tableData[i].A_shichang_type = '双创实训'
+            } else if (_tableData[i].A_shichang_type == 3) {
+                _tableData[i].A_shichang_type = '理想信念'
+            } else if (_tableData[i].A_shichang_type == 4) {
+                _tableData[i].A_shichang_type = '实践志愿'
             }
 
-            tableData.push(_tableData[i])
-            tableDataCopy.push(_tableData[i])
-
-            console.log("数据查询成功", _tableData[i])
         }
+        tableData = _tableData
+        tableDataCopy = _tableData
 
     }).catch(err => {
         console.log("获取数据失败" + err);
     })
 }
 // 删除按钮
-let handleDelete = ({ id }) => {
-    let index = tableData.findIndex(item => item.id == id)
+let handleDelete = ({ aid }) => {
+    let index = tableData.findIndex(item => item.aid == aid)
     // 从index位置开始删除tableData中的1个元素
     tableData.splice(index, 1)
 }
@@ -352,12 +301,12 @@ let handelCheckDelete = () => {
 //搜索，模糊查询
 let handleQueryInput = (val) => {
     queryInput = val
-    tableData = tableDataCopy.filter(item => (item.aid).toLowerCase().match(val.toLowerCase()) || (item.aname).toLowerCase().match(val.toLowerCase()))
+    tableData = tableDataCopy.filter(item => (item.aid).toString().match(val) || (item.aname).match(val))
 }
 //搜索，模糊查询
 let handleQueryName = (val) => {
     // 浅拷贝一层tableData，防止数据搜索匹配不上
-    tableData = tableDataCopy.filter(item => (item.aid).toLowerCase().match(val.toLowerCase()) || (item.aname).toLowerCase().match(val.toLowerCase()))
+    tableData = tableDataCopy.filter(item => (item.aid).toString().match(val) || (item.aname).match(val))
 }
 
 // 新增提交
@@ -484,20 +433,20 @@ const rules = $ref({
             trigger: 'change',
         },
     ],
-    type: [
+    A_shichang_type: [
         {
-            type: 'array',
+            type: 'int',
             required: true,
-            message: "请选择至少一个类型",
+            message: "请选择一个类型",
             trigger: 'change',
         },
     ],
-    resource: [
+    a_shichang_num: [
         {
             required: true,
-            message: '请选择有无宣传用品',
+            message: '请正确填写时长数目',
             trigger: 'change',
-        },
+        }, { type: 'number', min: 1, max: 30, message: '请输入1-30的数字' }
     ],
     desc: [
         { required: true, message: '请填写活动简介', trigger: 'blur' },
@@ -601,6 +550,13 @@ const submitAddForm = async (formEl) => {
     bottom: 10vh;
     cursor: pointer;
     z-index: 1;
+    display: flex;
+    flex-direction: row-reverse;
+}
+
+.refresh_btn>span {
+    transform: translate(-50px, 0);
+    cursor: initial;
 }
 
 .bx-refresh {

@@ -63,11 +63,12 @@ public enum ResponseStatus {
     ACTIVITY_GET_SIGN_IN_FAIL_2("5-400","未在活动进行时间！"),
     ACTIVITY_GET_SIGN_IN_FAIL_3("5-400","活动审核为通过，请耐心等待活动审核通过！"),
     ACTIVITY_SIGN_IN_SUCCESS("5-200","签到成功"),
-    ACTIVITY_SIGN_IN_FAIL("5-400","签到失败"),
-    ACTIVITY_SIGN_IN_FAIL_1("5-400","签到失败，没有报名记录"),
+    ACTIVITY_SIGN_IN_FAIL("5-400","签到签退失败"),
+    ACTIVITY_SIGN_IN_FAIL_1("5-400","签到签退失败，没有报名记录"),
     ACTIVITY_SIGN_IN_FAIL_2("5-400","签到失败，活动密钥失效"),
     ACTIVITY_SIGN_OFF_SUCCESS("5-200","签退成功"),
     ACTIVITY_SIGN_OFF_FAIL("5-400","签退失败"),
+    ACTIVITY_SIGN_FAIL("5-400","请求信息错误，请查看信息是否正确"),
 
     //报名相关响应
     REGISTER_ACTIVITY_SUCCESS("6-200","报名成功"),

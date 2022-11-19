@@ -8,21 +8,10 @@
 			<el-collapse-transition class="folder">
 				<div v-show="show">
 					<div class="transition-box"> 
-						<a href="user">学生登录</a> 
+                        <router-link to="/user"> 学生登录</router-link>
 					</div>
                     <div class="transition-box">   
-						 <a href="admin">管理员登录</a> 
-					</div>
-                  
-                     <div class="transition-box"> 
-						<a href="home">后台界面</a> 
-					</div>
-                    <div class="transition-box">   
-						 <a href="home2">学生中心</a> 
-					</div>
-                    
-                    <div class="transition-box"> 
-						<a href="about">test</a> 
+                        <router-link to="/admin"> 管理员登录</router-link>
 					</div>
 				</div>
 			</el-collapse-transition>
@@ -32,7 +21,7 @@
 	<!-- setup设置打开页面时的状态，show=true表示展开 -->
 	<script  setup>
 		import { ref } from 'vue'
-		const show = ref(false)
+		let show = ref(true)
 	</script>
   <style scoped>
   .folder{

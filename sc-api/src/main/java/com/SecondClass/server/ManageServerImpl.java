@@ -100,6 +100,8 @@ public class ManageServerImpl extends ServiceImpl<UserMapper,User> implements IM
                 LambdaQueryWrapper<Organization> queryWrapper = new LambdaQueryWrapper<>();
                 queryWrapper.eq(Organization::getOid, oid);
                 permission = organizationMapper.selectOne(queryWrapper).getPermissionsLevel();
+
+                redisUtils.setValue(RedisKeyName.MANAGE_ORGANIZATION_LEVEL + oid, String.valueOf(permission));
                 if (permission < level) level = permission;
             }
 

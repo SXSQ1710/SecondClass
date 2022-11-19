@@ -3,7 +3,7 @@
     <span class="leftTip">{{ toptip }}</span>
     <span class="rightBtn">
       <p class="exit" @click="open">退出登录</p>
-      <p>当前登录时间为：{{ sdf }}</p>
+      <p>本次登录时间：{{ sdf }}</p>
     </span>
   </div>
 </template>
@@ -46,7 +46,6 @@ export default {
             message: '您已退出系统，请重新登录'
           })
           sessionStorage.clear("access_token") //清空sessionStorage中名为userData的值 
-          // console.log("that.$router=" , window.getCurrentTime)
           // that.$router.push({path:'/home ', selected:"2" })
         })
         .catch(() => {

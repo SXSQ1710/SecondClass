@@ -34,8 +34,15 @@
                                     <div class="grid-content ep-bg-purple-light">{{ upwd }}</div>
                                 </el-col>
                             </el-row>
+                            <el-row :gutter="10" justify="center">
+                                <el-col :xs="8" :sm="6" :md="4" :lg="3" :xl="1">
+                                    <div class="grid-content ep-bg-purple">所属组织</div>
+                                </el-col>
+                                <el-col :xs="8" :sm="6" :md="4" :lg="3" :xl="1">
+                                    <div class="grid-content ep-bg-purple-light">{{ oids}}</div>
+                                </el-col>
+                            </el-row>
                         </div>
-
                     </div>
                 </el-tab-pane>
                 <el-tab-pane label="账号管理" name="1">
@@ -44,7 +51,7 @@
                             修改密码
                             <el-form label-position="left" label-width="100px" style="max-width: 460px">
                                 <el-form-item label="旧密码">
-                                    <el-input :placeholder="upwd"  readonly/>
+                                    <el-input :placeholder="upwd" readonly />
                                 </el-form-item>
                                 <el-form-item label="新密码">
                                     <el-input v-model="formData.newPassword" />
@@ -55,7 +62,6 @@
                                 </el-form-item>
                             </el-form>
                         </div>
-
                     </div>
                 </el-tab-pane>
                 <el-tab-pane label="角色权限" name="2">
@@ -66,40 +72,61 @@
                         </div>
                     </div>
                 </el-tab-pane>
+
             </el-tabs>
         </div>
     </div>
 </template>
 <script>
+import axios from 'axios'
+import { ElMessage } from "element-plus";
+
+
 export default {
-    props: {
-        uname: { type: String, default: "小张" },
-        upwd: { type: String, default: "123456" },
-        uid: { type: String, default: "3220003000" },
+    props:{
         url: { type: String, default: "https://api2.mubu.com/v3/document_image/883c3014-d556-4a2f-9fa3-1f0816d73ace-10633218.jpg" }
     },
     data() {
         return {
             formData: {
                 newPassword: '',
-                type: '',
-            }
+                type: ''
+            },
+            uname: { type: String, default: " " },
+            upwd: { type: String, default: " " },
+            uid: { type: String, default: " " },
+            oids: { type: String, default: "" },
         }
     },
     setup() {
         const resetForm = (form) => {
-            form.newPassword='';
+            form.newPassword = '';
         }
         return { resetForm }
+    }, mounted() {
+        let _this = this;
+        let _uid = sessionStorage.getItem("uid")
+        axios.get('http://localhost:8083/api/manage/user/' + _uid)
+            .then((res) => {
+                if (res.data['code'] == '7-200') {//这个data 是接收的resolve参数--
+                    _this.uname = res.data.data.uname
+                    _this.upwd = res.data.data.upassword
+                    _this.uid = res.data.data.uid
+                    _this.oids = res.data.data.oid  
+                }
+            }).catch((err) => {
+                console.log(err)
+                ElMessage({ message: err.response.data.msg, type: 'error' })
+            })
     }
 }
-// 数据
 
 </script>
 
 <style scoped>
 .eltabs {
-    background-color: var(--sidebar-color);;
+    background-color: var(--sidebar-color);
+    ;
     max-height: 80vh;
 }
 

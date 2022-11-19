@@ -4,13 +4,13 @@
       <div class="loginItem">
          <loginitem></loginitem>
       </div>
-      <form action="#">
+      <form @submit.prevent="submit">
          <div class="formrow">
             <div class="inline-input-icon">
                <span class="myicon iconfont icon-yonghu"></span>
             </div>
             <div class="inputBox">
-               <input type="text" autocomplete="username" required="required">
+               <input type="text" autocomplete="username" required="required" v-model="username">
                <span>学号</span>
             </div>
          </div>
@@ -20,7 +20,7 @@
             </div>
 
             <div class="inputBox">
-               <input type="password" autocomplete="current-password" required="required">
+               <input type="password" autocomplete="current-password" required="required" v-model="password">
                <span>密码</span>
             </div>
          </div>
@@ -35,15 +35,21 @@
                <!-- https://jxfw.gdut.edu.cn/yzm?d=1666938986151 -->
             </div>
          </div>
+         <div class="buttonBox formrow">
+                <input type="submit" value="登录">
+            </div>
       </form>
-      <div class="buttonBox">
-         <button>登录</button>
-      </div>
    </div>
 </template>
 
 <script>
+import { ElMessage } from "element-plus";
+import { h } from 'vue'
 import loginitem from "./LoginItem.vue"
+import axios from "axios"
+import { setUser } from '../../server/api/login'
+import cookies from 'js-cookie'
+
 export default {
    name: 'StuLogin',
    props: {
@@ -52,6 +58,8 @@ export default {
    components: { loginitem },
    data() {
       return {
+         username:"",
+         password:"",
          sdf: "https://jxfw.gdut.edu.cn/yzm?d=" + new Date().getTime()
       }
    },
@@ -60,6 +68,36 @@ export default {
          console.log("changeImage")
          this.sdf = "https://jxfw.gdut.edu.cn/yzm?d=" + new Date().getTime()
          // this.sdf.value =ref( "https://jxfw.gdut.edu.cn/yzm?d=" +new Date().getTime())
+      },
+      submit() {
+         console.log("submit!")
+         var _this = this
+         var formdata = {
+            uid: this.username,
+            upassword: this.password,
+            role: 0
+         };
+         axios.post('http://localhost:8083/api/manage/login', formdata).then((res) => {
+            //处理成功后的逻辑
+            if (res.data['code'] == '1-200') {//这个data 是接收的resolve参数--
+               ElMessage({
+                  message: h('p', { style: 'color:green' }, [
+                     h('span', null, res.data.msg),
+                  ]), type: 'success'
+               })
+
+               cookies.set("satoken", res.data.data.tokenValue, '7d')
+               sessionStorage.setItem("access_token", res.data.data.tokenValue)
+
+               setUser(formdata)
+               _this.$router.push("/home2#/wode");
+            } else {
+               ElMessage({ message: res.data.msg, type: 'error' })
+            }
+         }).catch((err) => {
+            console.log(err);
+            ElMessage('请求错误！')
+         })
       }
    },
    // lifecycle hooks
@@ -204,9 +242,11 @@ form {
    font-size: 30px !important;
    text-indent: 0;
 }
-
+.buttonBox{
+   text-align: center;
+}
 /* 给按钮写样式 */
-.buttonBox button {
+.buttonBox input[type="submit"] {
    padding: 12px 35px;
    border-radius: 6px;
    background: none;
@@ -217,12 +257,12 @@ form {
    font-weight: 600;
 }
 
-.buttonBox button:hover {
+.buttonBox input[type="submit"]:hover {
    color: #50c9c3;
    border: 1px solid #50c9c3;
 }
 
-.buttonBox button:active {
+.buttonBox input[type="submit"]:active {
    color: #1e625f;
    font-weight: bold;
    border: 1px solid #1e625f;
