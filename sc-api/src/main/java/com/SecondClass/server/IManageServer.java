@@ -33,4 +33,10 @@ public interface IManageServer extends IService<User>{
     Response getOrg(Map orgMap);
     Response changePwd(Map pwdMap);
     Response applyOrg(OrganizationApply orgApply);
+
+    Response getApplyOrg(int pageNo);
+
+    Response auditOrgApp(Long oAppId, Integer oAppStatus);
+
+    Response getMember();
 }

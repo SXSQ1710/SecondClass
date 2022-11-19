@@ -52,6 +52,8 @@ public enum ResponseStatus {
     //申请查询相关相应
     ACTIVITY_APP_QUERY_SUCCESS("4-200","查询成功"),
     ACTIVITY_APP_QUERY_FAIL("4-400","没有相关数据"),
+    ORGANIZATION_APP_QUERY_SUCCESS("4-200","查询成功"),
+    ORGANIZATION_APP_QUERY_FAIL("4-400","没有相关数据"),
     ORGANIZATION_QUERY_SUCCESS("4-200","组织查询成功"),
     ORGANIZATION_QUERY_FAIL("4-400","没有相关组织数据"),
 
@@ -92,7 +94,12 @@ public enum ResponseStatus {
     CREATE_USER_FAIL("8-400","用户账号导入失败"),
     CHANGE_USERPWD_SUCCESS("8-200","用户密码修改成功"),
     CHANGE_USERPWD_FAIL("8-400","用户密码修改失败"),
-
+    ORGANIZATION_APPLY_SUCCESS("8-200","申请加入组织成功，请等待审核结果！"),
+    ORGANIZATION_APPLY_FAIL("8-400","申请加入组织失败，请检查申请信息！"),
+    ORGANIZATION_APPLY_AUDIT_SUCCESS("8-200","申请加入组织审核成功，请等待审核结果！"),
+    ORGANIZATION_APPLY_AUDIT_FAIL("8-400","申请加入组织审核失败，请检查申请信息！"),
+    MEMBER_QUERY_SUCCESS("8-200","查询组织成员成功"),
+    MEMBER_QUERY__FAIL("8-400","查询组织成员失败"),
     SUBMIT_SHIAPPINFO_SUCCESS("9-200","提交有效信息给校团委成功"),
     SUBMIT_SHIAPPINFO_FAIL("9-400","提交有效信息给校团委失败");
 
