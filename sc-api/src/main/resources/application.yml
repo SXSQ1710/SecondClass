@@ -7,7 +7,7 @@ filePath: &filePath SecondClass/src/main/resources/static
 #数据库配置
 mysql-url: &url jdbc:mysql://localhost:3306/secondclass?useSSL=false&amp&serverTimezone=UTC&allowPublicKeyRetrieval=true
 mysql-username: &username root
-mysql-password: &password 13824101958
+mysql-password: &password root
 #静态资源地址
 static-locations: &static file:D:/javaide/SecondClass/src/main/resources/static
 self-attachment: D:\software\IntelliJ IDEA 2022.2.3\IdeaProjects\SecondClass\sc-api\src\main\resources\selfEnclosure\
@@ -59,6 +59,8 @@ spring:
   jackson:
     #json处理忽略空字段
     default-property-inclusion: non_null
+  mvc:
+    date-format: yyyy-MM-dd
 
 # mybatis-plus
 mybatis-plus:
