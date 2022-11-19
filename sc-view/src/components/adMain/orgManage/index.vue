@@ -41,7 +41,7 @@
                 <!-- 多行选择器 -->
                 <el-table-column type="selection" width="55" />
                 <!-- fixed 属性配置，固定列-->
-                <el-table-column prop="oid" label="组织ID" width="120" :header-row-style="headerCellStyle" />
+                <el-table-column prop="oid" label="组织ID" width="120" />
                 <el-table-column prop="oname" label="组织名称" width="200" />
                 <el-table-column prop="uid" label="负责人ID" width="120" />
                 <el-table-column prop="campus" label="所属校区" width="120" />
@@ -63,20 +63,11 @@
             draggable>
             <el-form ref="ruleFormRef" :model="form" :rules="rules" label-width="20vw" class="elform-input"
                 size="dafault" status-icon @submit.native.prevent>
-                <el-form-item class="once" label="组织ID" prop="oid">
-                    <el-input :max="8" v-model="form.oid" label-width="10vw" />
-                </el-form-item>
                 <el-form-item class="once" label="组织名称" prop="oname">
                     <el-input @keyup.native.enter v-model="form.oname" />
                 </el-form-item>
                 <el-form-item class="once" label="负责人ID" prop="uid">
                     <el-input @keyup.native.enter v-model="form.uid" />
-                </el-form-item>
-                <el-form-item class="once" label="负责人姓名" prop="uname">
-                    <el-input @keyup.native.enter v-model="form.uname" />
-                </el-form-item>
-                <el-form-item class="once" label="联系方式" prop="phone">
-                    <el-input @keyup.native.enter v-model="form.phone" />
                 </el-form-item>
                 <el-form-item label="所属校区" prop="campus">
                     <el-select v-model="form.campus" placeholder="所属校区">
@@ -88,13 +79,7 @@
                     </el-select>
                 </el-form-item>
                 <el-form-item label="上级单位" prop="superior_organization">
-                    <el-select v-model="form.superior_organization" placeholder="上级单位">
-                        <el-option label="龙洞校区" value="龙洞校区" />
-                        <el-option label="大学城校区" value="大学城校区" />
-                        <el-option label="东风路校区" value="东风路校区" />
-                        <el-option label="番禺校区" value="番禺校区" />
-                        <el-option label="揭阳校区" value="揭阳校区" />
-                    </el-select>
+                    <el-input v-model="form.superior_organization" placeholder="上级单位" width="500" />
                 </el-form-item>
 
                 <el-form-item class="once" label="组织简介" prop="odescription">
@@ -110,7 +95,7 @@
                         重置
                     </el-button>
                     <el-button type="primary" v-if="dialogType == 'add'" v-on:submit.prevent="submitAddForm"
-                        @click="handleCheckAdd">
+                        @click="handleCheckAdd(form)">
                         确认
                     </el-button>
                     <el-button type="primary" v-else-if="dialogType == 'edit'" @click="handleCheckEdit">
@@ -123,9 +108,12 @@
     </div>
 </template>
 <script  setup>
+
 import { onMounted } from 'vue'
 import axios from 'axios'
-
+//第一种获取target值的方式，通过vue中的响应式对象可使用toRaw()方法获取原始对象
+import { toRaw } from '@vue/reactivity'
+import { ElMessage } from 'element-plus';
 //所有的生命周期用法均为回调函数
 onMounted(() => {
     all()
@@ -198,13 +186,21 @@ let handleQueryName = () => {
     tableData = tableDataCopy.filter(item => (item.oname).toString().match(val.toLowerCase()) || (item.oid).toString().match(val.toLowerCase()))
 }
 // 新增提交
-let handleCheckAdd = (_res) => {
+let handleCheckAdd = (formData) => {
     dialogFormVisible = false // 关闭弹窗
-    //1. 拿到数据 ref(_res)
-    //2. 添加到table
-    tableData.push({
-        id: (tableData.length + 1).toString(),
-        ...form
+    var formDataList = toRaw(formData)
+    console.log(formDataList.uid)
+    console.log(formDataList.aname)
+
+    // 创建组织账号
+    axios.post('http://localhost:8083/api/manage/createOrg', { oname: formDataList.oname, uid: formDataList.uid, campus: formDataList.campus, odescription: formDataList.odescription, superior_organization: formDataList.superior_organization }).then(res => {
+        if(res.data["code"] == "8-200")
+        ElMessage({ message: res.data.msg, type: "success" })
+        else  
+        ElMessage({ message: res.data.msg, type: "error" })
+    }).catch(err => {
+        console.log("请求失败" + err);
+        ElMessage({ message: "失败了", type: "error" })
     })
 }
 // 修改提交
@@ -262,19 +258,9 @@ const rules = $ref({
         { min: 10, max: 10, message: '请正确填写10位学号' }
         // 限制学号位数为10位
     ],
-    uname: [
-        { required: true, message: '请填写用户名称', trigger: 'blur' }
-    ],
-    oid: [
-        { required: true, message: '请填写组织ID', trigger: 'blur' },
-    ],
+
     oname: [
-        { required: true, message: '请填写用户名称', trigger: 'blur' }
-    ],
-    phone: [
-        { required: true, message: '请填写用户的联系方式', trigger: 'blur' },
-        { min: 11, max: 11, message: '请正确填写13位手机号' }
-        // 限制联系方式为11位手机号
+        { required: true, message: '请填写组织名称', trigger: 'blur' }
     ],
     campus: [
         {
@@ -333,7 +319,7 @@ const headerCellStyle = ({ row, rowIndex }) => {
 }
 
 .el-input {
-    width: 200px;
+    width: 222px;
 }
 
 .elform-input {

@@ -89,7 +89,7 @@ export default {
                sessionStorage.setItem("access_token", res.data.data.tokenValue)
 
                setUser(formdata)
-               _this.$router.push("/home");
+               _this.$router.push("/home2#/wode");
             } else {
                ElMessage({ message: res.data.msg, type: 'error' })
             }

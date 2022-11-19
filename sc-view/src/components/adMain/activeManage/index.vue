@@ -31,8 +31,8 @@
                 <i class='bx bx-refresh bx-flip-vertical' @click="all"></i>
             </el-tooltip>
             <span>当前共有{{ totalValue }}条数据</span>
-
         </div>
+
         <el-scrollbar max-height="55vh" always>
 
             <!-- 表格 -->
@@ -250,7 +250,7 @@ const tableHeaderColor = ({ row, column, rowIndex, columnIndex }) => {
 }
 
 const all = () => {
-    axios.get('http://localhost:8083/api/activity/getAllApp/1/10').then(res => {
+    axios.get('http://localhost:8083/api/activity/getAll/1/10').then(res => {
         let _tableData = res.data.data.records
         let _nowTime = getNowTime()
         totalValue = _tableData.length

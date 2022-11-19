@@ -111,7 +111,7 @@ export default {
 }
 
 .title>p {
-  font-size: 30pt;
+  font-size: 2.8vw;
   text-align: center;
 }
 
@@ -126,7 +126,7 @@ export default {
   width: 14vw;
   height: 25vh;
   line-height: 10vh;
-  font-size: 22pt;
+  font-size: 2.2vw;
   text-align: center;
   /* justify-content: center; */
   background: #688493;

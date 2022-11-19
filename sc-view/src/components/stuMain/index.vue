@@ -56,7 +56,7 @@
 
         <section class="home">
             <div class="dashbord">
-                <Commons :selected=selected></Commons>
+                <Commons  :uname="uname" :ulevel="ulevel" :uImage="uImage" :sideBar="sideBar" ></Commons>
             </div>
             <div class="text">
                 当前时间：{{ sdf }}

@@ -8,7 +8,8 @@
         <div class="query-box">
             <div class="query-btn">
                 <!-- <i class="bx bx-search"></i> -->
-                <el-input v-model="queryInput" placeholder="请输入XX名称查询" @input="handleQueryInput"></el-input>
+                <el-input id="query_input" v-model="queryInput" placeholder="请输入XX名称查询" @input="handleQueryInput">
+                </el-input>
                 <el-button class="box_btn" type="primary" text @click="handleQueryName(queryInput)">
                     搜索
                 </el-button>
@@ -60,9 +61,9 @@
         <!-- 弹窗 -->
         <el-dialog v-model="dialogFormVisible" :title="dialogType == 'add' ? '新增' : dialogType == 'edit' ? '编辑' : '详情'"
             draggable>
-            <el-form ref="ruleFormRef" :model="form" :rules="rules" label-width="120px" class="elform-input"
+            <el-form ref="ruleFormRef" :model="form" :rules="rules" label-width="180px" class="elform-input"
                 size="dafault" status-icon @submit.native.prevent>
-                <el-form-item class="once" label="用户ID" prop="uid">
+                <el-form-item class="once" label="用户ID" prop="uid" width="0px">
                     <el-input @keyup.native.enter v-model="form.uid" />
                 </el-form-item>
                 <el-form-item class="once" label="用户名" prop="uname">
@@ -74,30 +75,35 @@
                 <el-form-item class="once" label="联系方式" prop="phone">
                     <el-input @keyup.native.enter v-model="form.phone" />
                 </el-form-item>
-                <el-form-item label="班级ID" prop="grade">
-                    <el-select v-model="form.cname" placeholder="所属班级">
-                        <el-option label="龙洞校区" value="龙洞校区" />
-                        <el-option label="大学城校区" value="大学城校区" />
-                        <el-option label="东风路校区" value="东风路校区" />
-                        <el-option label="番禺校区" value="番禺校区" />
-                        <el-option label="揭阳校区" value="揭阳校区" />
-                    </el-select>
+                <el-form-item label="班级" prop="aid">
+                    <el-input @keyup.native.enter v-model="form.cname" />
                 </el-form-item>
-                <el-form-item label="所属组织" prop="oid">
-                    <el-select v-model="form.oname" placeholder="校区">
-                        <el-option label="龙洞校区" value="龙洞校区" />
-                        <el-option label="大学城校区" value="大学城校区" />
-                        <el-option label="东风路校区" value="东风路校区" />
-                        <el-option label="番禺校区" value="番禺校区" />
-                        <el-option label="揭阳校区" value="揭阳校区" />
+                <!-- <el-form-item label="班级ID" prop="grade">
+                    <el-select v-model="form.cid" placeholder="">
+                        <el-option label="1" value="1" />
+                        <el-option label="2" value="2" />
+                        <el-option label="3" value="3" />
+                        <el-option label="4" value="4" />
+                        <el-option label="5" value="5" />
                     </el-select>
+                </el-form-item> 
+                <el-form-item label="所属组织" prop="oid">
+                    <el-select v-model="form.oname" placeholder="组织ID">
+                        <el-option label="1" value="1" />
+                        <el-option label="2" value="2" />
+                        <el-option label="3" value="3" />
+                        <el-option label="4" value="4" />
+                        <el-option label="5" value="5" />
+                    </el-select>
+                </el-form-item>-->
+                <el-form-item label="所属组织" prop="oid">
+                    <el-input @keyup.native.enter v-model="form.oid" />
                 </el-form-item>
             </el-form>
 
 
             <template #footer>
                 <span class="dialog-footer">
-                    <!-- <el-button type="primary" @click="dialogFormVisible = false"> -->
                     <el-button text type="primary" v-if="dialogType != 'detail'" @click="handleReset">
                         重置
                     </el-button>
@@ -142,15 +148,31 @@ let form = $ref({
 
 
 let tableData = $ref([
-    {
-        id: '',
-        uid: '',
-        uname: '',
-        upassword: '',
-        phone: '',
-        cname: '',
+{
+        id: '1',
+        uid: '1',
+        uname: '小明',
+        upassword: '123456',
+        phone: '123456',
+        cname: '信管1班',
+        oname: '[1,2,3,4]'
+    },{
+        id: '2',
+        uid: '2',
+        uname: '小红',
+        upassword: '123456',
+        phone: '123456',
+        cname: '信管1班',
+        oname: '[2,5]'
+    },{
+        id: '3',
+        uid: '3220001111',
+        uname: '张三',
+        upassword: '123456',
+        phone: '19854181623',
+        cname: '信管1班',
         oname: ''
-    }
+    },
 ])
 
 let tableDataCopy = Object.assign(tableData)
@@ -195,6 +217,8 @@ let handleCheckAdd = (_res) => {
         id: (tableData.length + 1).toString(),
         ...form
     })
+
+    ElMessage({ message: "用户创建成功", type: "success" })
 }
 // 修改提交
 let handleCheckEdit = () => {
@@ -302,8 +326,9 @@ const submitAddForm = async (formEl) => {
     margin-bottom: 20px;
 }
 
+/* input文本框的宽度 */
 .el-input {
-    width: 200px;
+    width: 300px;
 }
 
 .elform-input {

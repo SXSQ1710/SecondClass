@@ -6,28 +6,36 @@
 </template>
     
 <script>
+import axios from 'axios';
 export default {
     name: "wode2",
-    props: {
-        uid: { type: String, default: "3220003000" },
+    data() {
+        return {
+            uid:"",
+        }
     },
+    mounted() {
+        this.uid = sessionStorage.getItem("uid");
+    }
 }
 </script>
 <style>
-.welcome{
+.welcome {
     padding: 2vw;
-    background-color: rgba(204,202,220,0.33);
+    background-color: rgba(204, 202, 220, 0.33);
 }
-menu.dark > .welcome{
+
+menu.dark>.welcome {
     padding: 2vw;
     background-color: rgba(192, 190, 214, 0.841);
 }
-menu.dark > .helloword{
+
+menu.dark>.helloword {
     margin: 30px auto;
     color: #efe4e4;
 }
 
-.helloword{
+.helloword {
     margin: 30px auto;
     color: #4d4d4d;
 }
