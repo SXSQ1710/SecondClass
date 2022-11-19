@@ -24,4 +24,8 @@ public class R_SignIn {
      * 活动密钥
      */
     private String uuid;
+    /**
+     * 签到签退类型
+     */
+    private String type;
 }
