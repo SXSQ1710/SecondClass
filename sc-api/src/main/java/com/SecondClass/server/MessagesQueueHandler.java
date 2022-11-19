@@ -73,10 +73,17 @@ public class MessagesQueueHandler {
                     //3.解析数据
                     MapRecord<String, Object, Object> record = list.get(0);
                     Map<Object, Object> value = record.getValue();
-                    boolean type = value.containsKey("i");
-                    System.out.println(type);
-                    if (type){
+                    if (value.containsKey("i")){
                         String[] info = value.get("i").toString().split(",");
+                        //userId .. ',' .. activityId .. ',' .. participationStatus
+                        Participation participation = Participation.builder()
+                                .uid(Long.valueOf(info[0]))
+                                .aid(Long.valueOf(info[1]))
+                                .participateStatus(Integer.valueOf(info[2])).build();
+                        //4.写入数据库
+                        updateStatus(participation);
+                    } else if (value.containsKey("o")){
+                        String[] info = value.get("o").toString().split(",");
                         //userId .. ',' .. activityId .. ',' .. participationStatus
                         Participation participation = Participation.builder()
                                 .uid(Long.valueOf(info[0]))
@@ -96,7 +103,7 @@ public class MessagesQueueHandler {
         private void updateStatus(Participation participation){
             UpdateWrapper<Participation> updateWrapper = new UpdateWrapper<>();
             updateWrapper.eq("aid",participation.getAid()).eq("uid",participation.getUid());
-            updateWrapper.set("participate_status",2);
+            updateWrapper.set("participate_status",participation.getParticipateStatus());
             if (participationMapper.update(null,updateWrapper) != 1) throw new IllegalArgumentException();
         }
     }
