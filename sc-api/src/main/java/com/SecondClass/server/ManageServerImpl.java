@@ -331,8 +331,16 @@ public class ManageServerImpl extends ServiceImpl<UserMapper,User> implements IM
 
     @Override
     public Response getApplyOrg(int pageNo) {
+        //获取负责人的负责的oid
+        String uid =(String) StpUtil.getLoginId();
+        QueryWrapper<Organization> orgWrapper = new QueryWrapper<>();
+        orgWrapper.eq("uid",uid);
+        Long oid = (organizationMapper.selectOne(orgWrapper)).getOid();
+        //查询对应oid的申请信息
+        QueryWrapper<OrganizationApply> organizationApplyQueryWrapper = new QueryWrapper<>();
+        organizationApplyQueryWrapper.eq("oid",oid);
         Page<OrganizationApply> page = new Page<>(pageNo,15);
-        IPage<OrganizationApply> orgApplyPage = organizationApplyMapper.selectPage(page,null);
+        IPage<OrganizationApply> orgApplyPage = organizationApplyMapper.selectPage(page,organizationApplyQueryWrapper);
         List<OrganizationApply> organizationApplyList = orgApplyPage.getRecords();
         if(organizationApplyList.size()==0)return Response.success(ResponseStatus.ORGANIZATION_APP_QUERY_FAIL);
         return Response.success(ResponseStatus.ORGANIZATION_APP_QUERY_SUCCESS,organizationApplyList);
@@ -354,8 +362,17 @@ public class ManageServerImpl extends ServiceImpl<UserMapper,User> implements IM
             int i2 = 0;
             int i3 = 0;
             i = organizationApplyMapper.update(null, organizationApplyUpdateWrapper);
-            //更新成员表
+            //查看是否已经是组织成员,如果已经是成员，重复申请，直接返回成功
+            QueryWrapper<OrganizationMember> organizationMemberQueryWrapper = new QueryWrapper<>();
+            organizationMemberQueryWrapper.eq("oid",orgApplication.getOid())
+                    .eq("uid",orgApplication.getUid());
+            OrganizationMember temp_member = organizationMemberMapper.selectOne(organizationMemberQueryWrapper);
+            if(temp_member != null){
+                return Response.success(ResponseStatus.ORGANIZATION_APPLY_AUDIT_SUCCESS);
+            }
+            //更新成员表和user表
             if (i == 1 && oAppStatus == 2) {
+                //更新user表
                 LambdaQueryWrapper<User> queryWrapper = new LambdaQueryWrapper<>();
                 queryWrapper.eq(User::getUid, orgApplication.getUid());
                 User user = userMapper.selectOne(queryWrapper);
@@ -364,6 +381,7 @@ public class ManageServerImpl extends ServiceImpl<UserMapper,User> implements IM
                 oidList.add(orgApplication.getOid().intValue());
                 user.setOid(JSONUtil.toJsonStr(oidList));
                 i3 = userMapper.updateById(user);
+                //更新成员表
                 OrganizationMember member = new OrganizationMember();
                 member.setPosition("普通成员");
                 member.setOid(orgApplication.getOid());
