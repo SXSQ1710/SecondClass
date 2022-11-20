@@ -4,6 +4,9 @@
         <div class="eltabs">
             <el-tabs stretch class="demo-tabs">
                 <el-tab-pane label="个人信息" name="0">
+                  
+                    <el-scrollbar max-height="70vh" always>
+
                     <div class="block">
                         <div class="userimg">
                             <el-image :src="url" :preview-src-list="[url]" preview-teleported fit="cover" />
@@ -39,11 +42,17 @@
                                     <div class="grid-content ep-bg-purple">所属组织</div>
                                 </el-col>
                                 <el-col :xs="8" :sm="6" :md="4" :lg="3" :xl="1">
-                                    <div class="grid-content ep-bg-purple-light">{{ oids}}</div>
+                                    <div class="grid-content ep-bg-purple-light">{{ oids }}</div>
                                 </el-col>
                             </el-row>
                         </div>
                     </div>
+                    </el-scrollbar>
+
+
+
+
+
                 </el-tab-pane>
                 <el-tab-pane label="账号管理" name="1">
                     <div class="block">
@@ -66,9 +75,15 @@
                 </el-tab-pane>
                 <el-tab-pane label="角色权限" name="2">
                     <div class="block">
-                        <div class="content">
-                            普通学生角色权限
-                            <p>活动报名、自主申报、修改个人信息</p>
+                        <div class="_box">
+                            <div class="content">
+                                普通学生角色权限
+                                <p>活动报名、自主申报、修改个人信息</p>
+                            </div>
+                            <div class="content" v-if="ulevel=='1' ">
+                                学生组织角色权限
+                                <p>活动申请、活动时长申报、签到签退管理、组织人员管理</p>
+                            </div>
                         </div>
                     </div>
                 </el-tab-pane>
@@ -83,7 +98,7 @@ import { ElMessage } from "element-plus";
 
 
 export default {
-    props:{
+    props: {
         url: { type: String, default: "https://api2.mubu.com/v3/document_image/883c3014-d556-4a2f-9fa3-1f0816d73ace-10633218.jpg" }
     },
     data() {
@@ -96,6 +111,7 @@ export default {
             upwd: { type: String, default: " " },
             uid: { type: String, default: " " },
             oids: { type: String, default: "" },
+            ulevel:{ type: String, default: "" },
         }
     },
     setup() {
@@ -112,7 +128,11 @@ export default {
                     _this.uname = res.data.data.uname
                     _this.upwd = res.data.data.upassword
                     _this.uid = res.data.data.uid
-                    _this.oids = res.data.data.oid  
+                    _this.oids = res.data.data.oid.split('[')[1].split(']')[0]
+                    // 无组织用户[] 显示出来就是 ’ ‘
+                    if(_this.oids.length >0){
+                        _this.ulevel = "1"
+                    }
                 }
             }).catch((err) => {
                 console.log(err)

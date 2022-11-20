@@ -1,6 +1,6 @@
 <template>
     <div class="welcome">
-        <h1 class="helloword">学生工作系统管理后台</h1>
+        <h1 class="helloword">学生二课系统管理后台</h1>
         <h2 class="helloword">欢迎您！</h2>
     </div>
 </template>

@@ -17,6 +17,8 @@ export default {
             ulevel: "",
             uImage: "/src/assets/img.png",
             toptip: "后台管理系统",
+
+
             sideBar: {
                 list: [{
                     pagePath: '/wode',
@@ -56,8 +58,18 @@ export default {
             .then((res) => {
                 if (res.data['code'] == '7-200') {//这个data 是接收的resolve参数--
                     _this.uname = res.data.data.uname
-                    if (res.data.data.oid[1] == 1)
+                    if (res.data.data.oid[1] == 1) {
                         _this.ulevel = "管理员"
+                        _this.$router.push("/home")
+                    } else if (res.data.data.oid.length > 3) {
+                        _this.ulevel = "学生[组织]"
+                        this.sideBar.list.push({
+                            pagePath: '/',
+                            iconPath: 'bx bx-wallet icon',
+                            text: '组织活动'
+                        })
+                        _this.$router.push("/home2")
+                    }
                     else {
                         _this.ulevel = "学生";
                         _this.$router.push("/home2")

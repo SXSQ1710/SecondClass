@@ -31,7 +31,6 @@
                 <i class='bx bx-refresh bx-flip-vertical' @click="all"></i>
             </el-tooltip>
             <span>当前共有{{ totalValue }}条数据</span>
-
         </div>
 
         <!-- 表格 -->
@@ -123,7 +122,7 @@ onMounted(() => {
 // 数据
 let queryInput = $ref("")
 let multipleSelection = $ref([])     // 多选
-const dialogFormVisible = $ref(false)
+let dialogFormVisible = $ref(false)
 let formLabelWidth = $ref('20vw')
 let totalValue = $ref("0")
 let dialogType = $ref('add')
@@ -189,19 +188,17 @@ let handleQueryName = () => {
 let handleCheckAdd = (formData) => {
     dialogFormVisible = false // 关闭弹窗
     var formDataList = toRaw(formData)
-    console.log(formDataList.uid)
-    console.log(formDataList.aname)
 
     // 创建组织账号
     axios.post('http://localhost:8083/api/manage/createOrg', { oname: formDataList.oname, uid: formDataList.uid, campus: formDataList.campus, odescription: formDataList.odescription, superior_organization: formDataList.superior_organization }).then(res => {
-        if(res.data["code"] == "8-200")
-        ElMessage({ message: res.data.msg, type: "success" })
-        else  
-        ElMessage({ message: res.data.msg, type: "error" })
+        if (res.data["code"] == "8-200")
+            ElMessage({ message: res.data.msg, type: "success" })
     }).catch(err => {
         console.log("请求失败" + err);
         ElMessage({ message: "失败了", type: "error" })
     })
+
+    all()
 }
 // 修改提交
 let handleCheckEdit = () => {
@@ -254,9 +251,7 @@ const ruleFormRef = $ref()
 
 const rules = $ref({
     uid: [
-        { required: true, message: '请填写用户ID', trigger: 'blur' },
-        { min: 10, max: 10, message: '请正确填写10位学号' }
-        // 限制学号位数为10位
+        { required: true, message: '请填写用户ID', trigger: 'blur' } 
     ],
 
     oname: [

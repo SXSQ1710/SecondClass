@@ -21,7 +21,7 @@
                     删除多行
                 </el-button>
                 <el-button class="box_btn" type="primary" text @click="handleAdd">
-                    增加
+                    导入账号
                 </el-button>
             </div>
 
@@ -46,7 +46,7 @@
                 <el-table-column property="upassword" label="用户密码" width="120" />
                 <el-table-column property="phone" label="联系方式" width="120" />
                 <el-table-column property="cname" label="班级" width="200" />
-                <el-table-column property="oname" label="所属组织" width="" />
+                <el-table-column property="oid" label="所属组织" width="" />
                 <el-table-column fixed="right" label="操作" width="180">
                     <template #default="scope">
                         <el-button link type="primary" size="small" @click="handleDetail(scope.row)">详情</el-button>
@@ -75,8 +75,8 @@
                 <el-form-item class="once" label="联系方式" prop="phone">
                     <el-input @keyup.native.enter v-model="form.phone" />
                 </el-form-item>
-                <el-form-item label="班级" prop="aid">
-                    <el-input @keyup.native.enter v-model="form.cname" />
+                <el-form-item label="班级" prop="cid">
+                    <el-input @keyup.native.enter v-model="form.cid" />
                 </el-form-item>
                 <!-- <el-form-item label="班级ID" prop="grade">
                     <el-select v-model="form.cid" placeholder="">
@@ -88,7 +88,7 @@
                     </el-select>
                 </el-form-item> 
                 <el-form-item label="所属组织" prop="oid">
-                    <el-select v-model="form.oname" placeholder="组织ID">
+                    <el-select v-model="form.oid" placeholder="组织ID">
                         <el-option label="1" value="1" />
                         <el-option label="2" value="2" />
                         <el-option label="3" value="3" />
@@ -108,13 +108,12 @@
                         重置
                     </el-button>
                     <el-button type="primary" v-if="dialogType == 'add'" v-on:submit.prevent="submitAddForm"
-                        @click="handleCheckAdd">
-                        确认
+                        @click="handleCheckAdd(form)">
+                        创建用户
                     </el-button>
                     <el-button type="primary" v-else-if="dialogType == 'edit'" @click="handleCheckEdit">
                         修改
                     </el-button>
-
                 </span>
             </template>
         </el-dialog>
@@ -123,6 +122,11 @@
 <script  setup>
 import { onMounted } from 'vue'
 import axios from 'axios'
+
+//第一种获取target值的方式，通过vue中的响应式对象可使用toRaw()方法获取原始对象
+import { toRaw } from '@vue/reactivity'
+import { ElMessage } from 'element-plus';
+
 
 //所有的生命周期用法均为回调函数
 onMounted(() => {
@@ -143,35 +147,35 @@ let form = $ref({
     upassword: '',
     phone: '',
     cname: '',
-    oname: '',
+    oid: '',
 })
 
 
 let tableData = $ref([
-{
+    {
         id: '1',
         uid: '1',
         uname: '小明',
         upassword: '123456',
         phone: '123456',
         cname: '信管1班',
-        oname: '[1,2,3,4]'
-    },{
+        oid: '[1]'
+    }, {
         id: '2',
         uid: '2',
         uname: '小红',
         upassword: '123456',
         phone: '123456',
         cname: '信管1班',
-        oname: '[2,5]'
-    },{
+        oid: '[2,4]'
+    }, {
         id: '3',
         uid: '3220001111',
         uname: '张三',
         upassword: '123456',
         phone: '19854181623',
         cname: '信管1班',
-        oname: ''
+        oid: '[4]'
     },
 ])
 
@@ -179,23 +183,20 @@ let tableDataCopy = Object.assign(tableData)
 // 方法
 
 const all = () => {
-    axios.get('http://localhost/select_user').then(res => {
-        tableData = res.data;//数据传递到页面数组
-        tableDataCopy = Object.assign(tableData)
-        console.log("数据查询成功" + res.data)
-    }).catch(err => {
-        console.log("获取数据失败" + err);
-    })
+    // axios.get('http://localhost/select_user').then(res => {
+    //     tableData = res.data;//数据传递到页面数组
+    //     tableDataCopy = Object.assign(tableData)
+    //     console.log("数据查询成功" + res.data)
+    // }).catch(err => {
+    //     console.log("获取数据失败" + err);
+    // })
 }
+
 // 删除按钮
 let handleDelete = ({ id }) => {
     let index = tableData.findIndex(item => item.id == id)
     // 从index位置开始删除tableData中的1个元素
     tableData.splice(index, 1)
-}
-// 删除确认
-let handelCheckDelete = () => {
-    console.log('clickDELETE')
 }
 //搜索，模糊查询
 let handleQueryInput = (val) => {
@@ -209,16 +210,38 @@ let handleQueryName = (val) => {
 }
 
 // 新增提交
-let handleCheckAdd = (_res) => {
+let handleCheckAdd = (formData) => {
     dialogFormVisible = false // 关闭弹窗
-    //1. 拿到数据 ref(_res)
-    //2. 添加到table
-    tableData.push({
-        id: (tableData.length + 1).toString(),
-        ...form
+    var formDataList = toRaw(formData)
+  
+    var receiveData = {
+        uid: formDataList.uid,
+        upassword: formDataList.upassword,
+        cid: formDataList.cid,
+        uname: formDataList.uname,
+        oid: formDataList.oid,
+        phone: formDataList.phone
+    }
+
+    console.log("receiveData", receiveData)
+    // 创建组织账号
+    axios.post('http://localhost:8083/api/manage/addAccount', receiveData).then(res => {
+        console.log(res)
+        if (res.data["code"] == "8-200") {
+            form.cname = "信管" + form.cid +"班"
+
+            tableData.push({
+                id: (tableData.length + 1).toString(),
+                ...form
+            })
+            ElMessage({ message: res.data.msg, type: "success" })
+        } else
+            ElMessage({ message: res.data.msg, type: "error" })
+    }).catch(err => {
+        console.log("请求失败" + err);
+        ElMessage({ message: "请求失败", type: "error" })
     })
 
-    ElMessage({ message: "用户创建成功", type: "success" })
 }
 // 修改提交
 let handleCheckEdit = () => {
@@ -280,7 +303,7 @@ const rules = $ref({
     ],
     phone: [
         { required: true, message: '请填写用户的联系方式', trigger: 'blur' },
-        { min: 13, max: 13, message: '请正确填写13位手机号' }
+        { min: 11, max: 11, message: '请正确填写11位手机号' }
     ],
     cname: [
         {
@@ -288,7 +311,7 @@ const rules = $ref({
             trigger: 'change',
         },
     ],
-    oname: [
+    oid: [
         {
             message: '请选择您的所属组织',
             trigger: 'change',
