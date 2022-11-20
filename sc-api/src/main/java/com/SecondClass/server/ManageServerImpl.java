@@ -5,13 +5,11 @@ import cn.dev33.satoken.stp.StpUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.SecondClass.entity.R_entity.R_Login;
+import com.SecondClass.mapper.*;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.SecondClass.entity.*;
 import com.SecondClass.entity.Class;
-import com.SecondClass.mapper.ClassMapper;
-import com.SecondClass.mapper.OrganizationMapper;
-import com.SecondClass.mapper.UserMapper;
 import com.SecondClass.utils.RedisUtils;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
@@ -52,6 +50,12 @@ public class ManageServerImpl extends ServiceImpl<UserMapper,User> implements IM
     OrganizationMapper organizationMapper;
     @Resource
     StringRedisTemplate stringRedisTemplate;
+    @Resource
+    OrganizationApplyMapper organizationApplyMapper;
+    @Resource
+    OrganizationMemberMapper organizationMemberMapper;
+    @Resource
+    MemberViewMapper memberViewMapper;
 //    @Resource
 //    ManageServer manageserver;
 
@@ -152,6 +156,7 @@ public class ManageServerImpl extends ServiceImpl<UserMapper,User> implements IM
             else return Response.success(ResponseStatus.CREATE_ORGANIZATION_FAIL);
             //更新user表中负责人的所属组织
             int i1 = 0;
+            int i2 = 0;
             if(i == 1){
                 //更新新的组织负责人所属组织字段
                 System.out.println(organization.getOid());
@@ -162,9 +167,15 @@ public class ManageServerImpl extends ServiceImpl<UserMapper,User> implements IM
                 i1 = userMapper.updateById(user);
                 //删除redis相应的用户缓存
                 stringRedisTemplate.delete(RedisKeyName.MANAGE_USER + uid);
+                //插入orgMember表
+                OrganizationMember member = new OrganizationMember();
+                member.setOid(organization.getOid());
+                member.setUid(organization.getUid());
+                member.setPosition("负责人");
+                i2 = organizationMemberMapper.insert(member);
             }else return Response.success(ResponseStatus.CREATE_ORGANIZATION_FAIL);
 
-            if(i1 == 1) return Response.success(ResponseStatus.CREATE_ORGANIZATION_SUCCESS);
+            if(i1 == 1 && i2 ==1) return Response.success(ResponseStatus.CREATE_ORGANIZATION_SUCCESS);
             else return Response.success(ResponseStatus.CREATE_ORGANIZATION_FAIL);
         } catch (DataIntegrityViolationException d){
             //数据库插入失败
@@ -301,9 +312,107 @@ public class ManageServerImpl extends ServiceImpl<UserMapper,User> implements IM
 
     @Override
     public Response applyOrg(OrganizationApply orgApply) {
-        return null;
+        try {
+            Long uid = (Long) StpUtil.getLoginId();
+            orgApply.setUid(uid);
+            int i = organizationApplyMapper.insert(orgApply);
+            if (i==1)return Response.success(ResponseStatus.ORGANIZATION_APPLY_SUCCESS);
+            else return Response.success(ResponseStatus.ORGANIZATION_APPLY_FAIL);
+        } catch (DataIntegrityViolationException d){
+            //数据库插入失败
+            d.printStackTrace();
+            return Response.error(ResponseStatus.ORGANIZATION_APPLY_FAIL);
+        }catch (Exception e) {
+            //其他错误
+            e.printStackTrace();
+            return Response.success(ResponseStatus.ERROR);
+        }
     }
 
+    @Override
+    public Response getApplyOrg(int pageNo) {
+        //获取负责人的负责的oid
+        String uid =(String) StpUtil.getLoginId();
+        QueryWrapper<Organization> orgWrapper = new QueryWrapper<>();
+        orgWrapper.eq("uid",uid);
+        Long oid = (organizationMapper.selectOne(orgWrapper)).getOid();
+        //查询对应oid的申请信息
+        QueryWrapper<OrganizationApply> organizationApplyQueryWrapper = new QueryWrapper<>();
+        organizationApplyQueryWrapper.eq("oid",oid);
+        Page<OrganizationApply> page = new Page<>(pageNo,15);
+        IPage<OrganizationApply> orgApplyPage = organizationApplyMapper.selectPage(page,organizationApplyQueryWrapper);
+        List<OrganizationApply> organizationApplyList = orgApplyPage.getRecords();
+        if(organizationApplyList.size()==0)return Response.success(ResponseStatus.ORGANIZATION_APP_QUERY_FAIL);
+        return Response.success(ResponseStatus.ORGANIZATION_APP_QUERY_SUCCESS,organizationApplyList);
+    }
+
+    @Override
+    public Response auditOrgApp(Long oAppId, Integer oAppStatus) {
+        try {
+            //获得申请实体
+            QueryWrapper<OrganizationApply> orgAppWrapper = new QueryWrapper<>();
+            orgAppWrapper.eq("oAppId", oAppId);
+            OrganizationApply orgApplication = organizationApplyMapper.selectOne(orgAppWrapper);
+            if (orgApplication == null) throw new IllegalArgumentException();
+
+            //更新申请表
+            UpdateWrapper<OrganizationApply> organizationApplyUpdateWrapper = new UpdateWrapper<>();
+            organizationApplyUpdateWrapper.eq("oAppId", oAppId).set("oAppStatus", oAppStatus);
+            int i = 0;
+            int i2 = 0;
+            int i3 = 0;
+            i = organizationApplyMapper.update(null, organizationApplyUpdateWrapper);
+            //查看是否已经是组织成员,如果已经是成员，重复申请，直接返回成功
+            QueryWrapper<OrganizationMember> organizationMemberQueryWrapper = new QueryWrapper<>();
+            organizationMemberQueryWrapper.eq("oid",orgApplication.getOid())
+                    .eq("uid",orgApplication.getUid());
+            OrganizationMember temp_member = organizationMemberMapper.selectOne(organizationMemberQueryWrapper);
+            if(temp_member != null){
+                return Response.success(ResponseStatus.ORGANIZATION_APPLY_AUDIT_SUCCESS);
+            }
+            //更新成员表和user表
+            if (i == 1 && oAppStatus == 2) {
+                //更新user表
+                LambdaQueryWrapper<User> queryWrapper = new LambdaQueryWrapper<>();
+                queryWrapper.eq(User::getUid, orgApplication.getUid());
+                User user = userMapper.selectOne(queryWrapper);
+                String jsonStr = user.getOid();
+                List<Integer> oidList = JSONUtil.toList(jsonStr, Integer.class);
+                oidList.add(orgApplication.getOid().intValue());
+                user.setOid(JSONUtil.toJsonStr(oidList));
+                i3 = userMapper.updateById(user);
+                //更新成员表
+                OrganizationMember member = new OrganizationMember();
+                member.setPosition("普通成员");
+                member.setOid(orgApplication.getOid());
+                member.setUid(orgApplication.getUid());
+                i2 = organizationMemberMapper.insert(member);
+            }
+            if (i == 1 && i2 == 1 && i3 == 1) return Response.success(ResponseStatus.ORGANIZATION_APPLY_AUDIT_SUCCESS);
+            else return Response.success(ResponseStatus.ORGANIZATION_APPLY_AUDIT_FAIL);
+        } catch (DataIntegrityViolationException d){
+        //数据库插入失败
+        d.printStackTrace();
+        return Response.error(ResponseStatus.ORGANIZATION_APPLY_AUDIT_FAIL);
+    }catch (Exception e) {
+        //其他错误
+        e.printStackTrace();
+        return Response.success(ResponseStatus.ERROR);
+    }
+    }
+
+    @Override
+    public Response getMember() {
+        String uid =(String) StpUtil.getLoginId();
+        QueryWrapper<Organization> orgWrapper = new QueryWrapper<>();
+        orgWrapper.eq("uid",uid);
+        Long oid = (organizationMapper.selectOne(orgWrapper)).getOid();
+        QueryWrapper<MemberView> memberViewQueryWrapper= new QueryWrapper<>();
+        memberViewQueryWrapper.eq("oid",oid);
+        List<MemberView> memberViewList = memberViewMapper.selectList(memberViewQueryWrapper);
+        if(memberViewList.size()==0)return Response.success(ResponseStatus.MEMBER_QUERY__FAIL);
+        return Response.success(ResponseStatus.MEMBER_QUERY_SUCCESS,memberViewList);
+    }
 
     /**
      * @Author jiang

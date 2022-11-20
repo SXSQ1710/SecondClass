@@ -22,9 +22,7 @@ public class ManageController {
     ManageServerImpl manageServer;
 
     @PostMapping("/login")
-    public Response login(@RequestBody R_Login rLogin){
-        return manageServer.login(rLogin);
-    }
+    public Response login(@RequestBody R_Login rLogin){ return manageServer.login(rLogin); }
 
     @PostMapping("/createOrg")
     public Response createOrg(@RequestBody Organization organization ){
@@ -40,7 +38,10 @@ public class ManageController {
     public Response getALlOrg(@PathVariable("pageNo")Integer pageNo){
         return manageServer.getAllOrg(pageNo);
     }
-
+    @GetMapping("/getApplyOrg/{pageNo}")
+    public Response getApplyOrg(@PathVariable("pageNo")Integer pageNo){
+        return manageServer.getApplyOrg(pageNo);
+    }
     @GetMapping("/getOrg")
     public Response getOrg(@RequestParam Map<String,Object> orgMap) {
         return manageServer.getOrg(orgMap);
@@ -54,6 +55,16 @@ public class ManageController {
     @PostMapping("/applyOrg")
     public Response applyOrg(@RequestBody OrganizationApply orgApply) {
         return manageServer.applyOrg(orgApply);
+    }
+
+    @GetMapping("/auditOrgApp/{oAppId}/{oAppStatus}")
+    public Response auditOrgApp(@PathVariable("oAppId")Long oAppId,@PathVariable("oAppStatus")Integer oAppStatus) {
+        return manageServer.auditOrgApp(oAppId,oAppStatus);
+    }
+
+    @GetMapping("/getMember")
+    public Response getMember() {
+        return manageServer.getMember();
     }
 
     @PostMapping("/changePwd")
