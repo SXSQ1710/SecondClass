@@ -267,14 +267,13 @@ const tableHeaderColor = ({ row, column, rowIndex, columnIndex }) => {
 const all = () => {
     axios.get('http://localhost:8083/api/activity/getAllApp/1/10').then(res => {
         var _tata = res.data.data.records
+
         var _tableData = []
         for (let i = 0; i < _tata.length; i++) {
             var _tata2 = _tata[i]
             _tableData.push(JSON.parse(_tata2.aappDescription))
         }
-        console.log(new Date().getTime())
         let _nowTime = getNowTime()
-
 
         for (let i = 0; i < _tableData.length; i++) {
             _tableData[i].app_id = i + 1
@@ -311,7 +310,6 @@ const all = () => {
 
         }
 
-        console.log(_tableData)
         totalValue = _tableData.length
 
         tableData = _tableData

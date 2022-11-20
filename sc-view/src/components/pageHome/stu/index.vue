@@ -59,7 +59,7 @@ import axios from 'axios'
                     if (res.data.data.oid[1] == 1) {
                         _this.ulevel = "管理员"
                         _this.$router.push("/home")
-                    } else if (res.data.data.oid.length > 3) {
+                    } else if (res.data.data.oid.length >= 3) {
                         _this.ulevel = "学生[组织]"
                         this.sideBar.list.push({
                             pagePath: '/',

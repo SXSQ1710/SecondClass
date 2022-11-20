@@ -23,4 +23,14 @@ export const timestampToTime = (timestamp) => {
     let s = date.getSeconds() < 10 ? '0' + date.getSeconds() : date.getSeconds();
     return Y + M + D + h + m + s;
  }
- 
+//  格林威治时间转化为日期时间格式
+export const GMTToStr=(time)=>{
+    let date = new Date(time)
+    let Str=date.getFullYear() + '-' +
+    (date.getMonth() + 1) + '-' + 
+    date.getDate() + ' ' + 
+    date.getHours() + ':' + 
+    date.getMinutes() + ':' + 
+    date.getSeconds()
+    return Str
+}

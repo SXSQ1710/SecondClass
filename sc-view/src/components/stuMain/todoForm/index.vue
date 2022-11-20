@@ -108,14 +108,6 @@ const Data = () => {
     });
 }
 
-// const Data = [
-//         uid,
-//         selfAppType,
-//         selfAppShiNum,
-//         selfAppDescription,
-//         selfAppAttachment,
-//         selfAppStatu
-// ]
 const tableData = [
     {
         uid: '3220001111',

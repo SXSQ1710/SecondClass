@@ -4,6 +4,9 @@
         <div class="eltabs">
             <el-tabs stretch class="demo-tabs">
                 <el-tab-pane label="个人信息" name="0">
+                  
+                    <el-scrollbar max-height="70vh" always>
+
                     <div class="block">
                         <div class="userimg">
                             <el-image :src="url" :preview-src-list="[url]" preview-teleported fit="cover" />
@@ -44,6 +47,12 @@
                             </el-row>
                         </div>
                     </div>
+                    </el-scrollbar>
+
+
+
+
+
                 </el-tab-pane>
                 <el-tab-pane label="账号管理" name="1">
                     <div class="block">
@@ -119,9 +128,9 @@ export default {
                     _this.uname = res.data.data.uname
                     _this.upwd = res.data.data.upassword
                     _this.uid = res.data.data.uid
-                    _this.oids = res.data.data.oid
+                    _this.oids = res.data.data.oid.split('[')[1].split(']')[0]
                     // 无组织用户[] 显示出来就是 ’ ‘
-                    if(_this.oids.length >3){
+                    if(_this.oids.length >0){
                         _this.ulevel = "1"
                     }
                 }
