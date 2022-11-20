@@ -33,4 +33,8 @@ public class RedisKeyName {
 
     public final static String MANAGE_ORGANIZATION_MEMBER = "secondclass:manage:omember:";
 
+    public final static String SELF_APPLICATION = "secondclass:shichang:selfApplication:";
+
+    public final static String SHICHANG_TYPE = "secondclass:shichang:shiChangType:";
+
 }

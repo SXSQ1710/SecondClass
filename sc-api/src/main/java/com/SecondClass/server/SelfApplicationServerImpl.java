@@ -1,13 +1,12 @@
 package com.SecondClass.server;
 
+import cn.dev33.satoken.stp.StpUtil;
 import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.util.IdUtil;
-import com.SecondClass.entity.Response;
-import com.SecondClass.entity.ResponseStatus;
-import com.SecondClass.entity.SelfApplication;
-import com.SecondClass.entity.Shichang;
+import com.SecondClass.entity.*;
 import com.SecondClass.mapper.SelfApplicationMapper;
 import com.SecondClass.mapper.ShiChangMapper;
+import com.SecondClass.utils.RedisUtils;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
@@ -32,13 +31,22 @@ public class SelfApplicationServerImpl implements ISelfApplicationServer {
     @Resource
     private ShiChangMapper shiChangMapper;
 
+    @Resource
+    RedisUtils redisUtils;
+
     @Value("${self-attachment}")
     private String basePath;
 
     @Override
+    @Transactional
     public Response addSelfApplication(SelfApplication selfApplication) {
         //直接插入申报表信息
+        String uid = StpUtil.getLoginId().toString();
+        selfApplication.setUid(Long.parseLong(uid));
+        selfApplication.setSelfAppStatu(1);
         int insert = selfApplicationMapper.insert(selfApplication);
+        String selfAppId = selfApplication.getSelfAppId().toString();
+        redisUtils.setValue(RedisKeyName.SELF_APPLICATION + selfAppId, selfApplication);
         return insert>0 ? Response.success(ResponseStatus.SUCCESS) : Response.error(ResponseStatus.ERROR);
     }
 
@@ -48,7 +56,7 @@ public class SelfApplicationServerImpl implements ISelfApplicationServer {
         //原始附件名
         String originalFilename = attachment.getOriginalFilename();
         //后缀
-        String suffix = originalFilename.substring(originalFilename.lastIndexOf("."));
+        String suffix = originalFilename.substring(originalFilename.lastIndexOf('.'));
         //使用UUID生成附件名
         String fileName = IdUtil.simpleUUID() + suffix;
         String path = basePath+fileName;
@@ -73,9 +81,9 @@ public class SelfApplicationServerImpl implements ISelfApplicationServer {
         if (statue==2) {
             Shichang shichang = new Shichang();
             shichang.setUid(selfApplication.getUid());
-            shichang.setSid(selfApplication.getSelfAppType());
-            shichang.setSnum(selfApplication.getSelfAppShiNum());
-            shichang.setAcquireTime(new Date());
+//            shichang.setSid(selfApplication.getSelfAppType());
+//            shichang.setSnum(selfApplication.getSelfAppShiNum());
+//            shichang.setAcquireTime(new Date());
             shiChangMapper.insert(shichang);
         }
         int update = selfApplicationMapper.updateById(selfApplication);

@@ -313,7 +313,7 @@ public class ManageServerImpl extends ServiceImpl<UserMapper,User> implements IM
     @Override
     public Response applyOrg(OrganizationApply orgApply) {
         try {
-            Long uid = (Long) StpUtil.getLoginId();
+            Long uid = Long.parseLong((String)StpUtil.getLoginId()) ;
             orgApply.setUid(uid);
             int i = organizationApplyMapper.insert(orgApply);
             if (i==1)return Response.success(ResponseStatus.ORGANIZATION_APPLY_SUCCESS);
