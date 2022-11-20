@@ -336,6 +336,7 @@ public class ManageServerImpl extends ServiceImpl<UserMapper,User> implements IM
         QueryWrapper<Organization> orgWrapper = new QueryWrapper<>();
         orgWrapper.eq("uid",uid);
         Long oid = (organizationMapper.selectOne(orgWrapper)).getOid();
+
         //查询对应oid的申请信息
         QueryWrapper<OrganizationApply> organizationApplyQueryWrapper = new QueryWrapper<>();
         organizationApplyQueryWrapper.eq("oid",oid);
