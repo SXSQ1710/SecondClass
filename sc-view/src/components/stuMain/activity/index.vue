@@ -14,7 +14,7 @@
             </div>
         </div>
         <!-- 介绍 -->
-        <el-tooltip placement="right" content="查看详情点击报名">
+        <el-tooltip placement="top" content="查看详情点击报名">
             <div class="intro_btn">
                 <span class="myicon  iconfont icon-9"></span>
             </div>
@@ -26,41 +26,44 @@
             </div>
         </el-tooltip>
 
-        <!-- 表格 -->
-        <el-table border :data="tableData" ref="mutipleTableRef" style="width: 100%"
-            @selection-change="handleSelectionChange">
-            <!-- 多行选择器
+        <el-scrollbar max-height="55vh" always>
+
+            <!-- 表格 -->
+            <el-table border :data="tableData" ref="mutipleTableRef" style="width: 100%"
+                @selection-change="handleSelectionChange">
+                <!-- 多行选择器
             <el-table-column type="selection" width="55" /> -->
-            <!-- fixed 属性配置，固定列-->
-            <el-table-column prop="aid" label="活动ID" sortable width="120" align="center" header-align="center" />
+                <!-- fixed 属性配置，固定列-->
+                <el-table-column prop="aid" label="活动ID" sortable width="120" align="center" header-align="center" />
 
-            <el-table-column prop="apic" label="封面图" width="120" align="center" header-align="center">
-                <!-- <template #default="scope"> -->
-                <template v-slot="scope">
-                    <el-image style="width: 100%; height: 100px" :src="scope.row.apic" preview-teleported="true"
-                        :preview-src-list="[scope.row.apic]" :key="scope.row.aid">
-                        <div slot="error" class="image-slot">
-                            <i class="el-icon-picture-outline"></i>
-                        </div>
-                    </el-image>
-                </template>
-            </el-table-column>
+                <el-table-column prop="apic" label="封面图" width="120" align="center" header-align="center">
+                    <!-- <template #default="scope"> -->
+                    <template v-slot="scope">
+                        <el-image style="width: 100%; height: 100px" :src="scope.row.apic" preview-teleported="true"
+                            :preview-src-list="[scope.row.apic]" :key="scope.row.aid">
+                            <div slot="error" class="image-slot">
+                                <i class="el-icon-picture-outline"></i>
+                            </div>
+                        </el-image>
+                    </template>
+                </el-table-column>
 
-            <el-table-column prop="aname" label="活动名称" sortable width="200" header-align="center" />
-            <el-table-column prop="a_oid" label="举办单位" width="100" header-align="center" />
-            <el-table-column prop="astatus" label="活动状态" width="200" header-align="center" />
-            <el-table-column prop="a_uid" label="申请人" sortable width="120" header-align="center" />
-            <el-table-column prop="a_register_open" label="报名时间" sortable width="200" header-align="center" />
-            <el-table-column prop="a_hold_start" label="举办时间" sortable width="200" header-align="center" />
-            <el-table-column prop="a_address" label="举办地点" width="250" header-align="center" />
-            <el-table-column prop="A_shichang_type" label="活动时长类型" width="120" header-align="center" />
-            <el-table-column prop="a_shichang_num" label="时长" sortable width="120" header-align="center" />
-            <el-table-column fixed="right" label="操作" width="100" align="center" header-align="center">
-                <template #default="scope">
-                    <el-button link type="primary" size="small" @click="handleDetail(scope.row)">详情</el-button>
-                </template>
-            </el-table-column>
-        </el-table>
+                <el-table-column prop="aname" label="活动名称" sortable width="200" header-align="center" />
+                <el-table-column prop="a_oid" label="举办单位" width="100" header-align="center" />
+                <el-table-column prop="astatus" label="活动状态" sortable width="200" header-align="center" />
+                <el-table-column prop="a_uid" label="申请人" sortable width="120" header-align="center" />
+                <el-table-column prop="a_register_open" label="报名时间" sortable width="200" header-align="center" />
+                <el-table-column prop="a_hold_start" label="举办时间" sortable width="200" header-align="center" />
+                <el-table-column prop="a_address" label="举办地点" width="250" header-align="center" />
+                <el-table-column prop="A_shichang_type" label="活动时长类型" width="120" header-align="center" />
+                <el-table-column prop="a_shichang_num" label="时长" sortable width="120" header-align="center" />
+                <el-table-column fixed="right" label="操作" width="100" align="center" header-align="center">
+                    <template #default="scope">
+                        <el-button link type="primary" size="small" @click="handleDetail(scope.row)">详情</el-button>
+                    </template>
+                </el-table-column>
+            </el-table>
+        </el-scrollbar>
         <!-- 弹窗 -->
         <el-dialog v-model="dialogFormVisible"
             :title="dialogType == 'add' ? '新增' : (dialogType == 'edit' ? '编辑' : '详情')">
@@ -249,12 +252,12 @@ const all = () => {
 //搜索，模糊查询
 let handleQueryInput = (val) => {
     queryInput = val
-    tableData = tableDataCopy.filter(item => (item.aid).toLowerCase().match(val.toLowerCase()) || (item.aname).toLowerCase().match(val.toLowerCase()))
+    tableData = tableDataCopy.filter(item => (item.aid).toString().match(val) || (item.aname).match(val))
 }
 //搜索，模糊查询
 let handleQueryName = (val) => {
     // 浅拷贝一层tableData，防止数据搜索匹配不上
-    tableData = tableDataCopy.filter(item => (item.aid).toLowerCase().match(val.toLowerCase()) || (item.aname).toLowerCase().match(val.toLowerCase()))
+    tableData = tableDataCopy.filter(item => (item.aid).toString().match(val) || (item.aname).match(val))
 }
 
 // 详情
@@ -363,7 +366,7 @@ const handleCheckApp = (formUID, formAID) => {
     padding: 0;
     position: fixed;
     z-index: 3;
-    right: 66px;
+    right: 70px;
     top: 200px;
 }
 
