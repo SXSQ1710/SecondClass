@@ -26,18 +26,8 @@ public class Shichang implements Serializable {
      */
     private Long uid;
     /**
-     * 时长类型id
+     * 获得时长详情
      */
-    private Long sid;
-    /**
-     * 时长数量
-     */
-    private Integer snum;
-    /**
-     * 获得学年
-     */
-    private Date acquireTime;
-
-
+    private String shiChang;
 }
 

@@ -129,7 +129,7 @@ CREATE TABLE `t_organization_app_shi`  (
 -- ----------------------------
 DROP TABLE IF EXISTS `t_organization_apply`;
 CREATE TABLE `t_organization_apply`  (
-  `o_app_id` bigint(0) NOT NULL DEFAULT 0 AUTO_INCREMENT,
+  `o_app_id` bigint(0) NOT NULL AUTO_INCREMENT,
   `uid` bigint(0) NULL DEFAULT NULL,
   `oid` bigint(0) NULL DEFAULT NULL,
   `o_app_status` int(0) NULL DEFAULT 0,
@@ -186,15 +186,12 @@ CREATE TABLE `t_self_application`  (
 -- ----------------------------
 DROP TABLE IF EXISTS `t_shichang`;
 CREATE TABLE `t_shichang`  (
-  `id` bigint(0) NOT NULL AUTO_INCREMENT COMMENT '时长id',
-  `uid` bigint(0) NULL DEFAULT NULL COMMENT '学生id',
-  `sid` bigint(0) NULL DEFAULT NULL COMMENT '时长类型id',
-  `snum` int(0) NULL DEFAULT NULL COMMENT '时长数量',
-  `acquire_time` date NULL DEFAULT NULL COMMENT '获得学年',
+  `id` bigint NOT NULL AUTO_INCREMENT COMMENT '时长id',
+  `uid` bigint NULL DEFAULT NULL COMMENT '学生id',
+  `shi_chang` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL COMMENT '获得学年',
   PRIMARY KEY (`id`) USING BTREE,
-  INDEX `uid`(`uid`) USING BTREE,
-  INDEX `sid`(`sid`) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic;
+  INDEX `uid`(`uid`) USING BTREE
+) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Table structure for t_shichang_type
