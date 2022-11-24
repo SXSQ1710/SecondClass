@@ -6,7 +6,7 @@ import lombok.Data;
 /**
  * @title: RedisKeyName
  * @Author SXSQ
- * @Description //TODO
+ * @Description redis的key
  * @Date 2022/11/3 22:06
  **/
 @Data
@@ -36,5 +36,7 @@ public class RedisKeyName {
     public final static String SELF_APPLICATION = "secondclass:shichang:selfApplication:";
 
     public final static String SHICHANG_TYPE = "secondclass:shichang:shiChangType:";
+
+    public final static String SHICHANG_INFO = "secondclass:shichang:userShiChangInfo:";
 
 }
