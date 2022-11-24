@@ -6,10 +6,7 @@ import cn.hutool.json.JSONUtil;
 import com.SecondClass.entity.*;
 import com.SecondClass.entity.Class;
 import com.SecondClass.entity.R_entity.R_ShiChang;
-import com.SecondClass.mapper.ActivityMapper;
-import com.SecondClass.mapper.ParticipationMapper;
-import com.SecondClass.mapper.ShiChangMapper;
-import com.SecondClass.mapper.ShiChangTypeMapper;
+import com.SecondClass.mapper.*;
 import com.SecondClass.utils.RedisUtils;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
@@ -19,9 +16,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 @Service
@@ -31,7 +26,10 @@ public class ShiChangServerImpl implements IShiChangServer {
     private ShiChangMapper shiChangMapper;
 
     @Resource
-    ShiChangTypeMapper shichangTypeMapper;
+    private ShiChangTypeMapper shichangTypeMapper;
+
+    @Resource
+    private SelfApplicationMapper selfApplicationMapper;
 
     @Resource
     private ParticipationMapper participationMapper;
@@ -45,38 +43,83 @@ public class ShiChangServerImpl implements IShiChangServer {
     @Override
     public Response browseMyShiChang(Integer uid) {
 
-        LambdaQueryWrapper<Shichang> queryWrapper = Wrappers.<Shichang>lambdaQuery()
-                .eq(Shichang::getUid,uid);
-        Shichang shichang = shiChangMapper.selectOne(queryWrapper);
+        //redis查询时长信息，被动更新
+        String user_id = StpUtil.getLoginId().toString();
+        Shichang shichang = redisUtils.queryForValue(RedisKeyName.SHICHANG_INFO, user_id, Shichang.class, 60L, TimeUnit.DAYS, true,
+                (id)->{
+                    LambdaQueryWrapper<Shichang> queryWrapper = Wrappers.<Shichang>lambdaQuery()
+                            .eq(Shichang::getUid,uid);
+                    return shiChangMapper.selectOne(queryWrapper);
+                });
 
-        //[[1 ,[2 ,["1-2"],["1-2"]],[2 ,["1-2"],["1-2"]],[2 ,["1-2"],["1-2"]]]]
-        JSONArray objects = JSONUtil.parseArray(shichang.getShiChang());
-        List<List> info = JSONUtil.toList(shichang.getShiChang(), List.class);
-        HashMap<Object, Object> shiChangInfo = new HashMap<>();
-        for (List data :info){
-            System.out.println(data.get(0));
+//        数据库个人时长储存格式：
+//         [时长类型id,大一上[时长总数,参与活动id列表,自主申报id列表],大一下[时长总数,参与活动id列表,自主申报id列表],大二上,大二下,大三上,大三下,]
+//        [[1 ,[2 ,"1-2","1"],[2 ,"1-2","1"],[2 ,"1-2","1"],[2 ,"1-2","1"],[2 ,"1-2","1"],[2 ,"1-2","1"]],
+//         [2 ,[2 ,"1-2","1"],[2 ,"1-2","1"],[2 ,"1-2","1"],[2 ,"1-2","1"],[2 ,"1-2","1"],[2 ,"1-2","1"]],
+//         [3 ,[2 ,"1-2","1"],[2 ,"1-2","1"],[2 ,"1-2","1"],[2 ,"1-2","1"],[2 ,"1-2","1"],[2 ,"1-2","1"]],
+//         [4 ,[2 ,"1-2","1"],[2 ,"1-2","1"],[2 ,"1-2","1"],[2 ,"1-2","1"],[2 ,"1-2","1"],[2 ,"1-2","1"]]]
+
+        List<List> allInfo = JSONUtil.toList(shichang.getShiChang(), List.class);
+        List<Map<Object, Object>> R = new ArrayList<>();
+        for (List data :allInfo){
+            //获取时长类型
             String shiChangTypeId = String.valueOf(data.get(0));
-//            redisUtils.queryForValue(RedisKeyName.SHICHANG_TYPE, shiChangTypeId, ShichangType.class, 60L, TimeUnit.DAYS, true,
-//                (id) -> {
-//                    QueryWrapper<Class> shiChangTypeQueryWrapper = new QueryWrapper<>();
-//                    shiChangTypeQueryWrapper.eq("sid", shiChangTypeId);
-//                    return .selectOne(shiChangTypeQueryWrapper);
-//                });
 
+            ShichangType shichangType = redisUtils.queryForValue(RedisKeyName.SHICHANG_TYPE, shiChangTypeId, ShichangType.class, 60L, TimeUnit.DAYS, true,
+                    (id) -> {
+                        LambdaQueryWrapper<ShichangType> shiChangTypeQueryWrapper = new LambdaQueryWrapper<>();
+                        shiChangTypeQueryWrapper.eq(ShichangType::getSid, shiChangTypeId);
+                        return shichangTypeMapper.selectOne(shiChangTypeQueryWrapper);
+                    });
+            Map<Object, Object> shiChangInfo = new HashMap<>();
+            HashMap<Object, Object> oneShiChang = new HashMap<>();
 
-//            List<List> lists = JSONUtil.toList((JSONArray) data, List.class);
-//            System.out.println(lists.get(1).get(1));
-//            JSONUtil.toList(data, Object.class);
-//
-//            redisUtils.queryForValue(RedisKeyName.SHICHANG_TYPE, cIdStr, Class.class, 60L, TimeUnit.DAYS, true,
-//                    (id) -> {
-//                        QueryWrapper<Class> queryWrapper = new QueryWrapper<>();
-//                        queryWrapper.eq("cid", cIdStr);
-//                        return classMapper.selectOne(queryWrapper);
-//                    });
-//            shiChangInfo.put("")
+            shiChangInfo.put("name",shichangType.getShichangName());
+
+            for (int i = 1; i < data.size(); i++) {
+                //学期标号，大一上为 1-1，大一下为 1-2，大三下为 3-2
+                String xueQi = (i%2 + i/2)+ "-" +(i%2 == 0 ? 2:1);
+                List<Object> list = JSONUtil.toList((JSONArray) data.get(i), Object.class);
+                //时长信息总和
+                HashMap<Object, Object> hashMap1 = new HashMap<>();
+                //活动时长信息
+                HashMap<Object, Object> hashMap2 = new HashMap<>();
+                //自主申报信息
+                HashMap<Object, Object> hashMap3 = new HashMap<>();
+                //时长总和
+                hashMap1.put("total",list.get(0));
+                String[] activities = list.get(1).toString().split("-");
+                String[] selfApps = list.get(2).toString().split("-");
+                //活动时长来源
+                for(String aid : activities){
+                    Activity activity = redisUtils.queryForValue(RedisKeyName.ACTIVITY, aid, Activity.class, 10L, TimeUnit.DAYS, true,
+                            (id) -> {
+                                QueryWrapper<Activity> aQueryWrapper = new QueryWrapper<>();
+                                aQueryWrapper.eq("aid", aid);
+                                return activityMapper.selectOne(aQueryWrapper);
+                            });
+                    hashMap2.put(activity.getAname(),activity.getAShichangNum());
+                }
+                //自主申报时长来源
+                for(String said : selfApps){
+                    SelfApplication selfApplication = redisUtils.queryForValue(RedisKeyName.SELF_APPLICATION, said, SelfApplication.class, 10L, TimeUnit.DAYS, true,
+                            (id) -> {
+                                LambdaQueryWrapper<SelfApplication> sQueryWrapper = new LambdaQueryWrapper<>();
+                                sQueryWrapper.eq(SelfApplication::getSelfAppId, said);
+                                return selfApplicationMapper.selectOne(sQueryWrapper);
+                            });
+                    hashMap3.put(selfApplication.getSelfAppDescription(),selfApplication.getSelfAppShiNum());
+                }
+                hashMap1.put("activity",hashMap2);
+                hashMap1.put("selfApp",hashMap3);
+                oneShiChang.put(xueQi,hashMap1);
+            }
+
+            shiChangInfo.put("value",oneShiChang);
+
+            R.add(shiChangInfo);
         }
-        return Response.success(ResponseStatus.SUCCESS,objects);
+        return Response.success(ResponseStatus.SUCCESS,R);
     }
 
     @Override
