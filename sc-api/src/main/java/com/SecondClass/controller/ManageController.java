@@ -9,6 +9,7 @@ import com.SecondClass.server.ManageServerImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import java.util.List;
@@ -38,10 +39,12 @@ public class ManageController {
     public Response getALlOrg(@PathVariable("pageNo")Integer pageNo){
         return manageServer.getAllOrg(pageNo);
     }
+
     @GetMapping("/getApplyOrg/{pageNo}")
     public Response getApplyOrg(@PathVariable("pageNo")Integer pageNo){
         return manageServer.getApplyOrg(pageNo);
     }
+
     @GetMapping("/getOrg")
     public Response getOrg(@RequestParam Map<String,Object> orgMap) {
         return manageServer.getOrg(orgMap);
@@ -72,8 +75,8 @@ public class ManageController {
         return manageServer.changePwd(pwdMap);
     }
 
-//    @PostMapping("/addAccountByBatch")
-//    public Response addAccountByBatch(@RequestBody List<User> userList){return manageServer.addAccountByBatch(userList);}
+    @PostMapping("/addAccountByBatch")
+    public Response addAccountByBatch(MultipartFile file){return manageServer.addAccountByBatch(file);}
 
     @GetMapping("/class/{cid}")
     public Response getClassById(@PathVariable("cid")Long cid){
