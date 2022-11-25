@@ -1,6 +1,7 @@
 package com.SecondClass.server;
 
 import cn.dev33.satoken.stp.StpUtil;
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONUtil;
 import com.SecondClass.entity.*;
@@ -41,16 +42,32 @@ public class ShiChangServerImpl implements IShiChangServer {
     RedisUtils redisUtils;
 
     @Override
-    public Response browseMyShiChang(Integer uid) {
+    @Transactional
+    public Response browseMyShiChang() {
 
         //redis查询时长信息，被动更新
         String user_id = StpUtil.getLoginId().toString();
         Shichang shichang = redisUtils.queryForValue(RedisKeyName.SHICHANG_INFO, user_id, Shichang.class, 60L, TimeUnit.DAYS, true,
                 (id)->{
                     LambdaQueryWrapper<Shichang> queryWrapper = Wrappers.<Shichang>lambdaQuery()
-                            .eq(Shichang::getUid,uid);
+                            .eq(Shichang::getUid,user_id);
                     return shiChangMapper.selectOne(queryWrapper);
                 });
+
+        if (!BeanUtil.isNotEmpty(shichang)) {
+                List<ShichangType> shichangTypes = shichangTypeMapper.selectList(null);
+
+                String shiChangInfo = "[";
+                int size = shichangTypes.size();
+                for (int i = 0; i < size - 1; i++) {
+                    shiChangInfo += "[" + shichangTypes.get(i).getSid().toString() + " ,[0 ,\"-\",\"-\"],[0 ,\"-\",\"-\"],[0 ,\"-\",\"-\"],[0 ,\"-\",\"-\"],[0 ,\"-\",\"-\"],[0 ,\"-\",\"-\"]],";
+                }
+                shiChangInfo +=  "[" + shichangTypes.get(size-1).getSid().toString() + " ,[0 ,\"-\",\"-\"],[0 ,\"-\",\"-\"],[0 ,\"-\",\"-\"],[0 ,\"-\",\"-\"],[0 ,\"-\",\"-\"],[0 ,\"-\",\"-\"]]]";
+
+                shichang = Shichang.builder().uid(Long.valueOf(user_id)).shiChang(shiChangInfo).build();
+                shiChangMapper.insert(shichang);
+                redisUtils.setValue(RedisKeyName.SHICHANG_INFO+user_id, shichang,  60L, TimeUnit.DAYS);
+        }
 
 //        数据库个人时长储存格式：
 //         [时长类型id,大一上[时长总数,参与活动id列表,自主申报id列表],大一下[时长总数,参与活动id列表,自主申报id列表],大二上,大二下,大三上,大三下,]
@@ -88,28 +105,35 @@ public class ShiChangServerImpl implements IShiChangServer {
                 HashMap<Object, Object> hashMap3 = new HashMap<>();
                 //时长总和
                 hashMap1.put("total",list.get(0));
+
                 String[] activities = list.get(1).toString().split("-");
                 String[] selfApps = list.get(2).toString().split("-");
-                //活动时长来源
-                for(String aid : activities){
-                    Activity activity = redisUtils.queryForValue(RedisKeyName.ACTIVITY, aid, Activity.class, 10L, TimeUnit.DAYS, true,
-                            (id) -> {
-                                QueryWrapper<Activity> aQueryWrapper = new QueryWrapper<>();
-                                aQueryWrapper.eq("aid", aid);
-                                return activityMapper.selectOne(aQueryWrapper);
-                            });
-                    hashMap2.put(activity.getAname(),activity.getAShichangNum());
+
+                if (activities.length != 0){
+                    //活动时长来源
+                    for(String aid : activities){
+                        Activity activity = redisUtils.queryForValue(RedisKeyName.ACTIVITY, aid, Activity.class, 10L, TimeUnit.DAYS, true,
+                                (id) -> {
+                                    QueryWrapper<Activity> aQueryWrapper = new QueryWrapper<>();
+                                    aQueryWrapper.eq("aid", aid);
+                                    return activityMapper.selectOne(aQueryWrapper);
+                                });
+                        hashMap2.put(activity.getAname(),activity.getAShichangNum());
+                    }
                 }
-                //自主申报时长来源
-                for(String said : selfApps){
-                    SelfApplication selfApplication = redisUtils.queryForValue(RedisKeyName.SELF_APPLICATION, said, SelfApplication.class, 10L, TimeUnit.DAYS, true,
-                            (id) -> {
-                                LambdaQueryWrapper<SelfApplication> sQueryWrapper = new LambdaQueryWrapper<>();
-                                sQueryWrapper.eq(SelfApplication::getSelfAppId, said);
-                                return selfApplicationMapper.selectOne(sQueryWrapper);
-                            });
-                    hashMap3.put(selfApplication.getSelfAppDescription(),selfApplication.getSelfAppShiNum());
+                if (selfApps.length != 0){
+                    //自主申报时长来源
+                    for(String said : selfApps){
+                        SelfApplication selfApplication = redisUtils.queryForValue(RedisKeyName.SELF_APPLICATION, said, SelfApplication.class, 10L, TimeUnit.DAYS, true,
+                                (id) -> {
+                                    LambdaQueryWrapper<SelfApplication> sQueryWrapper = new LambdaQueryWrapper<>();
+                                    sQueryWrapper.eq(SelfApplication::getSelfAppId, said);
+                                    return selfApplicationMapper.selectOne(sQueryWrapper);
+                                });
+                        hashMap3.put(selfApplication.getSelfAppDescription(),selfApplication.getSelfAppShiNum());
+                    }
                 }
+
                 hashMap1.put("activity",hashMap2);
                 hashMap1.put("selfApp",hashMap3);
                 oneShiChang.put(xueQi,hashMap1);

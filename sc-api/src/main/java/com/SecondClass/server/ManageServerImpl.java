@@ -29,6 +29,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -44,7 +45,7 @@ import java.util.concurrent.TimeUnit;
 @Slf4j
 @Service
 @Component
-public class ManageServerImpl extends ServiceImpl<UserMapper,User> implements IManageServer, IService<User> {
+public class ManageServerImpl extends ServiceImpl<UserMapper,User> implements IManageServer{
 
     @Resource
     RedisUtils redisUtils;
@@ -62,6 +63,8 @@ public class ManageServerImpl extends ServiceImpl<UserMapper,User> implements IM
     OrganizationMemberMapper organizationMemberMapper;
     @Resource
     MemberViewMapper memberViewMapper;
+    @Resource
+    ShiChangTypeMapper shichangTypeMapper;
 
 //    @Resource
 //    IManageServer manageserver;
@@ -443,8 +446,9 @@ public class ManageServerImpl extends ServiceImpl<UserMapper,User> implements IM
             EasyExcelFactory.read(inputStream, User.class, listener).headRowNumber(1).build().readAll();
             //获取数据列表
             List<User> userList = listener.getDatas();
-            //批量插入数据
+            //批量插入数据到user表中
             saveBatch(userList);
+
             return Response.success(ResponseStatus.CREATE_USERBYBATCH_SUCCESS);
         } catch (DuplicateKeyException e) {
             return Response.error(ResponseStatus.CREATE_USERBYBATCH_FAIL_1);

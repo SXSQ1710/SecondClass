@@ -12,10 +12,9 @@ public interface IShiChangServer {
 
     /**
      * 浏览个人时长
-     * @param uid 用户id
      * @return response
      */
-    Response browseMyShiChang(Integer uid);
+    Response browseMyShiChang();
 
     /**
      * 审核活动时长
