@@ -6,6 +6,8 @@ import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.SecondClass.entity.R_entity.R_Login;
 import com.SecondClass.mapper.*;
+import com.SecondClass.utils.ExcelListener;
+import com.alibaba.excel.EasyExcelFactory;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.SecondClass.entity.*;
@@ -14,15 +16,19 @@ import com.SecondClass.utils.RedisUtils;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.service.IService;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
+import java.io.InputStream;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -38,7 +44,7 @@ import java.util.concurrent.TimeUnit;
 @Slf4j
 @Service
 @Component
-public class ManageServerImpl extends ServiceImpl<UserMapper,User> implements IManageServer {
+public class ManageServerImpl extends ServiceImpl<UserMapper,User> implements IManageServer, IService<User> {
 
     @Resource
     RedisUtils redisUtils;
@@ -56,8 +62,9 @@ public class ManageServerImpl extends ServiceImpl<UserMapper,User> implements IM
     OrganizationMemberMapper organizationMemberMapper;
     @Resource
     MemberViewMapper memberViewMapper;
+
 //    @Resource
-//    ManageServer manageserver;
+//    IManageServer manageserver;
 
 
 
@@ -417,42 +424,36 @@ public class ManageServerImpl extends ServiceImpl<UserMapper,User> implements IM
 
     /**
      * @Author jiang
-     * @Description //批量导入账号，报错中，没调好
+     * @Description 参考文档 https://blog.csdn.net/weixin_46146718/article/details/115250530
      * @Date 17:53 2022/11/12
-     * @Param [userList]
+     * @Param MultipartFile
      * @return com.SecondClass.entity.Response
      **/
-    /**
-    public Response addAccountByBatch(List<User> userList) {
+    @Transactional
+    public Response addAccountByBatch(MultipartFile file) {
         try {
-            //检查是否已存在用户
-            for(User user:userList ){
-                User uCheck = userMapper.selectById(user.getUid());
-                if(uCheck!=null){
-                    System.out.println("存在");
-                    return Response.success(ResponseStatus.CREATE_USER_FAIL );
-                }
-            }
-            User user1 = new User();
-            user1.setUname("lala");
-            boolean save = manageserver.save(user1);
-            System.out.println(save);
-            System.out.println(userList);
-            boolean b = manageserver.saveBatch(userList);
-            if (b) return Response.success(ResponseStatus.CREATE_USER_SUCCESS);
-            else return Response.success(ResponseStatus.CREATE_USER_FAIL);
-        } catch (DataIntegrityViolationException d){
-            //数据库插入失败
-            d.printStackTrace();
-            return Response.error(ResponseStatus.CREATE_ORGANIZATION_FAIL);
-        }catch (Exception e) {
-            //其他错误
+            //获取文件名
+            String filename = file.getOriginalFilename();
+            System.out.println("filename:"+filename);
+            //获取文件流
+            InputStream inputStream = file.getInputStream();
+            //实例化实现了AnalysisEventListener接口的类
+            ExcelListener listener = new ExcelListener();
+            //封装数据
+            EasyExcelFactory.read(inputStream, User.class, listener).headRowNumber(1).build().readAll();
+            //获取数据列表
+            List<User> userList = listener.getDatas();
+            //批量插入数据
+            saveBatch(userList);
+            return Response.success(ResponseStatus.CREATE_USERBYBATCH_SUCCESS);
+        } catch (DuplicateKeyException e) {
+            return Response.error(ResponseStatus.CREATE_USERBYBATCH_FAIL_1);
+        } catch (Exception e){
             e.printStackTrace();
-            return Response.success(ResponseStatus.ERROR);
+            return Response.error(ResponseStatus.CREATE_USERBYBATCH_FAIL);
         }
 
     }
-     **/
 
     public Response getClassById(Long cid) {
         String cIdStr = cid.toString();
