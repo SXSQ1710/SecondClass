@@ -20,7 +20,7 @@ import java.util.concurrent.LinkedTransferQueue;
  * @Author jiang
  * @Date 2022/11/5 19:04
  **/
-public interface IManageServer{
+public interface IManageServer extends IService<User>{
 
     Response login(R_Login rLogin);
 

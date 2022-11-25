@@ -26,9 +26,9 @@ public class ShiChangController {
     @Resource
     private IShiChangServer shiChangServer;
 
-    @GetMapping("/browseMyShiChang/{uid}")
-    public Response browseMyShiChang(@PathVariable("uid") Integer uid){
-        return shiChangServer.browseMyShiChang(uid);
+    @GetMapping("/browseMyShiChang")
+    public Response browseMyShiChang(){
+        return shiChangServer.browseMyShiChang();
     }
 
     @GetMapping("/auditActivityShiChang/{aid}/{statue}")

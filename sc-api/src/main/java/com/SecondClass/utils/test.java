@@ -24,14 +24,13 @@ public class test {
     }
 
     public static void main(String[] args) {
-        String json = "[1,2,3]";
-        JSONArray objects = JSONUtil.parseArray(json);
-        JSONUtil.toList(json,Integer.class);
-        System.out.println(objects);
-        System.out.println((int)objects.get(1) + 1);
-        objects.add("1");
-        String s = JSONUtil.toJsonStr(objects);
-        System.out.println(s);
-
+        String json = "-";
+        String[] split = json.split("-");
+        System.out.println(split.length);
+        System.out.println("-----");
+        for (String s :split){
+            System.out.println(s);
+            System.out.println("----");
+        }
     }
 }
