@@ -13,6 +13,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -37,6 +38,12 @@ public class ShiChangServerImpl implements IShiChangServer {
 
     @Resource
     private ActivityMapper activityMapper;
+
+    @Resource
+    private SemesterMapper semesterMapper;
+
+    @Resource
+    StringRedisTemplate stringRedisTemplate;
 
     @Resource
     RedisUtils redisUtils;
@@ -149,39 +156,58 @@ public class ShiChangServerImpl implements IShiChangServer {
     @Override
     @Transactional
     public Response auditActivityShiChang(Integer aid, Integer statue) {
-        LambdaQueryWrapper<Participation> queryWrapper = Wrappers.<Participation>lambdaQuery()
-                .eq(Participation::getAid,aid);
-        List<Participation> participations = participationMapper.selectList(queryWrapper);
-        //统计当前活动时长审核次数
-        int count = 0;
-        if (statue==4) {
-            //发放时长
-            for (Participation participation : participations) {
-                participation.setParticipateStatus(4);
-                LambdaQueryWrapper<Activity> wrapper = Wrappers.<Activity>lambdaQuery()
-                        .eq(Activity::getAid,aid);
-                Activity activity = activityMapper.selectOne(wrapper);
-                Shichang shichang = new Shichang();
-                shichang.setUid(participation.getUid());
-//                shichang.setSid(activity.getAShichangType());
-//                shichang.setSnum(activity.getAShichangNum());
-//                shichang.setAcquireTime(new Date());
-                int insert = shiChangMapper.insert(shichang);
-                //插入成功时才能修改参加活动表中的状态
-                if (insert>0) {
-                    int update = participationMapper.updateById(participation);
-                    if (update>0) count++;
-                }
-            }
-        }else {
-            //拒绝发放时长
-            for (Participation participation : participations) {
-                participation.setParticipateStatus(5);
-                int update = participationMapper.updateById(participation);
-                if (update>0) count++;
-            }
+
+        Semester semester = redisUtils.queryForValue(RedisKeyName.SHICHANG_SEMESTER, "1", Semester.class, 10L, TimeUnit.DAYS, true,
+                (id) -> {
+                    return semesterMapper.selectById(1);
+                });
+
+        Set<String> range = stringRedisTemplate.opsForZSet().range(RedisKeyName.SECOND_KILL_PARTICIPATION + aid, 1, -1);
+        String[] split;
+        for (String value : range){
+            split = value.split("-");
+            System.out.println(Arrays.toString(split));
         }
-        return count==participations.size() ? Response.success(ResponseStatus.SUCCESS):Response.error(ResponseStatus.ERROR);
+//        range.forEach(value-> {
+//            String[] split = value.split("-");
+//
+//            System.out.println(Arrays.toString(split));
+//        });
+
+        return Response.success(ResponseStatus.SUCCESS,semester);
+//        LambdaQueryWrapper<Participation> queryWrapper = Wrappers.<Participation>lambdaQuery()
+//                .eq(Participation::getAid,aid);
+//        List<Participation> participations = participationMapper.selectList(queryWrapper);
+//        //统计当前活动时长审核次数
+//        int count = 0;
+//        if (statue==4) {
+//            //发放时长
+//            for (Participation participation : participations) {
+//                participation.setParticipateStatus(4);
+//                LambdaQueryWrapper<Activity> wrapper = Wrappers.<Activity>lambdaQuery()
+//                        .eq(Activity::getAid,aid);
+//                Activity activity = activityMapper.selectOne(wrapper);
+//                Shichang shichang = new Shichang();
+//                shichang.setUid(participation.getUid());
+////                shichang.setSid(activity.getAShichangType());
+////                shichang.setSnum(activity.getAShichangNum());
+////                shichang.setAcquireTime(new Date());
+//                int insert = shiChangMapper.insert(shichang);
+//                //插入成功时才能修改参加活动表中的状态
+//                if (insert>0) {
+//                    int update = participationMapper.updateById(participation);
+//                    if (update>0) count++;
+//                }
+//            }
+//        }else {
+//            //拒绝发放时长
+//            for (Participation participation : participations) {
+//                participation.setParticipateStatus(5);
+//                int update = participationMapper.updateById(participation);
+//                if (update>0) count++;
+//            }
+//        }
+//        return count==participations.size() ? Response.success(ResponseStatus.SUCCESS):Response.error(ResponseStatus.ERROR);
     }
 
     @Override
@@ -204,5 +230,13 @@ public class ShiChangServerImpl implements IShiChangServer {
         Long uid = Long.valueOf((String) StpUtil.getLoginId());
         List<R_ShiChang>  list = shiChangMapper.queryAllGroupBySidAndTime(uid,startTime,endTime);
         return Response.success(ResponseStatus.SUCCESS,list);
+    }
+
+    @Override
+    public Response shiChangApplication(ShichangApplication shichangApplication) {
+        String user_id = StpUtil.getLoginId().toString();
+        shichangApplication.setUid(Long.parseLong(user_id));
+        System.out.println(shichangApplication);
+        return null;
     }
 }

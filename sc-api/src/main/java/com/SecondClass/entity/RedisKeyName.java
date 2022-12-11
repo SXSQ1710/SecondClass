@@ -39,4 +39,6 @@ public class RedisKeyName {
 
     public final static String SHICHANG_INFO = "secondclass:shichang:userShiChangInfo:";
 
+    public final static String SHICHANG_SEMESTER = "secondclass:semester:";
+
 }

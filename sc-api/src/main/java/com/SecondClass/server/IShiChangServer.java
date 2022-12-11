@@ -3,6 +3,7 @@ package com.SecondClass.server;
 import com.SecondClass.entity.Participation;
 import com.SecondClass.entity.Response;
 import com.SecondClass.entity.Shichang;
+import com.SecondClass.entity.ShichangApplication;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import org.apache.ibatis.annotations.Select;
 
@@ -42,4 +43,6 @@ public interface IShiChangServer {
      * @return
      */
     Response queryAllGroupBySidAndTime(Date startTime, Date endTime);
+
+    Response shiChangApplication(ShichangApplication shichangApplication);
 }

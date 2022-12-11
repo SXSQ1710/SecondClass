@@ -2,12 +2,10 @@ package com.SecondClass.controller;
 
 import com.SecondClass.entity.Participation;
 import com.SecondClass.entity.Response;
+import com.SecondClass.entity.ShichangApplication;
 import com.SecondClass.server.IShiChangServer;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import java.util.Date;
@@ -35,6 +33,11 @@ public class ShiChangController {
     public Response auditActivityShiChang(@PathVariable("aid") Integer aid,
                                           @PathVariable("statue") Integer statue){
         return shiChangServer.auditActivityShiChang(aid,statue);
+    }
+
+    @PostMapping("/shiChangApplication")
+    public Response shiChangApplication(@RequestBody ShichangApplication shichangApplication){
+        return shiChangServer.shiChangApplication(shichangApplication);
     }
 
     @GetMapping("/getMyParticipation/{uid}/{pageNo}/{pageSize}")
