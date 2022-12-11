@@ -22,6 +22,11 @@ public class ProjectExceptionAdvice {
         log.error("全局异常捕获：redis链接失败！" + e.toString());
     }
 
+    @ExceptionHandler(org.springframework.data.redis.RedisSystemException.class)
+    public void RedisSystemException(Exception e){
+        log.error("全局异常捕获：redis链接失败！" + e.toString());
+    }
+
     @ExceptionHandler(cn.dev33.satoken.exception.NotLoginException.class)
     public Response NotLoginException(Exception e){
         log.error("全局异常捕获：NotLoginException！");

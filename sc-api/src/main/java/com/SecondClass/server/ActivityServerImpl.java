@@ -156,8 +156,10 @@ public class ActivityServerImpl implements IActivityServer{
 
 
     public Response findActivityAppByUid(Long uid,Page page) {
+        //通过token获取用户id，传入的uid暂时被禁用
+        String user_id = StpUtil.getLoginId().toString();
         QueryWrapper<ActivityApplication> queryWrapper = new QueryWrapper<>();
-        queryWrapper.eq("uid",uid);
+        queryWrapper.eq("uid",user_id);
         IPage<ActivityApplication> appList =  activityApplicationMapper.selectPage(page,queryWrapper);
         if(appList.getSize() == 0 ){
             return Response.success(ResponseStatus.ACTIVITY_APP_QUERY_FAIL,appList);
