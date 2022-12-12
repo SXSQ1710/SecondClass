@@ -1,5 +1,7 @@
 package com.SecondClass.entity;
 
+import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -24,6 +26,7 @@ public class ShichangApplication implements Serializable {
     /**
      * 活动时长发放申请表id
      */
+    @TableId(value = "shi_app_id",type= IdType.AUTO)
     private Long shiAppId;
     /**
      * 申请人id

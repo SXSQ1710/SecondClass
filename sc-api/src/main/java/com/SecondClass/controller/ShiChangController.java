@@ -36,8 +36,27 @@ public class ShiChangController {
     }
 
     @PostMapping("/shiChangApplication")
-    public Response shiChangApplication(@RequestBody ShichangApplication shichangApplication){
-        return shiChangServer.shiChangApplication(shichangApplication);
+    public Response postShiChangApplication(@RequestBody ShichangApplication shichangApplication){
+        return shiChangServer.postShiChangApplication(shichangApplication);
+    }
+
+    @GetMapping("/shiChangApplication/{pageNo}/{pageSize}")
+    public Response getShiChangApplication( @PathVariable("pageNo") Integer pageNo,
+                                            @PathVariable("pageSize") Integer pageSize){
+        Page<ShichangApplication> page = new Page<>(pageNo,pageSize);
+        return shiChangServer.getShiChangApplication(page);
+    }
+
+    @GetMapping("/getAllShiChangApplication/{pageNo}/{pageSize}")
+    public Response getAllShiChangApplication( @PathVariable("pageNo") Integer pageNo,
+                                               @PathVariable("pageSize") Integer pageSize){
+        Page<ShichangApplication> page = new Page<>(pageNo,pageSize);
+        return shiChangServer.getAllShiChangApplication(page);
+    }
+
+    @GetMapping("/getShiAppInfo/{sAppId}")
+    public Response getShiAppInfo (@PathVariable("sAppId") Integer sAppId){
+        return shiChangServer.getShiAppInfo(sAppId);
     }
 
     @GetMapping("/getMyParticipation/{uid}/{pageNo}/{pageSize}")

@@ -26,10 +26,13 @@ public class test {
     }
 
     public static void main(String[] args) {
+
         Calendar cal = Calendar.getInstance();
 
         int year = cal.get(Calendar.YEAR);
         int month = cal.get(Calendar.MONTH) + 1;
+        System.out.println(year);
+        System.out.println(month);
         String currXueqi = (year - 1) + "-" + year+" 1";
         if (month > 8 || month < 2) {
             currXueqi = year + "-" + (year + 1)+" 2";

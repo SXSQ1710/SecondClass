@@ -59,9 +59,10 @@ public class User implements Serializable {
      */
     @ExcelProperty(value = "用户名", index = 5)
     private String uname;
-
-
-
-
+    /**
+     * 年级
+     */
+    @ExcelProperty(value = "年级", index = 6)
+    private Integer grade;
 }
 
