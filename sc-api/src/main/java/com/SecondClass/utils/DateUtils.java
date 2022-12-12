@@ -24,19 +24,20 @@ public class DateUtils {
      */
     public static boolean isEffectiveDate(Date startTime, Date endTime) {
         Date nowTime = new Date();
-//        System.out.println(nowTime);
-//        System.out.println(startTime);
-//        System.out.println(endTime);
 
-        if (nowTime.getTime() == startTime.getTime()
-                || nowTime.getTime() == endTime.getTime()) {
-            System.out.println(1);
+        return isEffectiveDate(nowTime, startTime, endTime);
+    }
+
+    public static boolean isEffectiveDate(Date checkTime, Date startTime, Date endTime) {
+
+        if (checkTime.getTime() == startTime.getTime()
+                || checkTime.getTime() == endTime.getTime()) {
             return true;
         }
 
 
         Calendar date = Calendar.getInstance();
-        date.setTime(nowTime);
+        date.setTime(checkTime);
 
         Calendar begin = Calendar.getInstance();
         begin.setTime(startTime);
@@ -45,10 +46,8 @@ public class DateUtils {
         end.setTime(endTime);
 
         if (date.after(begin) && date.before(end)) {
-            System.out.println(2);
             return true;
         } else {
-            System.out.println(3);
             return false;
         }
     }

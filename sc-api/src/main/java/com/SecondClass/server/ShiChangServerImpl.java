@@ -5,9 +5,9 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONUtil;
 import com.SecondClass.entity.*;
-import com.SecondClass.entity.Class;
 import com.SecondClass.entity.R_entity.R_ShiChang;
 import com.SecondClass.mapper.*;
+import com.SecondClass.utils.DateUtils;
 import com.SecondClass.utils.RedisUtils;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
@@ -16,6 +16,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 import javax.annotation.Resource;
 import java.util.*;
@@ -41,6 +42,12 @@ public class ShiChangServerImpl implements IShiChangServer {
 
     @Resource
     private SemesterMapper semesterMapper;
+
+    @Resource
+    private ShichangApplicationMapper shichangApplicationMapper;
+
+    @Resource
+    private UserMapper userMapper;
 
     @Resource
     StringRedisTemplate stringRedisTemplate;
@@ -163,18 +170,152 @@ public class ShiChangServerImpl implements IShiChangServer {
                 });
 
         Set<String> range = stringRedisTemplate.opsForZSet().range(RedisKeyName.SECOND_KILL_PARTICIPATION + aid, 1, -1);
+
+        //异步任务开始
+        Activity activity = redisUtils.queryForValue(RedisKeyName.ACTIVITY, aid+"", Activity.class, 10L, TimeUnit.DAYS, true,
+                (id) -> {
+                    QueryWrapper<Activity> aQueryWrapper = new QueryWrapper<>();
+                    aQueryWrapper.eq("aid", aid);
+                    return activityMapper.selectOne(aQueryWrapper);
+                });
+
+        Long aShiChangType = activity.getAShichangType(); //时长类型id
+        Integer aShiChangNum = activity.getAShichangNum(); //时长数量
+        int aSemester; //活动进行时的学期
+
+        if(DateUtils.isEffectiveDate(activity.getAHoldStart(), semester.getLastSemesterBegin(), semester.getLastSemesterEnd())){
+            aSemester = 1;
+        }else if (DateUtils.isEffectiveDate(activity.getAHoldStart(), semester.getNextSemesterBegin(), semester.getNextSemesterEnd())){
+            aSemester = 2;
+        }else {
+            return Response.error(ResponseStatus.ERROR);
+        }
+
+//        数据库个人时长储存格式：
+//         [时长类型id,大一上[时长总数,参与活动id列表,自主申报id列表],大一下[时长总数,参与活动id列表,自主申报id列表],大二上,大二下,大三上,大三下,]
+//        [[1 ,[2 ,"1-2","1"],[2 ,"1-2","1"],[2 ,"1-2","1"],[2 ,"1-2","1"],[2 ,"1-2","1"],[2 ,"1-2","1"]],
+//         [2 ,[2 ,"1-2","1"],[2 ,"1-2","1"],[2 ,"1-2","1"],[2 ,"1-2","1"],[2 ,"1-2","1"],[2 ,"1-2","1"]],
+//         [3 ,[2 ,"1-2","1"],[2 ,"1-2","1"],[2 ,"1-2","1"],[2 ,"1-2","1"],[2 ,"1-2","1"],[2 ,"1-2","1"]],
+//         [4 ,[2 ,"1-2","1"],[2 ,"1-2","1"],[2 ,"1-2","1"],[2 ,"1-2","1"],[2 ,"1-2","1"],[2 ,"1-2","1"]]]
+
         String[] split;
         for (String value : range){
             split = value.split("-");
-            System.out.println(Arrays.toString(split));
+            //System.out.println(Arrays.toString(split));
+            String uid = split[0]; //用户id
+            String status = split[1]; //活动参与状态码
+            if (status.equals("3")){
+
+                User user = redisUtils.queryForValue(RedisKeyName.MANAGE_USER, uid, User.class, 60L, TimeUnit.DAYS, false,
+                        (id) -> {
+                            LambdaQueryWrapper<User> queryWrapper = new LambdaQueryWrapper<>();
+                            queryWrapper.eq(User::getUid, uid);
+                            return userMapper.selectOne(queryWrapper);
+                        });
+
+                Calendar cal = Calendar.getInstance();
+                int nowYear = cal.get(Calendar.YEAR);
+                int grade = nowYear - user.getGrade() + 1;
+//                System.out.println(uid +"-"+ grade );
+
+                LambdaQueryWrapper<Shichang> wrapper = new LambdaQueryWrapper<>();
+                wrapper.eq(Shichang::getUid, uid);
+                Shichang shichang = shiChangMapper.selectOne(wrapper);
+
+                //用户时长记录未创建
+                if (!BeanUtil.isNotEmpty(shichang)){
+                    List<ShichangType> shichangTypes = shichangTypeMapper.selectList(null);
+
+                    String shiChangInfo = "[";
+                    int size = shichangTypes.size();
+                    ArrayList<String> strings = new ArrayList<>();
+
+                    for (int i = 0; i < size; i++) {
+                        Long shiChangTypeId = shichangTypes.get(i).getSid();
+                        String r;
+
+                        if(shiChangTypeId.equals(aShiChangType)){
+                            ArrayList<String> aShiChang = new ArrayList<>();
+                            aShiChang.add(shiChangTypeId.toString());
+                            for (int j = 1; j < 7; j++) {
+                                if ((aSemester + (grade - 1)*2) == j){
+                                    aShiChang.add("["+ aShiChangNum.toString() +",\"" + aid.toString() + "\",\"-\"]");
+                                }else{
+                                    aShiChang.add("[0 ,\"-\",\"-\"]");
+                                }
+                            }
+                             r = "["+ StringUtils.collectionToDelimitedString(aShiChang, ",")+"]";
+                        }else {
+                            r = "[" + shiChangTypeId.toString() + ",[0 ,\"-\",\"-\"],[0 ,\"-\",\"-\"],[0 ,\"-\",\"-\"],[0 ,\"-\",\"-\"],[0 ,\"-\",\"-\"],[0 ,\"-\",\"-\"]]";
+                        }
+                        strings.add(r);
+                    }
+                    shiChangInfo += StringUtils.collectionToDelimitedString(strings,",") + "]";
+//                    System.out.println(shiChangInfo);
+
+                    shichang = Shichang.builder().uid(Long.valueOf(uid)).shiChang(shiChangInfo).build();
+                    shiChangMapper.insert(shichang);
+                    redisUtils.setValue(RedisKeyName.SHICHANG_INFO + uid, shichang,  60L, TimeUnit.DAYS);
+
+                }else {
+
+                    //数据库个人时长储存格式：
+                    //[时长类型id,大一上[时长总数,参与活动id列表,自主申报id列表],大一下[时长总数,参与活动id列表,自主申报id列表],大二上,大二下,大三上,大三下,]
+                    //[[1 ,[2 ,"1-2","1"],[2 ,"1-2","1"],[2 ,"1-2","1"],[2 ,"1-2","1"],[2 ,"1-2","1"],[2 ,"1-2","1"]],
+                    // [2 ,[2 ,"1-2","1"],[2 ,"1-2","1"],[2 ,"1-2","1"],[2 ,"1-2","1"],[2 ,"1-2","1"],[2 ,"1-2","1"]],
+                    // [3 ,[2 ,"1-2","1"],[2 ,"1-2","1"],[2 ,"1-2","1"],[2 ,"1-2","1"],[2 ,"1-2","1"],[2 ,"1-2","1"]],
+                    // [4 ,[2 ,"1-2","1"],[2 ,"1-2","1"],[2 ,"1-2","1"],[2 ,"1-2","1"],[2 ,"1-2","1"],[2 ,"1-2","1"]]]
+
+                    List<List> allInfo = JSONUtil.toList(shichang.getShiChang(), List.class);
+
+                    //data : [1 ,[2 ,"1-2","1"],[2 ,"1-2","1"],[2 ,"1-2","1"],[2 ,"1-2","1"],[2 ,"1-2","1"],[2 ,"1-2","1"]]
+                    List data;
+                    for (int i = 0; i < allInfo.size(); i++) {
+                        data = allInfo.get(i);
+                        if ((int)data.get(0) == aShiChangType.intValue()){
+                            for (int j = 1; j < data.size(); j++) {
+                                if ((aSemester + (grade - 1) * 2) == j) {
+                                    //data.get(i) : [2 ,"1-2","1"]
+                                    List<Object> list = JSONUtil.toList((JSONArray) data.get(j), Object.class);
+
+                                    String[] activities = list.get(1).toString().split("-");
+                                    ArrayList<String> arrayList = new ArrayList<>(Arrays.asList(activities));
+                                    arrayList.add(aid.toString());
+                                    list.set(1, StringUtils.collectionToDelimitedString(arrayList, "-"));
+                                    list.set(0, (int)list.get(0) + aShiChangNum);
+                                    String jsonStr = JSONUtil.toJsonStr(list);
+                                    data.set(j, jsonStr);
+                                    allInfo.set(i, data);
+                                }
+                            }
+                        }else {
+                            continue;
+                        }
+                    }
+
+                    shichang.setShiChang(allInfo.toString());
+                    shiChangMapper.update(shichang, wrapper);
+                    stringRedisTemplate.delete(RedisKeyName.SHICHANG_INFO + uid);
+                }
+
+
+
+
+            }else {
+                continue;
+            }
+
         }
+
+        return Response.success(ResponseStatus.SUCCESS,semester);
+
+
 //        range.forEach(value-> {
 //            String[] split = value.split("-");
 //
 //            System.out.println(Arrays.toString(split));
 //        });
 
-        return Response.success(ResponseStatus.SUCCESS,semester);
 //        LambdaQueryWrapper<Participation> queryWrapper = Wrappers.<Participation>lambdaQuery()
 //                .eq(Participation::getAid,aid);
 //        List<Participation> participations = participationMapper.selectList(queryWrapper);
@@ -233,10 +374,63 @@ public class ShiChangServerImpl implements IShiChangServer {
     }
 
     @Override
-    public Response shiChangApplication(ShichangApplication shichangApplication) {
+    @Transactional
+    public Response postShiChangApplication(ShichangApplication shichangApplication) {
+        try{
+            String user_id = StpUtil.getLoginId().toString();
+            shichangApplication.setUid(Long.parseLong(user_id));
+            shichangApplication.setShiAppStatus(1);
+            if (shichangApplicationMapper.insert(shichangApplication) == 1){
+                return Response.success(ResponseStatus.SHICHANG_APP_SUCCESS);
+            }else {
+                return Response.error(ResponseStatus.SHICHANG_APP_FAIL);
+            }
+        }catch (Exception e){
+            e.printStackTrace();
+            return Response.error(ResponseStatus.SHICHANG_APP_ERROR);
+        }
+    }
+
+    @Override
+    public Response getShiChangApplication(Page<ShichangApplication> page) {
         String user_id = StpUtil.getLoginId().toString();
-        shichangApplication.setUid(Long.parseLong(user_id));
-        System.out.println(shichangApplication);
-        return null;
+        LambdaQueryWrapper<ShichangApplication> queryWrapper = Wrappers.<ShichangApplication>lambdaQuery()
+                .eq(ShichangApplication::getUid,user_id);
+        Page<ShichangApplication> ret = shichangApplicationMapper.selectPage(page, queryWrapper);
+        return Response.success(ResponseStatus.SUCCESS,ret);
+    }
+
+    @Override
+    public Response getAllShiChangApplication(Page<ShichangApplication> page) {
+        LambdaQueryWrapper<ShichangApplication> queryWrapper = Wrappers.lambdaQuery();
+        Page<ShichangApplication> ret = shichangApplicationMapper.selectPage(page, queryWrapper);
+        return Response.success(ResponseStatus.SUCCESS,ret);
+    }
+
+    @Override
+    public Response getShiAppInfo(Integer sAppId) {
+
+        ShichangApplication shichangApplication = redisUtils.queryForValue(RedisKeyName.SHICHANG_APPLICATION, sAppId + "", ShichangApplication.class, 10L, TimeUnit.DAYS, true,
+                (id) -> {
+                    return shichangApplicationMapper.selectById(sAppId);
+                });
+
+        if (!BeanUtil.isNotEmpty(shichangApplication)) return Response.error(ResponseStatus.ERROR);
+
+        String aid = shichangApplication.getAid().toString();
+
+        Activity activity = redisUtils.queryForValue(RedisKeyName.ACTIVITY, aid, Activity.class, 10L, TimeUnit.DAYS, true,
+                (id) -> {
+                    return activityMapper.selectById(aid);
+                });
+
+        Map<String,Object> R = new HashMap<>();
+
+        R.put("uid",shichangApplication.getUid());
+        R.put("shiAppDescription",shichangApplication.getShiAppDescription());
+        R.put("shiAppStatus",shichangApplication.getShiAppStatus());
+        R.put("activityInfo",activity);
+
+        return Response.success(ResponseStatus.SUCCESS,R);
     }
 }

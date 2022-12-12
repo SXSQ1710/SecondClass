@@ -44,5 +44,11 @@ public interface IShiChangServer {
      */
     Response queryAllGroupBySidAndTime(Date startTime, Date endTime);
 
-    Response shiChangApplication(ShichangApplication shichangApplication);
+    Response postShiChangApplication(ShichangApplication shichangApplication);
+
+    Response getShiChangApplication(Page<ShichangApplication> page);
+
+    Response getAllShiChangApplication(Page<ShichangApplication> page);
+
+    Response getShiAppInfo(Integer sAppId);
 }
