@@ -519,6 +519,7 @@ public class ManageServerImpl extends ServiceImpl<UserMapper,User> implements IM
         LambdaQueryWrapper<MemberView> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(MemberView::getOid, oid);
         List<MemberView> memberViews = memberViewMapper.selectList(wrapper);
+
         return Response.success(ResponseStatus.SUCCESS, memberViews);
     }
 
