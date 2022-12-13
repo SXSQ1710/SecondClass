@@ -35,6 +35,7 @@
 </template>
 <script>
 export default {
+  inject: ['reload'],
   data() {
     return {
       banner: [
@@ -48,6 +49,7 @@ export default {
       ],
     }
   },
+
   methods: {
     to(type) {
       if (type == 1)
@@ -55,6 +57,8 @@ export default {
       if (type == 2)
         this.$router.push("/admin");
     }
+  },
+  created() {
   }
 }
 
@@ -66,6 +70,45 @@ export default {
   padding: 0;
 }
 
+/* 下面是对登录按钮的一些设置 */
+.log_in {
+  display: flex;
+  column-gap: 1vw;
+  padding-left: 0.5vw;
+}
+
+.iconBtn {
+  width: 14vw;
+  height: 25vh;
+  line-height: 10vh;
+  font-size: 2.2vw;
+  text-align: center;
+  background: #688493;
+  cursor: pointer;
+}
+
+.iconBtn:nth-child(1):hover {
+  opacity: 0.6;
+  transform: rotate(5deg);
+}
+
+.iconBtn:nth-child(2):hover {
+  opacity: 0.6;
+  transform: rotate(-5deg);
+}
+
+.iconBtn:active {
+  opacity: 1;
+  color: var(--text-color);
+}
+
+.iconBtn>.myicon {
+  color: #a2dda2;
+  font-size: 40pt;
+  padding-top: 1vh;
+}
+
+/* 轮播图 */
 .el-carousel__item h3 {
   display: flex;
   color: #475669;
@@ -99,7 +142,8 @@ export default {
   grid-template-columns: 70% 30%;
   align-items: center;
 }
-.text{
+
+.text {
   height: 80vh;
   user-select: none;
 }
@@ -113,44 +157,5 @@ export default {
 .title>p {
   font-size: 2.8vw;
   text-align: center;
-}
-
-/* 下面是对登录按钮的一些设置 */
-.log_in {
-  display: flex;
-  column-gap: 1vw;
-  padding-left: 0.5vw;
-}
-
-.iconBtn {
-  width: 14vw;
-  height: 25vh;
-  line-height: 10vh;
-  font-size: 2.2vw;
-  text-align: center;
-  /* justify-content: center; */
-  background: #688493;
-  cursor: pointer;
-}
-
-.iconBtn:nth-child(1):hover {
-  opacity: 0.6;
-  transform: rotate(5deg);
-}
-
-.iconBtn:nth-child(2):hover {
-  opacity: 0.6;
-  transform: rotate(-5deg);
-}
-
-.iconBtn:active {
-  opacity: 1;
-  color: var(--text-color);
-}
-
-.iconBtn>.myicon {
-  color: #a2dda2;
-  font-size: 40pt;
-  padding-top: 1vh;
 }
 </style>

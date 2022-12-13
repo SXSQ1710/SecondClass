@@ -2,14 +2,15 @@
   <div class="topmenu">
     <span class="leftTip">{{ toptip }}</span>
     <span class="rightBtn">
-      <p class="exit" @click="open">退出登录</p>
+      <p class="exit" @click="exitCheck">退出登录</p>
       <p>本次登录时间：{{ sdf }}</p>
     </span>
   </div>
 </template>
 <script>
 import { ElMessage, ElMessageBox } from 'element-plus'
-import {getNowTime} from '../../server/api/time'
+import { getNowTime } from '../../server/api/time'
+import store from '../../store/store.js'
 
 export default {
 
@@ -30,7 +31,7 @@ export default {
         path: path,
       })
     }
-    const open = () => {
+    const exitCheck = () => {
       ElMessageBox.confirm(
         '确定要退出登录吗?',
         '退出登录',
@@ -45,8 +46,7 @@ export default {
             type: 'success',
             message: '您已退出系统，请重新登录'
           })
-          sessionStorage.clear("access_token") //清空sessionStorage中名为userData的值 
-          // that.$router.push({path:'/home ', selected:"2" })
+          store.commit("del_token"); //清空token
         })
         .catch(() => {
           ElMessage({
@@ -56,14 +56,13 @@ export default {
         })
     }
     // 如果没有’{}‘中括号包围open，会默认在页面打开时调用一次该方法
-    return { open, goToForm }
+    return { exitCheck, goToForm }
   }
   ,
   methods: {
-        getCurrentTime() {
-            var _this = this;
-            this.sdf = getNowTime(new Date().getTime())     
-        }
+    getCurrentTime() {
+      this.sdf = getNowTime(new Date().getTime())
+    }
   },
   created() {
     this.getCurrentTime()
@@ -72,15 +71,16 @@ export default {
 </script>
 <style scoped>
 .topmenu {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   width: 100vw;
   height: 8vh;
   font-size: 3vw;
   text-align: left;
   line-height: 8vh;
-  position: relative;
   background: linear-gradient(to top, rgb(192, 194, 217), rgb(248, 229, 229));
-  /* background: var(--sidebar-color);
-    transition: var(--tran-03); */
   border-bottom: 0.5px solid rgba(228, 233, 247, 0.6);
 }
 
@@ -94,11 +94,6 @@ export default {
   user-select: none;
 }
 
-.topmenu {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
 
 .exit {
   color: red;

@@ -7,7 +7,6 @@
         <!-- query查询框 -->
         <div class="query-box">
             <div class="query-btn">
-                <!-- <i class="bx bx-search"></i> -->
                 <el-input id="query_input" v-model="queryInput" placeholder="请输入XX名称查询" @input="handleQueryInput">
                 </el-input>
                 <el-button class="box_btn" type="primary" text @click="handleQueryName(queryInput)">
@@ -16,10 +15,6 @@
             </div>
 
             <div class="query-btn">
-                <el-button class="box_btn2" type="danger" text v-if="multipleSelection.length > 0"
-                    @click="handleMultiDelete">
-                    删除多行
-                </el-button>
                 <el-button class="box_btn" type="primary" text @click="handleAdd">
                     导入账号
                 </el-button>
@@ -51,7 +46,6 @@
                     <template #default="scope">
                         <el-button link type="primary" size="small" @click="handleDetail(scope.row)">详情</el-button>
                         <el-button link type="primary" size="small" @click="handleEdit(scope.row)">编辑</el-button>
-                        <el-button link type="danger" size="small" @click="handleDelete(scope.row)">删除</el-button>
                     </template>
                 </el-table-column>
             </el-table>
@@ -64,19 +58,19 @@
             <el-form ref="ruleFormRef" :model="form" :rules="rules" label-width="180px" class="elform-input"
                 size="dafault" status-icon @submit.native.prevent>
                 <el-form-item class="once" label="用户ID" prop="uid" width="0px">
-                    <el-input @keyup.native.enter v-model="form.uid" />
+                    <el-input @keyup.native.enter v-model="form.uid" :disabled="dialogType != 'add'" />
                 </el-form-item>
                 <el-form-item class="once" label="用户名" prop="uname">
-                    <el-input @keyup.native.enter v-model="form.uname" />
+                    <el-input @keyup.native.enter v-model="form.uname" :disabled="dialogType != 'add'" />
                 </el-form-item>
                 <el-form-item class="once" label="用户密码" prop="upassword">
                     <el-input @keyup.native.enter v-model="form.upassword" />
                 </el-form-item>
                 <el-form-item class="once" label="联系方式" prop="phone">
-                    <el-input @keyup.native.enter v-model="form.phone" />
+                    <el-input @keyup.native.enter v-model="form.phone" :disabled="dialogType != 'add'" />
                 </el-form-item>
                 <el-form-item label="班级" prop="cid">
-                    <el-input @keyup.native.enter v-model="form.cid" />
+                    <el-input @keyup.native.enter v-model="form.cid" :disabled="dialogType != 'add'" />
                 </el-form-item>
                 <!-- <el-form-item label="班级ID" prop="grade">
                     <el-select v-model="form.cid" placeholder="">
@@ -97,7 +91,7 @@
                     </el-select>
                 </el-form-item>-->
                 <el-form-item label="所属组织" prop="oid">
-                    <el-input @keyup.native.enter v-model="form.oid" />
+                    <el-input @keyup.native.enter v-model="form.oid" :readonly="dialogType != 'add'" />
                 </el-form-item>
             </el-form>
 
@@ -126,6 +120,7 @@ import axios from 'axios'
 //第一种获取target值的方式，通过vue中的响应式对象可使用toRaw()方法获取原始对象
 import { toRaw } from '@vue/reactivity'
 import { ElMessage } from 'element-plus';
+import '../../../assets/css/common.css'
 
 
 //所有的生命周期用法均为回调函数
@@ -183,13 +178,21 @@ let tableDataCopy = Object.assign(tableData)
 // 方法
 
 const all = () => {
-    // axios.get('http://localhost/select_user').then(res => {
-    //     tableData = res.data;//数据传递到页面数组
-    //     tableDataCopy = Object.assign(tableData)
-    //     console.log("数据查询成功" + res.data)
-    // }).catch(err => {
-    //     console.log("获取数据失败" + err);
-    // })
+    axios.get('http://localhost:8083/api/manage/getAllAccount/1').then(res => {
+        if (res.data["code"] == "7-200") {
+
+            tableData = res.data.data
+            tableDataCopy = Object.assign(tableData)
+
+            ElMessage({ message: res.data.msg, type: "success" })
+        } else
+            ElMessage({ message: res.data.msg, type: "error" })
+
+
+    }).catch(err => {
+        console.log("获取数据失败" + err);
+        ElMessage({ message: "请求失败", type: "error" })
+    })
 }
 
 // 删除按钮
@@ -213,7 +216,7 @@ let handleQueryName = (val) => {
 let handleCheckAdd = (formData) => {
     dialogFormVisible = false // 关闭弹窗
     var formDataList = toRaw(formData)
-  
+
     var receiveData = {
         uid: formDataList.uid,
         upassword: formDataList.upassword,
@@ -228,7 +231,7 @@ let handleCheckAdd = (formData) => {
     axios.post('http://localhost:8083/api/manage/addAccount', receiveData).then(res => {
         console.log(res)
         if (res.data["code"] == "8-200") {
-            form.cname = "信管" + form.cid +"班"
+            form.cname = "信管" + form.cid + "班"
 
             tableData.push({
                 id: (tableData.length + 1).toString(),
@@ -338,22 +341,6 @@ const submitAddForm = async (formEl) => {
     user-select: text;
 }
 
-/* 顶部标题 */
-.title {
-    font-size: 26pt;
-}
-
-.query-box {
-    display: flex;
-    justify-content: space-between;
-    margin-bottom: 20px;
-}
-
-/* input文本框的宽度 */
-.el-input {
-    width: 300px;
-}
-
 .elform-input {
     transform: scale(1);
     display: inline-block;
@@ -364,11 +351,6 @@ const submitAddForm = async (formEl) => {
     margin-bottom: 14px;
 }
 
-#loginItem {
-    display: flex;
-    align-items: center;
-    flex-direction: column;
-}
 
 /* 下面是对表格form的一些css修改 */
 .el-col-2 {
@@ -383,50 +365,5 @@ const submitAddForm = async (formEl) => {
     width: 60%;
     height: 100%;
     margin: 20vh;
-}
-
-.once {
-    width: 80%;
-}
-
-/* 顶部按钮的样式设置 */
-
-
-.box_btn {
-    background: #c2dff5bd;
-    font-weight: bold;
-}
-
-.box_btn2 {
-    background: #adc2d22e;
-}
-
-.refresh_btn {
-    padding: 20px 0;
-    position: fixed;
-    right: 3vw;
-    bottom: 10vh;
-    cursor: pointer;
-    z-index: 1;
-}
-
-.bx-refresh {
-    position: absolute;
-    font-size: 20pt;
-    display: flex;
-}
-
-/* 滚动scroll样式 */
-
-.scrollbar-demo-item {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    height: 50px;
-    margin: 10px;
-    text-align: center;
-    border-radius: 4px;
-    background: var(--el-color-primary-light-9);
-    color: var(--el-color-primary);
 }
 </style>

@@ -105,7 +105,7 @@ CREATE TABLE `t_organization`  (
 -- ----------------------------
 -- Records of t_organization
 -- ----------------------------
-INSERT INTO `t_organization` VALUES (1, '校团委', 1, '龙洞校区', '学校老大', NULL, 1);
+INSERT INTO `t_organization` VALUES (1, '校团委', 1, '龙洞校区', '系统中唯一赋予管理员权限的组织', NULL, 1);
 INSERT INTO `t_organization` VALUES (2, '志愿者协会', 2, '龙洞校区', NULL, NULL, 2);
 
 -- ----------------------------

@@ -7,7 +7,6 @@
         <!-- query查询框 -->
         <div class="query-box">
             <div class="query-btn">
-                <!-- <i class="bx bx-search"></i> -->
                 <el-input v-model="queryInput" placeholder="请输入XX名称查询" @input="handleQueryInput"></el-input>
                 <el-button class="box_btn" type="primary" text @click="handleQueryName(queryInput)">
                     搜索
@@ -78,8 +77,7 @@
         </el-scrollbar>
 
         <!-- 弹窗 -->
-        <el-dialog v-model=dialogFormVisible
-            :title="dialogType == 'add' ? '新增' : (dialogType == 'edit' ? '编辑' : '详情')">
+        <el-dialog v-model=dialogFormVisible :title="dialogType == 'add' ? '新增' : (dialogType == 'edit' ? '编辑' : '详情')">
             <el-form ref="ruleFormRef" :model="form" :rules="rules" label-width="120px" class="elform-input"
                 size="dafault" status-icon @submit.native.prevent>
                 <el-form-item class="once" label="活动ID" prop="aid">
@@ -194,8 +192,8 @@
 import { onMounted } from 'vue'
 import axios from 'axios'
 
-import { getNowTime } from '../../../server/api/time';
-
+import { getNowTime, compareTime } from '../../../server/api/time';
+import '../../../assets/css/common.css'
 
 
 //所有的生命周期用法均为回调函数
@@ -259,9 +257,9 @@ const all = () => {
             // 匹配活动Status
             if (_tableData[i].astatus == 2) {
                 _tableData[i].astatus = '审核通过'
-                if (_nowTime > _tableData[i].a_hold_end) {
+                if (compareTime(_nowTime, _tableData[i].a_hold_end)) {
                     _tableData[i].astatus += '[已结束]'
-                } else if (_nowTime > _tableData[i].a_register_open) {
+                } else if (compareTime(_nowTime, _tableData[i].a_register_open)) {
                     _tableData[i].astatus += '[进行中]'
                 } else {
                     _tableData[i].astatus += '[待开始]'
@@ -294,10 +292,7 @@ let handleDelete = ({ aid }) => {
     // 从index位置开始删除tableData中的1个元素
     tableData.splice(index, 1)
 }
-// 删除确认
-let handelCheckDelete = () => {
-    console.log('clickDELETE')
-}
+
 //搜索，模糊查询
 let handleQueryInput = (val) => {
     queryInput = val
@@ -472,22 +467,6 @@ const submitAddForm = async (formEl) => {
     user-select: text;
 }
 
-
-/* 标题样式 */
-.title {
-    font-size: 26pt;
-}
-
-.query-box {
-    display: flex;
-    justify-content: space-between;
-    margin-bottom: 20px;
-}
-
-.el-input {
-    width: 200px;
-}
-
 .text-center {
     margin: 0 auto
 }
@@ -502,11 +481,7 @@ const submitAddForm = async (formEl) => {
     margin-bottom: 14px;
 }
 
-#loginItem {
-    display: flex;
-    align-items: center;
-    flex-direction: column;
-}
+
 
 /* 下面是对表格form的一些css修改 */
 .el-col-2 {
@@ -521,76 +496,5 @@ const submitAddForm = async (formEl) => {
     width: 60%;
     height: 100%;
     margin: 20vh;
-}
-
-.once {
-    width: 80%;
-}
-
-/* 顶部按钮的样式设置 */
-/* .search_icon {
-    color: #000000b3;
-    z-index: 1;
-} */
-
-.box_btn {
-    background: #c2dff5bd;
-    font-weight: bold;
-}
-
-.box_btn2 {
-    background: #adc2d22e;
-}
-
-
-.refresh_btn {
-    padding: 20px 0;
-    position: fixed;
-    right: 3vw;
-    bottom: 10vh;
-    cursor: pointer;
-    z-index: 1;
-    display: flex;
-    flex-direction: row-reverse;
-}
-
-.refresh_btn>span {
-    transform: translate(-50px, 0);
-    cursor: initial;
-}
-
-.bx-refresh {
-    position: absolute;
-    font-size: 20pt;
-    display: flex;
-}
-
-
-/* 滚动scroll样式 */
-
-.scrollbar-demo-item {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    height: 50px;
-    margin: 10px;
-    text-align: center;
-    border-radius: 4px;
-    background: var(--el-color-primary-light-9);
-    color: var(--el-color-primary);
-}
-
-/* 滚动scroll样式 */
-
-.scrollbar-demo-item {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    height: 50px;
-    margin: 10px;
-    text-align: center;
-    border-radius: 4px;
-    background: var(--el-color-primary-light-9);
-    color: var(--el-color-primary);
 }
 </style>

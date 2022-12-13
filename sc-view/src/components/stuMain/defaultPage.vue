@@ -169,7 +169,8 @@
             <template #footer>
                 <span class="dialog-footer">
                     <span>UID：{{ my_uid }} {{ uname }} </span>
-                    <el-button type="primary" v-if="dialogType=='add'" @submit.native.preven @click="handleCheckApp(my_uid, form.aid)">
+                    <el-button type="primary" v-if="dialogType == 'add'" @submit.native.preven
+                        @click="handleCheckApp(my_uid, form.aid)">
                         申请活动
                     </el-button>
                 </span>
@@ -184,6 +185,7 @@ import axios from 'axios'
 
 import { getNowTime, GMTToStr, timestampToTime } from '../../server/api/time';
 import { ElMessage } from 'element-plus';
+import '../../assets/css/common.css'
 
 
 
@@ -228,8 +230,6 @@ let tableDataCopy = []
 // 方法
 const all = () => {
     axios.get('http://localhost:8083/api/activity/findActivityAppByUid/' + my_uid + '/1/10').then(res => {
-        console.log(res)
-
         var _tata = res.data.data.records
         var _tableData = []
         for (let i = 0; i < _tata.length; i++) {
@@ -308,13 +308,13 @@ let handleEdit = (row) => {
         adescription: row.adescription,
         a_address: row.aAddress,
         a_register_open: row.aRegisterOpen,
-        a_register_close:row.aRegisterClose,
+        a_register_close: row.aRegisterClose,
         a_limitted_number: row.aLimittedNumber,
         a_oid: row.aOid,
         a_uid: my_uid,
         a_hold_start: row.aHoldStart,
         a_hold_end: row.aHoldEnd,
-        apic:row.apic,
+        apic: row.apic,
         a_app_attachment: row.apic,
         a_shichang_num: row.aShichangNum,
         A_shichang_type: row.aShichangType,
@@ -324,19 +324,19 @@ let handleEdit = (row) => {
 // 详情
 let handleDetail = (row) => {
     dialogType = 'detail'
-    
+
     form = {
         aname: row.aname,
         adescription: row.adescription,
         a_address: row.aAddress,
         a_register_open: row.aRegisterOpen,
-        a_register_close:row.aRegisterClose,
+        a_register_close: row.aRegisterClose,
         a_limitted_number: row.aLimittedNumber,
         a_oid: row.aOid,
         a_uid: my_uid,
         a_hold_start: row.aHoldStart,
         a_hold_end: row.aHoldEnd,
-        apic:row.apic,
+        apic: row.apic,
         a_app_attachment: row.apic,
         a_shichang_num: row.aShichangNum,
         A_shichang_type: row.aShichangType,
@@ -367,12 +367,9 @@ const handleCheckApp = (formUID, formAID) => {
         a_shichang_num: form.a_shichang_num,
         A_shichang_type: form.A_shichang_type,
     }
-    console.log("form=", form)
-    console.log("formdata=", _formdata)
     axios.post('http://localhost:8083/api/activity/applyActivity', _formdata).then((res) => {
-        console.log(res)
         //处理成功后的逻辑
-        if ((res.data.code) == 200) {
+        if ((res.data.code) == '2-200') {
             ElMessage({ message: res.data.msg, type: 'success' })
         } else {
             ElMessage({ message: res.data.msg, type: 'error' })
@@ -389,21 +386,6 @@ const handleCheckApp = (formUID, formAID) => {
     user-select: text;
 }
 
-/* 标题样式 */
-.title {
-    font-size: 26pt;
-}
-
-.query-box {
-    display: flex;
-    justify-content: space-between;
-    margin-bottom: 20px;
-}
-
-.el-input {
-    width: 200px;
-}
-
 .text-center {
     margin: 0 auto
 }
@@ -418,11 +400,6 @@ const handleCheckApp = (formUID, formAID) => {
     margin-bottom: 14px;
 }
 
-#loginItem {
-    display: flex;
-    align-items: center;
-    flex-direction: column;
-}
 
 /* 下面是对表格form的一些css修改 */
 .el-col-2 {
@@ -439,20 +416,6 @@ const handleCheckApp = (formUID, formAID) => {
     margin: 20vh;
 }
 
-.once {
-    width: 80%;
-}
-
-/* 顶部按钮的样式设置 */
-
-.box_btn {
-    background: #c2dff5bd;
-    font-weight: bold;
-}
-
-.box_btn2 {
-    background: #adc2d22e;
-}
 
 .intro_btn {
     padding: 0;
@@ -462,40 +425,9 @@ const handleCheckApp = (formUID, formAID) => {
     top: 200px;
 }
 
-.refresh_btn {
-    padding: 20px 0;
-    position: fixed;
-    right: 3vw;
-    bottom: 10vh;
-    cursor: pointer;
-    z-index: 1;
-}
-
-.bx-refresh {
-    position: absolute;
-    font-size: 20pt;
-    display: flex;
-}
-
-
-/* 滚动scroll样式 */
-
-.scrollbar-demo-item {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    height: 50px;
-    margin: 10px;
-    text-align: center;
-    border-radius: 4px;
-    background: var(--el-color-primary-light-9);
-    color: var(--el-color-primary);
-}
-
 .dialog-footer {
     color: rgba(86, 97, 105, 0.5);
     text-shadow: 0 0 0 black 1px;
-
 }
 
 .dialog-footer>span {

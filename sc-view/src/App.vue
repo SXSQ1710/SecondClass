@@ -1,19 +1,33 @@
 <template>
   <header>
     <div class="wrapper">
-      <router-view></router-view>
+      <router-view v-if="isRouteAlive"></router-view>
     </div>
   </header>
 </template>
 
 <script>
-
 export default {
+  provide() {
+    return {
+      reload: this.reload
+    }
+  },
   name: 'App',
   data() {
-    return {}
+    return { isRouteAlive: true }
   },
   mounted() {
+  },
+  methods() {
+    reload = () => {
+      // 从 DOM 中删除 my-component 组件
+      this.isRouteAlive = false;
+
+      this.$nextTick().then(() => {
+        this.isRouteAlive = true;
+      });
+    }
   }
 }
 </script>
@@ -26,19 +40,4 @@ header {
 #app {
   margin: 0;
 }
-
-/* 定义一个区别于手机的尺寸，宽小于800px
-@media (max-width: 1024px) {
-  header {
-    display: flex;
-    place-items: center;
-    padding-right: calc(var(--section-gap) / 2);
-  }
-
-  header .wrapper {
-    display: flex;
-    place-items: flex-start;
-    flex-wrap: wrap;
-  }
-} */
 </style>

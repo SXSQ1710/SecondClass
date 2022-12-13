@@ -207,7 +207,7 @@
 import axios from 'axios'
 import { ElMessage } from "element-plus";
 import { onMounted } from 'vue'
-import { getNowTime } from '../../../server/api/time';
+import { getNowTime, compareTime } from '../../../server/api/time';
 import { toRaw } from '@vue/reactivity'
 
 // 数据
@@ -248,9 +248,9 @@ const all = () => {
 
         for (let i = 0; i < _tableData.length; i++) {
             // 匹配活动Status
-            if (_nowTime > _tableData[i].a_hold_end) {
+            if (compareTime(_nowTime, _tableData[i].a_hold_end)) {
                 _tableData[i].astatus = '[已结束]'
-            } else if (_nowTime > _tableData[i].a_register_open) {
+            } else if (compareTime(_nowTime, _tableData[i].a_register_open)) {
                 _tableData[i].astatus = '[进行中]'
             } else {
                 _tableData[i].astatus = '[待开始]'
@@ -285,8 +285,8 @@ let checkID = () => {
     var _uid = sessionStorage.getItem("uid")
     axios.get('http://localhost:8083/api/manage/user/' + _uid).then(res => {
         var my_oids = res.data.data.oid
-        if(my_oids.length>=3){
-            identity =true
+        if (my_oids.length >= 3) {
+            identity = true
         }
     }).catch(err => {
         console.log("获取数据失败" + err);
@@ -298,10 +298,8 @@ let openQrcode = (row, typeCount) => {
 
     var activityData = toRaw(row)
     console.log(activityData)
-    console.log("获取正在进行的活动信息", activityData.aid, activityData.uid, 0)
     // 1为获取签到码；0为获取签退码
     axios.get('http://localhost:8083/api/activity/signIn/' + activityData.aid + '/' + activityData.uid + '/' + typeCount).then(res => {
-        console.log(res.data.data)
         getQrcode = res.data.data
         ElMessage({ message: res.data.msg, type: "success" })
     }).catch(err => {

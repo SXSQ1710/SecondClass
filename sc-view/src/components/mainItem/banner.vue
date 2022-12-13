@@ -10,15 +10,13 @@
 
 </template>
 	<!-- setup设置打开页面时的状态，show=true表示展开 -->
-<script  setup lang="ts">
-import { ref } from 'vue'
+<script  setup >
 const imglist = [
 	{
 		path: '../src/assets/apicture/01.jpg',
 	},
 	{
 		path: '../src/assets/apicture/02.jpg',
-
 	},
 	{
 		path: '../src/assets/apicture/03.jpg',

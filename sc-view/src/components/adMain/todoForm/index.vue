@@ -70,10 +70,52 @@
                 <el-table-column prop="aShichangNum" label="时长" sortable width="120" header-align="center" />
                 <el-table-column prop="adescription" label="活动介绍" width="200" header-align="center" />
 
-                <el-table-column fixed="right" label="操作" width="180" header-align="center">
+                <el-table-column fixed="right" label="操作" width="120" header-align="center">
                     <template #default="scope">
                         <el-button link type="primary" size="small" @click="handleDetail(scope.row)">详情</el-button>
-                        <el-button link type="primary" size="small" @click="handleEdit(scope.row)">编辑</el-button>
+                        <el-button link type="danger" size="small" @click="handleDelete(scope.row)">删除</el-button>
+                    </template>
+                </el-table-column>
+            </el-table>
+
+        </el-scrollbar>
+
+        <el-scrollbar v-if="mode == 1" max-height="55vh" always>
+
+            <!-- 表格 -->
+            <el-table border :data="tableData" ref="mutipleTableRef" style="width: 100%"
+                @selection-change="handleSelectionChange">
+                <!-- 多行选择器 -->
+                <el-table-column type="selection" width="55" />
+                <!-- fixed 属性配置，固定列-->
+                <el-table-column prop="aid" label="活动ID" sortable width="120" align="center" header-align="center" />
+
+                <el-table-column prop="apic" label="封面图" sortable width="120" align="center" header-align="center">
+                    <!-- <template #default="scope"> -->
+                    <template v-slot="scope">
+                        <el-image style="width: 100%; height: 100px" :src="scope.row.apic" preview-teleported="true"
+                            :preview-src-list="[scope.row.apic]" :key="scope.row.aid">
+                            <div slot="error" class="image-slot">
+                                <i class="el-icon-picture-outline"></i>
+                            </div>
+                        </el-image>
+                    </template>
+                </el-table-column>
+
+                <el-table-column prop="aname" label="活动名称" sortable width="200" header-align="center" />
+                <el-table-column prop="aOid" label="组织ID" sortable width="100" header-align="center" />
+                <el-table-column prop="astatus" label="活动状态" sortable width="200" header-align="center" />
+                <el-table-column prop="aUid" label="申请人" sortable width="120" header-align="center" />
+                <el-table-column prop="aRegisterOpen" label="报名时间" sortable width="200" header-align="center" />
+                <el-table-column prop="aHoldStart" label="举办时间" sortable width="200" header-align="center" />
+                <el-table-column prop="aAddress" label="举办地点" width="250" header-align="center" />
+                <el-table-column prop="aShichangType" label="时长类型" sortable width="120" header-align="center" />
+                <el-table-column prop="aShichangNum" label="时长" sortable width="120" header-align="center" />
+                <el-table-column prop="adescription" label="活动介绍" width="200" header-align="center" />
+
+                <el-table-column fixed="right" label="操作" width="120" header-align="center">
+                    <template #default="scope">
+                        <el-button link type="primary" size="small" @click="handleDetail(scope.row)">详情</el-button>
                         <el-button link type="danger" size="small" @click="handleDelete(scope.row)">删除</el-button>
                     </template>
                 </el-table-column>
@@ -193,9 +235,6 @@
                             @click="handleCheckAdd">
                             确认
                         </el-button>
-                        <el-button type="primary" v-else-if="dialogType == 'edit'" @click="handleCheckEdit">
-                            修改
-                        </el-button>
                     </span>
 
                 </span>
@@ -207,10 +246,9 @@
 <script  setup>
 import { onMounted } from 'vue'
 import axios from 'axios'
-import { getNowTime, timestampToTime } from '../../../server/api/time';
+import { getNowTime, timestampToTime, compareTime } from '../../../server/api/time';
 import { ElMessage } from "element-plus";
-
-
+import '../../../assets/css/common.css'
 
 //所有的生命周期用法均为回调函数
 onMounted(() => {
@@ -267,7 +305,6 @@ const tableHeaderColor = ({ row, column, rowIndex, columnIndex }) => {
 const all = () => {
     axios.get('http://localhost:8083/api/activity/getAllApp/1/10').then(res => {
         var _tata = res.data.data.records
-
         var _tableData = []
         for (let i = 0; i < _tata.length; i++) {
             var _tata2 = _tata[i]
@@ -276,7 +313,7 @@ const all = () => {
         let _nowTime = getNowTime()
 
         for (let i = 0; i < _tableData.length; i++) {
-            _tableData[i].app_id = i + 1
+            _tableData[i].app_id = _tata[i].a_app_id
 
             // 时间戳转换
             _tableData[i].aRegisterOpen = timestampToTime(_tableData[i].aRegisterOpen)
@@ -285,9 +322,9 @@ const all = () => {
             // 匹配活动Status
             if (_tableData[i].astatus == 2) {
                 _tableData[i].astatus = '审核通过'
-                if (_nowTime > _tableData[i].aHoldEnd) {
+                if (compareTime(_nowTime, _tableData[i].aHoldEnd)) {
                     _tableData[i].astatus += '[已结束]'
-                } else if (_nowTime > _tableData[i].aRegisterOpen) {
+                } else if (compareTime(_nowTime, _tableData[i].aRegisterOpen)) {
                     _tableData[i].astatus += '[进行中]'
                 } else {
                     _tableData[i].astatus += '[待开始]'
@@ -329,10 +366,13 @@ let handleDelete = ({ aid }) => {
 // 驳回
 let handleCheckApp = (aAppId, updStatus, explain) => {
     dialogFormVisible = false
+    console.log(aAppId, updStatus, explain)
     axios.get('http://localhost:8083/api/activity/auditActivity/' + aAppId + '/' + updStatus + '/' + explain).then(res => {
         console.log(res)
         if (res.data['code'] == "3-200") {
             ElMessage({ message: res.data.msg, type: 'success' })
+        } else {
+            ElMessage({ message: res.data.msg, type: 'error' })
         }
     }).catch(err => {
         console.log("获取数据失败" + err);
@@ -361,15 +401,6 @@ let handleCheckAdd = (_res) => {
         ...form
     })
 }
-// 修改提交
-let handleCheckEdit = () => {
-    dialogFormVisible = false // 关闭弹窗
-    //1. 拿到数据 form = { ...row }
-    //2. 添加到table
-    let index = tableData.findIndex(item => item.id == form.id)
-    // 从index位置开始删除tableData中的1个元素
-    tableData[index] = form
-}
 
 // 新增
 let handleAdd = () => {
@@ -377,12 +408,7 @@ let handleAdd = () => {
     form = []
     dialogFormVisible = true
 }
-// 编辑
-let handleEdit = (row) => {
-    dialogType = 'edit'
-    form = { ...row }
-    dialogFormVisible = true
-}
+
 // 详情
 let handleDetail = (row) => {
     dialogType = 'detail'
@@ -394,20 +420,7 @@ let handleDetail = (row) => {
 const handleReset = () => {
     form = []
 }
-// 多选
-const handleSelectionChange = (val) => {
-    multipleSelection = []
-    val.forEach(element => {
-        multipleSelection.push(element)
-    });
-    console.log(val)
-}
-// 多选删除
-let handleMultiDelete = () => {
-    multipleSelection.forEach(element => {
-        handleDelete(element)
-    });
-}
+
 
 const ruleFormRef = $ref()
 
@@ -494,19 +507,6 @@ const rules = $ref({
         { required: true, message: '请填写活动简介', trigger: 'blur' },
     ],
 })
-// 提交表单功能实现
-const submitAddForm = async (formEl) => {
-    console.log("FormEI", formEl)
-    if (!formEl) return
-    // 验证表单
-    await formEl.validate((valid, fields) => {
-        if (valid) {
-            console.log('submit!')
-        } else {
-            console.log('error submit!', fields)
-        }
-    })
-}
 </script>
 
 <style scoped>
@@ -515,21 +515,6 @@ const submitAddForm = async (formEl) => {
 }
 
 
-/* 标题样式 */
-.title {
-    font-size: 26pt;
-    margin-bottom: 10px;
-}
-
-.query-box {
-    display: flex;
-    justify-content: space-between;
-    margin-bottom: 20px;
-}
-
-.el-input {
-    width: 200px;
-}
 
 .text-center {
     margin: 0 auto
@@ -543,12 +528,6 @@ const submitAddForm = async (formEl) => {
 .el-form-item {
     /* 表单行距 */
     margin-bottom: 14px;
-}
-
-#loginItem {
-    display: flex;
-    align-items: center;
-    flex-direction: column;
 }
 
 /* 下面是对表格form的一些css修改 */
@@ -566,78 +545,8 @@ const submitAddForm = async (formEl) => {
     margin: 20vh;
 }
 
-.once {
-    width: 80%;
-}
-
-/* 顶部按钮的样式设置 */
-/* .search_icon {
-    color: #000000b3;
-    z-index: 1;
-} */
-
-.box_btn {
-    background: #c2dff5bd;
-    font-weight: bold;
-}
-
-.box_btn2 {
-    background: #adc2d22e;
-}
-
-
-.refresh_btn {
-    padding: 20px 0;
-    position: fixed;
-    right: 3vw;
-    bottom: 10vh;
-    cursor: pointer;
-    z-index: 1;
-    display: flex;
-    flex-direction: row-reverse;
-}
-
-.refresh_btn>span {
-    transform: translate(-50px, 0);
-    cursor: initial;
-}
-
-.bx-refresh {
-    position: absolute;
-    font-size: 20pt;
-    display: flex;
-}
-
 .el-dialog__body {
     padding: 0
-}
-
-/* 滚动scroll样式 */
-
-.scrollbar-demo-item {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    height: 50px;
-    margin: 10px;
-    text-align: center;
-    border-radius: 4px;
-    background: var(--el-color-primary-light-9);
-    color: var(--el-color-primary);
-}
-
-/* 滚动scroll样式 */
-
-.scrollbar-demo-item {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    height: 50px;
-    margin: 10px;
-    text-align: center;
-    border-radius: 4px;
-    background: var(--el-color-primary-light-9);
-    color: var(--el-color-primary);
 }
 
 .dialog-footer {

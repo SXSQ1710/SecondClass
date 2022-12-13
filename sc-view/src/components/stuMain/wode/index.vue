@@ -1,6 +1,6 @@
 <template>
     <div class="welcome">
-        <h1 class="helloword">欢迎回来，用户{{uid}}</h1>
+        <h1 class="helloword">欢迎回来，用户{{ uid }}</h1>
         <h2 class="helloword">第二课堂系统主页</h2>
     </div>
 </template>
@@ -11,7 +11,7 @@ export default {
     name: "wode2",
     data() {
         return {
-            uid:"",
+            uid: "",
         }
     },
     mounted() {

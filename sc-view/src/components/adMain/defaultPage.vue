@@ -1,9 +1,9 @@
 <template>
     <h1>to be continued ...</h1>
-    </template>
+</template>
     
-    <script>
-    export default{
-        name:"dafaultPage"
-    }
-    </script>
+<script>
+export default {
+    name: "dafaultPage"
+}
+</script>

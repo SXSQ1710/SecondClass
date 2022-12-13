@@ -44,7 +44,7 @@
                 <el-table-column prop="oname" label="组织名称" width="200" />
                 <el-table-column prop="uid" label="负责人ID" width="120" />
                 <el-table-column prop="campus" label="所属校区" width="120" />
-                <el-table-column prop="odescription" label="组织概述" width="300" />
+                <el-table-column prop="odescription" label="组织介绍" width="300" />
                 <el-table-column prop="superior_organization" label="上级单位" width="300" />
                 <el-table-column fixed="right" label="操作" width="180">
                     <template #default="scope">
@@ -112,7 +112,9 @@ import { onMounted } from 'vue'
 import axios from 'axios'
 //第一种获取target值的方式，通过vue中的响应式对象可使用toRaw()方法获取原始对象
 import { toRaw } from '@vue/reactivity'
-import { ElMessage } from 'element-plus';
+import { ElMessage, ElMessageBox } from 'element-plus';
+import '../../../assets/css/common.css'
+
 //所有的生命周期用法均为回调函数
 onMounted(() => {
     all()
@@ -123,7 +125,6 @@ onMounted(() => {
 let queryInput = $ref("")
 let multipleSelection = $ref([])     // 多选
 let dialogFormVisible = $ref(false)
-let formLabelWidth = $ref('20vw')
 let totalValue = $ref("0")
 let dialogType = $ref('add')
 
@@ -170,10 +171,7 @@ let handleDelete = (row) => {
     // 从index位置开始删除tableData中的1个元素
     tableData.splice(index, 1)
 }
-// 删除确认
-let handelCheckDelete = () => {
-    console.log('clickDELETE')
-}
+
 //搜索，模糊查询
 let handleQueryInput = (val) => {
     queryInput = val
@@ -186,17 +184,34 @@ let handleQueryName = () => {
 }
 // 新增提交
 let handleCheckAdd = (formData) => {
-    dialogFormVisible = false // 关闭弹窗
     var formDataList = toRaw(formData)
-
-    // 创建组织账号
-    axios.post('http://localhost:8083/api/manage/createOrg', { oname: formDataList.oname, uid: formDataList.uid, campus: formDataList.campus, odescription: formDataList.odescription, superior_organization: formDataList.superior_organization }).then(res => {
-        if (res.data["code"] == "8-200")
-            ElMessage({ message: res.data.msg, type: "success" })
-    }).catch(err => {
-        console.log("请求失败" + err);
-        ElMessage({ message: "失败了", type: "error" })
-    })
+    ElMessageBox.confirm(
+        '确定要创建该组织吗?',
+        '导入组织账号',
+        {
+            confirmButtonText: '是',
+            cancelButtonText: '否',
+            type: 'warning',
+        }
+    )
+        .then(() => {
+            dialogFormVisible = false // 关闭弹窗
+            // 创建组织账号
+            axios.post('http://localhost:8083/api/manage/createOrg', { oname: formDataList.oname, uid: formDataList.uid, campus: formDataList.campus, odescription: formDataList.odescription, superior_organization: formDataList.superior_organization }).then(res => {
+                if (res.data["code"] == "8-200")
+                    ElMessage({ message: res.data.msg, type: "success" })
+                all()
+            }).catch(err => {
+                console.log("请求失败" + err);
+                ElMessage({ message: "失败了", type: "error" })
+            })
+        })
+        .catch(() => {
+            ElMessage({
+                type: 'info',
+                message: '您的请求已撤回',
+            })
+        })
 
     all()
 }
@@ -251,7 +266,7 @@ const ruleFormRef = $ref()
 
 const rules = $ref({
     uid: [
-        { required: true, message: '请填写用户ID', trigger: 'blur' } 
+        { required: true, message: '请填写用户ID', trigger: 'blur' }
     ],
 
     oname: [
@@ -276,25 +291,6 @@ const rules = $ref({
         },
     ]
 })
-// 提交表单功能实现
-const submitAddForm = async (formEl) => {
-    console.log("FormEI", formEl)
-    if (!formEl) return
-    // 验证表单
-    await formEl.validate((valid, fields) => {
-        if (valid) {
-            console.log('submit!')
-        } else {
-            console.log('error submit!', fields)
-        }
-    })
-}
-
-
-// 设置表头和行单元格样式
-const headerCellStyle = ({ row, rowIndex }) => {
-    return ' background: var(--primary-color-light); color: var(--text-color); '
-}
 </script>
 
 <style scoped>
@@ -302,19 +298,8 @@ const headerCellStyle = ({ row, rowIndex }) => {
     user-select: text;
 }
 
-/* 标题样式 */
-.title {
-    font-size: 26pt;
-}
-
-.query-box {
-    display: flex;
-    justify-content: space-between;
-    margin-bottom: 20px;
-}
-
 .el-input {
-    width: 222px;
+    width: 280px;
 }
 
 .elform-input {
@@ -325,12 +310,6 @@ const headerCellStyle = ({ row, rowIndex }) => {
 .el-form-item {
     /* 表单行距 */
     margin-bottom: 14px;
-}
-
-#loginItem {
-    display: flex;
-    align-items: center;
-    flex-direction: column;
 }
 
 /* 下面是对表格form的一些css修改 */
@@ -346,53 +325,5 @@ const headerCellStyle = ({ row, rowIndex }) => {
     width: 60%;
     height: 100%;
     margin: 20vh;
-}
-
-/* 顶部按钮的样式设置 */
-
-.box_btn {
-    background: #c2dff5bd;
-    font-weight: bold;
-}
-
-.box_btn2 {
-    background: #adc2d22e;
-}
-
-.refresh_btn {
-    padding: 20px 0;
-    position: fixed;
-    right: 3vw;
-    bottom: 10vh;
-    cursor: pointer;
-    z-index: 1;
-    display: flex;
-    flex-direction: row-reverse;
-}
-
-.refresh_btn>span {
-    transform: translate(-50px, 0);
-    cursor: initial;
-}
-
-.bx-refresh {
-    position: absolute;
-    font-size: 20pt;
-    display: flex;
-}
-
-
-/* 滚动scroll样式 */
-
-.scrollbar-demo-item {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    height: 50px;
-    margin: 10px;
-    text-align: center;
-    border-radius: 4px;
-    background: var(--el-color-primary-light-9);
-    color: var(--el-color-primary);
 }
 </style>

@@ -1,0 +1,66 @@
+/* 标题样式 */
+.title {
+    font-size: 26pt;
+    margin-bottom: 10px;
+}
+/* 更新数据按钮样式 */
+.refresh_btn {
+    padding: 20px 0;
+    position: fixed;
+    right: 3vw;
+    bottom: 10vh;
+    cursor: pointer;
+    z-index: 1;
+    display: flex;
+    flex-direction: row-reverse;
+}
+.refresh_btn>span {
+    transform: translate(-50px, 0);
+    cursor: initial;
+}
+.bx-refresh {
+    position: absolute;
+    font-size: 20pt;
+    display: flex;
+}
+
+/* 滚动scroll样式 */
+.scrollbar-demo-item {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 50px;
+    margin: 10px;
+    text-align: center;
+    border-radius: 4px;
+    background: var(--el-color-primary-light-9);
+    color: var(--el-color-primary);
+}
+/* 顶部按钮样式 */
+.query-box {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 20px;
+}
+.el-input {
+    width: 200px;
+}
+
+.box_btn {
+    background: #c2dff5bd;
+    font-weight: bold;
+}
+
+.box_btn2 {
+    background: #adc2d22e;
+}
+/* 其它 */
+#loginItem {
+    display: flex;
+    align-items: center;
+    flex-direction: column;
+}
+
+.once {
+    width: 80%;
+}

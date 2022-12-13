@@ -1,6 +1,7 @@
 import { ElMessage } from "element-plus";
+import store from '../store/store.js'
 import { createRouter, createWebHistory } from "vue-router";
-import NotFound from '@/components/404.vue'
+import NotFound from "@/components/404.vue";
 const routes = [
   {
     path: "/",
@@ -26,12 +27,6 @@ const routes = [
         meta: {
           title: "后台登录",
         },
-      },
-      {
-        path: "/users",
-        name: "users",
-        component: () =>
-          import("../components/adMain/userManage/MenuBar/index.vue"),
       },
       {
         path: "/welcome",
@@ -70,16 +65,20 @@ const routes = [
     ],
   },
   {
-    path:'/:pathMatch(.*)*',
-    name: 'NotFound',
-    component:NotFound
+    path: "/:pathMatch(.*)*",
+    name: "NotFound",
+    component: NotFound,
   },
 ];
-
+// 页面刷新时，重新赋值token
+if (sessionStorage.getItem("token")) {
+  store.commit("set_token", sessionStorage.getItem("token"));
+}
 const router = createRouter({
   history: createWebHistory(),
   routes,
 });
+
 
 router.beforeEach(async (to, from, next) => {
   const title = to.meta.title ? to.meta.title : "default";
@@ -87,15 +86,15 @@ router.beforeEach(async (to, from, next) => {
 
   // 判断该路由是否需要登录权限
   if (to.meta.requireAuth) {
-    //如果token不存在，就跳到首页
-    if (sessionStorage.getItem("access_token")) next();
+    //如果token不存在，就回到首页
+    if (localStorage.getItem('token')) next();
     else {
       next("/");
       ElMessage("您未登录！");
     }
   } else {
     // 登录过一次后无需再次登录，直至用户退出登录
-    if (sessionStorage.getItem("access_token")) {
+    if (store.state.token) {
       if (to.path == "/admin") {
         next("/home");
       }

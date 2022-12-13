@@ -7,7 +7,6 @@
         <!-- query查询框 -->
         <div class="query-box">
             <div class="query-btn">
-                <!-- <i class="bx bx-search"></i> -->
                 <el-input v-model="queryInput" placeholder="请输入组织ID或名称" @input="handleQueryInput"></el-input>
                 <el-button class="box_btn" type="primary" text @click="handleQueryName(queryInput)">
                     搜索
@@ -49,7 +48,8 @@
                 <el-table-column fixed="right" label="操作" width="180">
                     <template #default="scope">
                         <el-button link type="primary" size="small" @click="handleDetail(scope.row)">详情</el-button>
-                        <el-button link type="primary" size="small" @click="handleDetail(scope.row)">申请加入</el-button>
+                        <el-button link type="primary" size="small"
+                            @click="handleCheckApply(scope.row)">申请加入</el-button>
                     </template>
                 </el-table-column>
             </el-table>
@@ -57,8 +57,7 @@
 
 
         <!-- 弹窗 -->
-        <el-dialog v-model="dialogFormVisible" :title="dialogType == 'add' ? '新增' : dialogType == 'edit' ? '编辑' : '详情'"
-            draggable>
+        <el-dialog v-model="dialogFormVisible" :title="dialogType == 'add' ? '申请创建组织' : '详情'" draggable>
             <el-form ref="ruleFormRef" :model="form" :rules="rules" label-width="20vw" class="elform-input"
                 size="dafault" status-icon @submit.native.prevent>
                 <el-form-item class="once" label="组织名称" prop="oname">
@@ -88,20 +87,13 @@
 
             <template #footer>
                 <span class="dialog-footer">
-                    <!-- <el-button type="primary" @click="dialogFormVisible = false"> -->
-                    <el-button text type="primary" v-if="dialogType != 'detail'" @click="handleReset">
-                        重置
+                    <span>UID：{{ my_uid }} {{ uname }} </span>
+                    <el-button type="primary" @submit.native.prevent>
+                        申请加入组织
                     </el-button>
-                    <el-button type="primary" v-if="dialogType == 'add'" v-on:submit.prevent="submitAddForm"
-                        @click="handleCheckAdd(form)">
-                        确认
-                    </el-button>
-                    <el-button type="primary" v-else-if="dialogType == 'edit'" @click="handleCheckEdit">
-                        修改
-                    </el-button>
-
                 </span>
             </template>
+
         </el-dialog>
     </div>
 </template>
@@ -111,7 +103,9 @@ import { onMounted } from 'vue'
 import axios from 'axios'
 //第一种获取target值的方式，通过vue中的响应式对象可使用toRaw()方法获取原始对象
 import { toRaw } from '@vue/reactivity'
-import { ElMessage } from 'element-plus';
+import { ElMessage, ElMessageBox } from 'element-plus';
+import '../../../assets/css/common.css'
+
 //所有的生命周期用法均为回调函数
 onMounted(() => {
     all()
@@ -119,6 +113,7 @@ onMounted(() => {
 })
 
 // 数据
+let my_uid = sessionStorage.getItem("uid")
 let queryInput = $ref("")
 let multipleSelection = $ref([])     // 多选
 let dialogFormVisible = $ref(false)
@@ -163,15 +158,44 @@ const all = () => {
         console.log("获取数据失败" + err);
     })
 }
-// 删除按钮
-let handleDelete = (row) => {
-    let index = tableData.findIndex(item => item.oid == row.oid)
-    // 从index位置开始删除tableData中的1个元素
-    tableData.splice(index, 1)
-}
-// 删除确认
-let handelCheckDelete = () => {
-    console.log('clickDELETE')
+
+// 申请加入组织
+let handleCheckApply = (row) => {
+    // console.log(row.oid)
+    ElMessageBox.confirm(
+        '确定申请加入该组织吗?',
+        '申请加入',
+        {
+            confirmButtonText: '是',
+            cancelButtonText: '否',
+            type: 'warning',
+        }
+    )
+        .then(() => {
+
+            // 创建组织账号
+            axios.post('http://localhost:8083/api/manage/applyOrg', { oid: row.oid, uid: my_uid }).then((res) => {
+                console.log(res)
+                if (res.data["code"] == "8-200")
+                    ElMessage({ message: res.data.msg, type: "success" })
+                else
+                    ElMessage({ message: res.data.msg, type: "error" })
+            }).catch(err => {
+                console.log("请求失败" + err);
+                ElMessage({ message: "失败了", type: "error" })
+            })
+
+            // ElMessage({
+            //     type: 'success',
+            //     message: '成功提交申请至学生组织，请耐心等待审核通知'
+            // })
+        })
+        .catch(() => {
+            ElMessage({
+                type: 'info',
+                message: '您的申请已撤回',
+            })
+        })
 }
 //搜索，模糊查询
 let handleQueryInput = (val) => {
@@ -201,26 +225,11 @@ let handleCheckAdd = (formData) => {
 
     all()
 }
-// 修改提交
-let handleCheckEdit = () => {
-    dialogFormVisible = false // 关闭弹窗
-    //1. 拿到数据 form = { ...row }
-    //2. 添加到table
-    let index = tableData.findIndex(item => item.id == form.id)
-    // 修改表格数据
-    tableData[index] = form
-}
 
 // 新增
 let handleAdd = () => {
     dialogType = 'add'
     form = []
-    dialogFormVisible = true
-}
-// 编辑
-let handleEdit = (row) => {
-    dialogType = 'edit'
-    form = { ...row }
     dialogFormVisible = true
 }
 // 详情
@@ -230,10 +239,6 @@ let handleDetail = (row) => {
     dialogFormVisible = true
 }
 
-// 重置
-const handleReset = () => {
-    form = []
-}
 // 多选
 const handleSelectionChange = (val) => {
     multipleSelection = []
@@ -279,41 +284,11 @@ const rules = $ref({
         },
     ]
 })
-// 提交表单功能实现
-const submitAddForm = async (formEl) => {
-    console.log("FormEI", formEl)
-    if (!formEl) return
-    // 验证表单
-    await formEl.validate((valid, fields) => {
-        if (valid) {
-            console.log('submit!')
-        } else {
-            console.log('error submit!', fields)
-        }
-    })
-}
-
-
-// 设置表头和行单元格样式
-const headerCellStyle = ({ row, rowIndex }) => {
-    return ' background: var(--primary-color-light); color: var(--text-color); '
-}
 </script>
 
 <style scoped>
 * {
     user-select: text;
-}
-
-/* 标题样式 */
-.title {
-    font-size: 26pt;
-}
-
-.query-box {
-    display: flex;
-    justify-content: space-between;
-    margin-bottom: 20px;
 }
 
 .el-input {
@@ -330,11 +305,7 @@ const headerCellStyle = ({ row, rowIndex }) => {
     margin-bottom: 14px;
 }
 
-#loginItem {
-    display: flex;
-    align-items: center;
-    flex-direction: column;
-}
+
 
 /* 下面是对表格form的一些css修改 */
 .el-col-2 {
@@ -349,53 +320,5 @@ const headerCellStyle = ({ row, rowIndex }) => {
     width: 60%;
     height: 100%;
     margin: 20vh;
-}
-
-/* 顶部按钮的样式设置 */
-
-.box_btn {
-    background: #c2dff5bd;
-    font-weight: bold;
-}
-
-.box_btn2 {
-    background: #adc2d22e;
-}
-
-.refresh_btn {
-    padding: 20px 0;
-    position: fixed;
-    right: 3vw;
-    bottom: 10vh;
-    cursor: pointer;
-    z-index: 1;
-    display: flex;
-    flex-direction: row-reverse;
-}
-
-.refresh_btn>span {
-    transform: translate(-50px, 0);
-    cursor: initial;
-}
-
-.bx-refresh {
-    position: absolute;
-    font-size: 20pt;
-    display: flex;
-}
-
-
-/* 滚动scroll样式 */
-
-.scrollbar-demo-item {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    height: 50px;
-    margin: 10px;
-    text-align: center;
-    border-radius: 4px;
-    background: var(--el-color-primary-light-9);
-    color: var(--el-color-primary);
 }
 </style>

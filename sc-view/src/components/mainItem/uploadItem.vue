@@ -36,8 +36,6 @@ const handleExceed: UploadProps['onExceed'] = (files) => {
 const clearFiles: UploadProps['onExceed'] = (files) => {
   upload.value!.clearFiles()
 }
-
-
 </script>
 
 <style>

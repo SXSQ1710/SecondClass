@@ -20,20 +20,19 @@
             </div>
         </el-tooltip>
         <!-- 刷新数据 -->
-        <el-tooltip content="更新列表数据">
-            <div class="refresh_btn" @click="all">
-                <i class='bx bx-refresh bx-flip-vertical'></i>
-            </div>
-        </el-tooltip>
+        <div class="refresh_btn">
+            <!-- 当前共有多少条数据 -->
+            <el-tooltip content="更新列表数据">
+                <i class='bx bx-refresh bx-flip-vertical' @click="all"></i>
+            </el-tooltip>
+            <span>当前共有{{ totalValue }}条数据</span>
+        </div>
 
         <el-scrollbar max-height="55vh" always>
 
             <!-- 表格 -->
             <el-table border :data="tableData" ref="mutipleTableRef" style="width: 100%"
                 @selection-change="handleSelectionChange">
-                <!-- 多行选择器
-            <el-table-column type="selection" width="55" /> -->
-                <!-- fixed 属性配置，固定列-->
                 <el-table-column prop="aid" label="活动ID" sortable width="120" align="center" header-align="center" />
 
                 <el-table-column prop="apic" label="封面图" width="120" align="center" header-align="center">
@@ -164,10 +163,9 @@
 import { onMounted } from 'vue'
 import axios from 'axios'
 
-import { getNowTime } from '../../../server/api/time';
+import { getNowTime, compareTime } from '../../../server/api/time';
 import { ElMessage } from 'element-plus';
-
-
+import '../../../assets/css/common.css'
 
 //所有的生命周期用法均为回调函数
 onMounted(() => {
@@ -179,9 +177,7 @@ onMounted(() => {
 // 数据
 let my_uid = sessionStorage.getItem("uid")
 let queryInput = $ref("")
-let multipleSelection = $ref([])     // 多选
-let totalValue = $ref("0")
-
+let totalValue = $ref(0)
 let dialogType = $ref('add')
 let dialogFormVisible = $ref(false)
 let form = $ref({
@@ -220,9 +216,9 @@ const all = () => {
             // 匹配活动Status
             if (_tableData[i].astatus == 2) {
                 _tableData[i].astatus = '审核通过'
-                if (_nowTime > _tableData[i].a_hold_end) {
+                if (compareTime(_nowTime, _tableData[i].a_hold_end)) {
                     _tableData[i].astatus += '[已结束]'
-                } else if (_nowTime > _tableData[i].a_register_open) {
+                } else if (compareTime(_nowTime, _tableData[i].a_register_open)) {
                     _tableData[i].astatus += '[进行中]'
                 } else {
                     _tableData[i].astatus += '[待开始]'
@@ -297,21 +293,6 @@ const handleCheckApp = (formUID, formAID) => {
     user-select: text;
 }
 
-/* 标题样式 */
-.title {
-    font-size: 26pt;
-}
-
-.query-box {
-    display: flex;
-    justify-content: space-between;
-    margin-bottom: 20px;
-}
-
-.el-input {
-    width: 200px;
-}
-
 .text-center {
     margin: 0 auto
 }
@@ -324,12 +305,6 @@ const handleCheckApp = (formUID, formAID) => {
 .el-form-item {
     /* 表单行距 */
     margin-bottom: 14px;
-}
-
-#loginItem {
-    display: flex;
-    align-items: center;
-    flex-direction: column;
 }
 
 /* 下面是对表格form的一些css修改 */
@@ -347,20 +322,6 @@ const handleCheckApp = (formUID, formAID) => {
     margin: 20vh;
 }
 
-.once {
-    width: 80%;
-}
-
-/* 顶部按钮的样式设置 */
-
-.box_btn {
-    background: #c2dff5bd;
-    font-weight: bold;
-}
-
-.box_btn2 {
-    background: #adc2d22e;
-}
 
 .intro_btn {
     padding: 0;
@@ -370,40 +331,9 @@ const handleCheckApp = (formUID, formAID) => {
     top: 200px;
 }
 
-.refresh_btn {
-    padding: 20px 0;
-    position: fixed;
-    right: 3vw;
-    bottom: 10vh;
-    cursor: pointer;
-    z-index: 1;
-}
-
-.bx-refresh {
-    position: absolute;
-    font-size: 20pt;
-    display: flex;
-}
-
-
-/* 滚动scroll样式 */
-
-.scrollbar-demo-item {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    height: 50px;
-    margin: 10px;
-    text-align: center;
-    border-radius: 4px;
-    background: var(--el-color-primary-light-9);
-    color: var(--el-color-primary);
-}
-
 .dialog-footer {
     color: rgba(86, 97, 105, 0.5);
     text-shadow: 0 0 0 black 1px;
-
 }
 
 .dialog-footer>span {

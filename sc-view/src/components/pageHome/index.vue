@@ -54,34 +54,35 @@ export default {
     mounted() {
         let _this = this;
         let _uid = sessionStorage.getItem("uid")
+
+        console.log("_uid: ", _uid)
+
         axios.get('http://localhost:8083/api/manage/user/' + _uid)
             .then((res) => {
+                console.log("_uid: ", _uid)
+                console.log("_uid: ", res.data)
+
                 if (res.data['code'] == '7-200') {//这个data 是接收的resolve参数--
                     _this.uname = res.data.data.uname
-                    if (res.data.data.oid[1] == 1) {
+                    if (res.data.data.oid == undefined || res.data.data.oid.length <= 2) {
+                        _this.ulevel = "学生";
+                        _this.$router.push("/home2")
+                    } else if (res.data.data.oid.split(",")[0].split("[")[1] == 1) {
                         _this.ulevel = "管理员"
                         _this.$router.push("/home")
-                    } else if (res.data.data.oid.length > 3) {
+                    } else {
                         _this.ulevel = "学生[组织]"
                         this.sideBar.list.push({
                             pagePath: '/',
-                            iconPath: 'bx bx-wallet icon',
+                            iconPath: 'bx bxs-leaf icon',
                             text: '组织活动'
                         })
-                        _this.$router.push("/home2")
-                    }
-                    else {
-                        _this.ulevel = "学生";
                         _this.$router.push("/home2")
                     }
                 }
             }).catch((err) => {
                 console.log(err)
-                ElMessage({ message: err.response.data.msg, type: 'error' })
             })
     }
 }
 </script>
-<style>
-
-</style>
