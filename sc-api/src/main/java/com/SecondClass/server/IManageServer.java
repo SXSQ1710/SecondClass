@@ -28,6 +28,8 @@ public interface IManageServer extends IService<User>{
 
     Response addAccountByBatch(MultipartFile file);
 
+    Response getAllAccount(Page<User> page);
+
     Response getAllOrg(Page<Organization> page);
 
     Response getOrg(Organization organization);

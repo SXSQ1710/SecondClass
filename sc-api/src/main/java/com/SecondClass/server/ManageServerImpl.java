@@ -236,21 +236,23 @@ public class ManageServerImpl extends ServiceImpl<UserMapper,User> implements IM
 
     }
 
-//    /**
-//     * @Author jiang
-//     * @Description //获取所有的用户
-//     * @Date 18:18 2022/11/12
-//     * @Param [pageNo]
-//     * @return com.SecondClass.entity.Response
-//     **/
-//    @Override
-//    public Response getAllAccount(int pageNo) {
-//        Page<User> page = new Page<>(pageNo, 15);
-//        IPage<User> orgPage = userMapper.selectPage(page, null);
-//        List<User> userList = orgPage.getRecords();
-//        if (userList.size() == 0) return Response.success(ResponseStatus.MANAGE_USER_FAIL);
-//        return Response.success(ResponseStatus.MANAGE_USER_SUCCESS, userList);
-//    }
+    /**
+     * @Author jiang
+     * @Description //获取所有的用户
+     * @Date 18:18 2022/11/12
+     * @Param [pageNo]
+     * @return com.SecondClass.entity.Response
+     **/
+    @Override
+    public Response getAllAccount(Page<User> page) {
+        IPage<User> orgPage = userMapper.selectPage(page, null);
+        orgPage.getRecords().forEach((value) -> {
+            value.setUpassword(null);
+            value.setOid(null);
+        });
+        if (orgPage.getTotal() == 0) return Response.success(ResponseStatus.MANAGE_USER_FAIL);
+        return Response.success(ResponseStatus.MANAGE_USER_SUCCESS, orgPage);
+    }
 
     /**
      * @Author jiang
