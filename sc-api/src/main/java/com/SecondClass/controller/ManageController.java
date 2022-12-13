@@ -32,6 +32,13 @@ public class ManageController {
         return manageServer.addAccount(user);
     }
 
+    @GetMapping("/getAllAccount/{pageNo}/{pageSize}")
+    public Response getAllAccount(@PathVariable("pageNo") Integer pageNo,
+                                  @PathVariable("pageSize") Integer pageSize){
+        Page<User> page = new Page<>(pageNo, pageSize);
+        return manageServer.getAllAccount(page);
+    }
+
     @GetMapping("/getAllOrg/{pageNo}/{pageSize}")
     public Response getALlOrg( @PathVariable("pageNo") Integer pageNo,
                                @PathVariable("pageSize") Integer pageSize){
