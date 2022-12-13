@@ -168,7 +168,7 @@ CREATE TABLE `t_organization_member`  (
   PRIMARY KEY (`id`) USING BTREE,
   INDEX `uid`(`uid`) USING BTREE,
   INDEX `oid`(`oid`) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 1602485939557400580 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = DYNAMIC;
+) ENGINE = InnoDB AUTO_INCREMENT = 8 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Records of t_organization_member
@@ -178,8 +178,8 @@ INSERT INTO `t_organization_member` VALUES (2, 2, 1, '负责人');
 INSERT INTO `t_organization_member` VALUES (3, 5, 1, '负责人');
 INSERT INTO `t_organization_member` VALUES (4, 2, 2, '普通成员');
 INSERT INTO `t_organization_member` VALUES (5, 4, 3, '负责人');
-INSERT INTO `t_organization_member` VALUES (1602485939557400580, 5, 3, '普通成员');
-INSERT INTO `t_organization_member` VALUES (1602485939557400582, 3, 2, '普通成员');
+INSERT INTO `t_organization_member` VALUES (6, 5, 3, '普通成员');
+INSERT INTO `t_organization_member` VALUES (7, 3, 2, '普通成员');
 
 -- ----------------------------
 -- Table structure for t_participation
