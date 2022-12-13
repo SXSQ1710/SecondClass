@@ -30,6 +30,8 @@ public interface IManageServer extends IService<User>{
 
     Response addAccountByBatch(MultipartFile file);
 
+    Response getAllAccount(int pageNo);
+
     Response getAllOrg(int pageNo);
 
     Response getOrg(Map orgMap);

@@ -35,6 +35,11 @@ public class ManageController {
         return manageServer.addAccount(user);
     }
 
+    @GetMapping("/getAllAccount/{pageNo}")
+    public Response getAllAccount(@PathVariable("pageNo")Integer pageNo){
+        return manageServer.getAllAccount(pageNo);
+    }
+    
     @GetMapping("/getAllOrg/{pageNo}")
     public Response getALlOrg(@PathVariable("pageNo")Integer pageNo){
         return manageServer.getAllOrg(pageNo);
