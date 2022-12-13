@@ -1,10 +1,7 @@
 package com.SecondClass.controller;
 
-import com.SecondClass.entity.Organization;
-import com.SecondClass.entity.OrganizationApply;
+import com.SecondClass.entity.*;
 import com.SecondClass.entity.R_entity.R_Login;
-import com.SecondClass.entity.Response;
-import com.SecondClass.entity.User;
 import com.SecondClass.server.ManageServerImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -35,24 +32,23 @@ public class ManageController {
         return manageServer.addAccount(user);
     }
 
-    @GetMapping("/getAllAccount/{pageNo}")
-    public Response getAllAccount(@PathVariable("pageNo")Integer pageNo){
-        return manageServer.getAllAccount(pageNo);
-    }
-    
-    @GetMapping("/getAllOrg/{pageNo}")
-    public Response getALlOrg(@PathVariable("pageNo")Integer pageNo){
-        return manageServer.getAllOrg(pageNo);
+    @GetMapping("/getAllOrg/{pageNo}/{pageSize}")
+    public Response getALlOrg( @PathVariable("pageNo") Integer pageNo,
+                               @PathVariable("pageSize") Integer pageSize){
+        Page<Organization> page = new Page<>(pageNo,pageSize);
+        return manageServer.getAllOrg(page);
     }
 
-    @GetMapping("/getApplyOrg/{pageNo}")
-    public Response getApplyOrg(@PathVariable("pageNo")Integer pageNo){
-        return manageServer.getApplyOrg(pageNo);
+    @GetMapping("/getApplyOrg/{pageNo}/{pageSize}")
+    public Response getApplyOrg( @PathVariable("pageNo") Integer pageNo,
+                                 @PathVariable("pageSize") Integer pageSize){
+        Page<OrganizationApply> page = new Page<>(pageNo,pageSize);
+        return manageServer.getApplyOrg(page);
     }
 
     @GetMapping("/getOrg")
-    public Response getOrg(@RequestParam Map<String,Object> orgMap) {
-        return manageServer.getOrg(orgMap);
+    public Response getOrg(@RequestBody Organization organization) {
+        return manageServer.getOrg(organization);
     }
 
     @GetMapping("/getOrgById/{oid}")
@@ -70,9 +66,16 @@ public class ManageController {
         return manageServer.auditOrgApp(oAppId,oAppStatus);
     }
 
-    @GetMapping("/getMember")
-    public Response getMember() {
-        return manageServer.getMember();
+    @GetMapping("/getMember/{pageNo}/{pageSize}")
+    public Response getMember( @PathVariable("pageNo") Integer pageNo,
+                               @PathVariable("pageSize") Integer pageSize) {
+        Page<MemberView> page = new Page<>(pageNo,pageSize);
+        return manageServer.getMember(page);
+    }
+
+    @GetMapping("/getMemberByOid/{oid}")
+    public Response getMemberByOid(@PathVariable("oid") Integer oid){
+        return manageServer.getMemberByOid(oid);
     }
 
     @PostMapping("/changePwd")

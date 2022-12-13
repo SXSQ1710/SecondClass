@@ -99,6 +99,7 @@ public enum ResponseStatus {
     CHANGE_USERPWD_FAIL("8-400","用户密码修改失败"),
     ORGANIZATION_APPLY_SUCCESS("8-200","申请加入组织成功，请等待审核结果！"),
     ORGANIZATION_APPLY_FAIL("8-400","申请加入组织失败，请检查申请信息！"),
+    ORGANIZATION_APPLY_FAIL_1("8-400","申请加入组织失败，你已经在组织中！"),
     ORGANIZATION_APPLY_AUDIT_SUCCESS("8-200","申请加入组织审核成功，请等待审核结果！"),
     ORGANIZATION_APPLY_AUDIT_FAIL("8-400","申请加入组织审核失败，请检查申请信息！"),
     MEMBER_QUERY_SUCCESS("8-200","查询组织成员成功"),
