@@ -2,13 +2,17 @@ package com.SecondClass.server;
 
 import cn.dev33.satoken.stp.SaTokenInfo;
 import cn.dev33.satoken.stp.StpUtil;
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.SecondClass.entity.R_entity.R_Login;
+import com.SecondClass.entity.R_entity.R_Student;
+import com.SecondClass.entity.R_entity.R_UserAppOrg;
 import com.SecondClass.mapper.*;
 import com.SecondClass.utils.ExcelListener;
 import com.alibaba.excel.EasyExcelFactory;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.SecondClass.entity.*;
 import com.SecondClass.entity.Class;
@@ -25,6 +29,7 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
@@ -231,21 +236,21 @@ public class ManageServerImpl extends ServiceImpl<UserMapper,User> implements IM
 
     }
 
-    /**
-     * @Author jiang
-     * @Description //获取所有的用户
-     * @Date 18:18 2022/11/12
-     * @Param [pageNo]
-     * @return com.SecondClass.entity.Response
-     **/
-    @Override
-    public Response getAllAccount(int pageNo) {
-        Page<User> page = new Page<>(pageNo, 15);
-        IPage<User> orgPage = userMapper.selectPage(page, null);
-        List<User> userList = orgPage.getRecords();
-        if (userList.size() == 0) return Response.success(ResponseStatus.MANAGE_USER_FAIL);
-        return Response.success(ResponseStatus.MANAGE_USER_SUCCESS, userList);
-    }
+//    /**
+//     * @Author jiang
+//     * @Description //获取所有的用户
+//     * @Date 18:18 2022/11/12
+//     * @Param [pageNo]
+//     * @return com.SecondClass.entity.Response
+//     **/
+//    @Override
+//    public Response getAllAccount(int pageNo) {
+//        Page<User> page = new Page<>(pageNo, 15);
+//        IPage<User> orgPage = userMapper.selectPage(page, null);
+//        List<User> userList = orgPage.getRecords();
+//        if (userList.size() == 0) return Response.success(ResponseStatus.MANAGE_USER_FAIL);
+//        return Response.success(ResponseStatus.MANAGE_USER_SUCCESS, userList);
+//    }
 
     /**
      * @Author jiang
@@ -255,12 +260,10 @@ public class ManageServerImpl extends ServiceImpl<UserMapper,User> implements IM
      * @return com.SecondClass.entity.Response
      **/
     @Override
-    public Response getAllOrg(int pageNo) {
-        Page<Organization> page = new Page<>(pageNo,15);
+    public Response getAllOrg(Page<Organization> page) {
         IPage<Organization> orgPage = organizationMapper.selectPage(page,null);
-        List<Organization> organizationList = orgPage.getRecords();
-        if(organizationList.size()==0)return Response.success(ResponseStatus.ORGANIZATION_QUERY_FAIL);
-        return Response.success(ResponseStatus.ORGANIZATION_QUERY_SUCCESS,organizationList);
+        if(orgPage.getTotal()==0)return Response.success(ResponseStatus.ORGANIZATION_QUERY_FAIL);
+        return Response.success(ResponseStatus.ORGANIZATION_QUERY_SUCCESS,orgPage);
     }
 
     /**
@@ -271,17 +274,17 @@ public class ManageServerImpl extends ServiceImpl<UserMapper,User> implements IM
      * @return com.SecondClass.entity.Response
      **/
     @Override
-    public Response getOrg(Map orgMap) {
+    public Response getOrg(Organization organization) {
         try {
             LambdaQueryWrapper<Organization> queryWrapper = new LambdaQueryWrapper<>();
-            queryWrapper.or((item)->{
-                item.like(Organization::getOid,orgMap.get("oid"))
-                    .like(Organization::getOname,orgMap.get("oname"))
-                    .like(Organization::getSuperiorOrganization,orgMap.get("superiorOrganization"))
-                    .like(Organization::getOdescription,orgMap.get("odescription"))
-                    .like(Organization::getUid,orgMap.get("uid"))
-                    .like(Organization::getCampus,orgMap.get("campus"));});
+            queryWrapper.like(Organization::getOname,organization.getOname()).or()
+                        .like(Organization::getOdescription,organization.getOdescription()).or()
+                        .like(Organization::getCampus,organization.getCampus());
             List<Organization> organizationList = organizationMapper.selectList(queryWrapper);
+            organizationList.forEach((value) -> {
+                value.setPermissionsLevel(null);
+                value.setUid(null);
+            });
             if (organizationList.size()==0) return Response.success(ResponseStatus.ORGANIZATION_QUERY_FAIL);
             return Response.success(ResponseStatus.ORGANIZATION_QUERY_SUCCESS,organizationList);
         } catch (Exception e) {
@@ -303,7 +306,7 @@ public class ManageServerImpl extends ServiceImpl<UserMapper,User> implements IM
                     queryWrapper.eq(Organization::getOid, oid.toString());
                     return organizationMapper.selectOne(queryWrapper);
                 });
-
+        organization.setPermissionsLevel(null);
         return Response.success(ResponseStatus.ORGANIZATION_QUERY_SUCCESS, organization);
     }
 
@@ -342,9 +345,27 @@ public class ManageServerImpl extends ServiceImpl<UserMapper,User> implements IM
         try {
             Long uid = Long.parseLong((String)StpUtil.getLoginId()) ;
             orgApply.setUid(uid);
+            String oid = orgApply.getOid().toString();
+            Organization organization = redisUtils.queryForValue(RedisKeyName.MANAGE_ORGANIZATION, oid, Organization.class, 60L, TimeUnit.DAYS, true,
+                    (id) -> {
+                        LambdaQueryWrapper<Organization> queryWrapper = new LambdaQueryWrapper<>();
+                        queryWrapper.eq(Organization::getOid, oid);
+                        return organizationMapper.selectOne(queryWrapper);
+                    });
+            //查看组织是否存在
+            if (!BeanUtil.isNotEmpty(organization)) return Response.error(ResponseStatus.ORGANIZATION_APPLY_FAIL);
+
+            String oidListStr = (String) StpUtil.getSession().get("o");
+            List<Integer> oidList = JSONUtil.toList(oidListStr, Integer.class);
+            if(oidList.contains(orgApply.getOid().intValue())) return Response.error(ResponseStatus.ORGANIZATION_APPLY_FAIL_1);
+            orgApply.setOAppStatus(0);
             int i = organizationApplyMapper.insert(orgApply);
-            if (i==1)return Response.success(ResponseStatus.ORGANIZATION_APPLY_SUCCESS);
-            else return Response.success(ResponseStatus.ORGANIZATION_APPLY_FAIL);
+            if (i==1) {
+                redisUtils.setValue(RedisKeyName.MANAGE_ORGANIZATION_APP + orgApply.getOAppId().toString(), orgApply);
+                return Response.success(ResponseStatus.ORGANIZATION_APPLY_SUCCESS);
+            }else {
+                return Response.success(ResponseStatus.ORGANIZATION_APPLY_FAIL);
+            }
         } catch (DataIntegrityViolationException d){
             //数据库插入失败
             d.printStackTrace();
@@ -357,47 +378,103 @@ public class ManageServerImpl extends ServiceImpl<UserMapper,User> implements IM
     }
 
     @Override
-    public Response getApplyOrg(int pageNo) {
-        //获取负责人的负责的oid
+    public Response getApplyOrg(Page<OrganizationApply> page) {
+        //获取负责人的管理的oid
         String uid =(String) StpUtil.getLoginId();
-        QueryWrapper<Organization> orgWrapper = new QueryWrapper<>();
-        orgWrapper.eq("uid",uid);
-        Long oid = (organizationMapper.selectOne(orgWrapper)).getOid();
+        String oidListStr = (String) StpUtil.getSession().get("o");
+        List<Integer> oidList = JSONUtil.toList(oidListStr, Integer.class);
+        for (int i = 0; i < oidList.size(); i++) {
+            LambdaQueryWrapper<OrganizationMember> wrapper = new LambdaQueryWrapper<>();
+            wrapper.eq(OrganizationMember::getOid, oidList.get(i))
+                    .eq(OrganizationMember::getUid, uid);
+            OrganizationMember organizationMember = organizationMemberMapper.selectOne(wrapper);
+            if (!organizationMember.getPosition().equals("负责人")) oidList.remove(i);
+        }
+        if (oidList.size() == 0) return Response.error(ResponseStatus.ORGANIZATION_APP_QUERY_FAIL);
 
-        //查询对应oid的申请信息
         QueryWrapper<OrganizationApply> organizationApplyQueryWrapper = new QueryWrapper<>();
-        organizationApplyQueryWrapper.eq("oid",oid);
-        Page<OrganizationApply> page = new Page<>(pageNo,15);
+        organizationApplyQueryWrapper.in("oid",oidList);
         IPage<OrganizationApply> orgApplyPage = organizationApplyMapper.selectPage(page,organizationApplyQueryWrapper);
         List<OrganizationApply> organizationApplyList = orgApplyPage.getRecords();
         if(organizationApplyList.size()==0)return Response.success(ResponseStatus.ORGANIZATION_APP_QUERY_FAIL);
-        return Response.success(ResponseStatus.ORGANIZATION_APP_QUERY_SUCCESS,organizationApplyList);
+
+        ArrayList<R_UserAppOrg> r_userAppOrgs = new ArrayList<>();
+        for (int i = 0; i < organizationApplyList.size(); i++) {
+            String auid = organizationApplyList.get(i).getUid().toString();
+            User user = redisUtils.queryForValue(RedisKeyName.MANAGE_USER, auid, User.class, 60L, TimeUnit.DAYS, false,
+                    (id) -> {
+                        LambdaQueryWrapper<User> queryWrapper = new LambdaQueryWrapper<>();
+                        queryWrapper.eq(User::getUid, uid);
+                        return userMapper.selectOne(queryWrapper);
+                    });
+
+            String cIdStr = user.getCid().toString();
+            Class classInfo = redisUtils.queryForValue(RedisKeyName.MANAGE_CLASS, cIdStr, Class.class, 60L, TimeUnit.DAYS, true,
+                    (id) -> {
+                        QueryWrapper<Class> queryWrapper = new QueryWrapper<>();
+                        queryWrapper.eq("cid", cIdStr);
+                        return classMapper.selectOne(queryWrapper);
+                    });
+
+            String oid = organizationApplyList.get(i).getOid().toString();
+            Organization organization = redisUtils.queryForValue(RedisKeyName.MANAGE_ORGANIZATION, oid, Organization.class, 60L, TimeUnit.DAYS, true,
+                    (id) -> {
+                        QueryWrapper<Organization> queryWrapper = new QueryWrapper<>();
+                        queryWrapper.eq("oid", oid);
+                        return organizationMapper.selectOne(queryWrapper);
+                    });
+            R_UserAppOrg r_student = BeanUtil.copyProperties(user, R_UserAppOrg.class);
+            r_student.setCampus(classInfo.getCampus());
+            r_student.setCname(classInfo.getCname());
+            r_student.setCollege(classInfo.getCollege());
+            r_student.setMajor(classInfo.getMajor());
+            r_student.setAppOid(organization.getOid());
+            r_student.setAppOname(organization.getOname());
+
+            r_userAppOrgs.add(r_student);
+        }
+        HashMap<String, Object> stringObjectHashMap = new HashMap<>();
+        stringObjectHashMap.put("records",r_userAppOrgs);
+        stringObjectHashMap.put("total",orgApplyPage.getTotal());
+        stringObjectHashMap.put("size",orgApplyPage.getSize());
+        stringObjectHashMap.put("pages",orgApplyPage.getPages());
+        stringObjectHashMap.put("current",orgApplyPage.getCurrent());
+        return Response.success(ResponseStatus.ORGANIZATION_APP_QUERY_SUCCESS,stringObjectHashMap);
     }
 
     @Override
+    @Transactional
     public Response auditOrgApp(Long oAppId, Integer oAppStatus) {
         try {
             //获得申请实体
-            QueryWrapper<OrganizationApply> orgAppWrapper = new QueryWrapper<>();
-            orgAppWrapper.eq("oAppId", oAppId);
-            OrganizationApply orgApplication = organizationApplyMapper.selectOne(orgAppWrapper);
-            if (orgApplication == null) throw new IllegalArgumentException();
+            OrganizationApply orgApplication = redisUtils.queryForValue(RedisKeyName.MANAGE_ORGANIZATION_APP, oAppId.toString(), OrganizationApply.class, 60L, TimeUnit.DAYS, true,
+                    (id) -> {
+                        LambdaQueryWrapper<OrganizationApply> orgAppWrapper = new LambdaQueryWrapper<>();
+                        orgAppWrapper
+                                .eq(OrganizationApply::getOAppId, oAppId);
+                        return organizationApplyMapper.selectOne(orgAppWrapper);
+                    });
+
+            if (!BeanUtil.isNotEmpty(orgApplication)) throw new IllegalArgumentException();
+            if (orgApplication.getOAppStatus() != 0) throw new IllegalArgumentException();
 
             //更新申请表
-            UpdateWrapper<OrganizationApply> organizationApplyUpdateWrapper = new UpdateWrapper<>();
-            organizationApplyUpdateWrapper.eq("oAppId", oAppId).set("oAppStatus", oAppStatus);
-            int i = 0;
+            LambdaUpdateWrapper<OrganizationApply> organizationApplyUpdateWrapper = new LambdaUpdateWrapper<>();
+            organizationApplyUpdateWrapper
+                    .eq(OrganizationApply::getOAppId, oAppId)
+                    .set(OrganizationApply::getOAppStatus, oAppStatus);
+
             int i2 = 0;
             int i3 = 0;
-            i = organizationApplyMapper.update(null, organizationApplyUpdateWrapper);
+            int i = organizationApplyMapper.update(null, organizationApplyUpdateWrapper);
             //查看是否已经是组织成员,如果已经是成员，重复申请，直接返回成功
-            QueryWrapper<OrganizationMember> organizationMemberQueryWrapper = new QueryWrapper<>();
-            organizationMemberQueryWrapper.eq("oid",orgApplication.getOid())
-                    .eq("uid",orgApplication.getUid());
-            OrganizationMember temp_member = organizationMemberMapper.selectOne(organizationMemberQueryWrapper);
-            if(temp_member != null){
-                return Response.success(ResponseStatus.ORGANIZATION_APPLY_AUDIT_SUCCESS);
-            }
+//            QueryWrapper<OrganizationMember> organizationMemberQueryWrapper = new QueryWrapper<>();
+//            organizationMemberQueryWrapper.eq("oid",orgApplication.getOid())
+//                    .eq("uid",orgApplication.getUid());
+//            OrganizationMember temp_member = organizationMemberMapper.selectOne(organizationMemberQueryWrapper);
+//            if(temp_member != null){
+//                return Response.success(ResponseStatus.ORGANIZATION_APPLY_AUDIT_SUCCESS);
+//            }
             //更新成员表和user表
             if (i == 1 && oAppStatus == 2) {
                 //更新user表
@@ -409,37 +486,58 @@ public class ManageServerImpl extends ServiceImpl<UserMapper,User> implements IM
                 oidList.add(orgApplication.getOid().intValue());
                 user.setOid(JSONUtil.toJsonStr(oidList));
                 i3 = userMapper.updateById(user);
+                //删除缓存
+                stringRedisTemplate.delete(RedisKeyName.MANAGE_USER + user.getUid().toString());
                 //更新成员表
                 OrganizationMember member = new OrganizationMember();
                 member.setPosition("普通成员");
                 member.setOid(orgApplication.getOid());
                 member.setUid(orgApplication.getUid());
                 i2 = organizationMemberMapper.insert(member);
+                //删除缓存
+                stringRedisTemplate.delete(RedisKeyName.MANAGE_ORGANIZATION_MEMBER + orgApplication.getOid().toString());
             }
-            if (i == 1 && i2 == 1 && i3 == 1) return Response.success(ResponseStatus.ORGANIZATION_APPLY_AUDIT_SUCCESS);
+            if (i == 1 && i2 == 1 && i3 == 1) {
+                stringRedisTemplate.delete(RedisKeyName.MANAGE_ORGANIZATION_APP + oAppId.toString());
+                return Response.success(ResponseStatus.ORGANIZATION_APPLY_AUDIT_SUCCESS);
+            }
             else return Response.success(ResponseStatus.ORGANIZATION_APPLY_AUDIT_FAIL);
         } catch (DataIntegrityViolationException d){
-        //数据库插入失败
-        d.printStackTrace();
-        return Response.error(ResponseStatus.ORGANIZATION_APPLY_AUDIT_FAIL);
-    }catch (Exception e) {
-        //其他错误
-        e.printStackTrace();
-        return Response.success(ResponseStatus.ERROR);
-    }
+            //数据库插入失败
+            return Response.error(ResponseStatus.ORGANIZATION_APPLY_AUDIT_FAIL);
+        }catch (Exception e) {
+            //其他错误
+            return Response.error(ResponseStatus.ORGANIZATION_APPLY_AUDIT_FAIL);
+        }
     }
 
     @Override
-    public Response getMember() {
+    public Response getMember(Page<MemberView> page) {
         String uid =(String) StpUtil.getLoginId();
         QueryWrapper<Organization> orgWrapper = new QueryWrapper<>();
         orgWrapper.eq("uid",uid);
-        Long oid = (organizationMapper.selectOne(orgWrapper)).getOid();
+        List<Organization> list = organizationMapper.selectList(orgWrapper);
+        if(list.size()==0)return Response.success(ResponseStatus.MEMBER_QUERY__FAIL);
+        ArrayList<String> oids = new ArrayList<>();
+        for (int i = 0; i < list.size(); i++) {
+            String oid = String.valueOf(list.get(i).getOid());
+            //查询对应oid的申请信息
+            oids.add(oid);
+        }
+
         QueryWrapper<MemberView> memberViewQueryWrapper= new QueryWrapper<>();
-        memberViewQueryWrapper.eq("oid",oid);
-        List<MemberView> memberViewList = memberViewMapper.selectList(memberViewQueryWrapper);
-        if(memberViewList.size()==0)return Response.success(ResponseStatus.MEMBER_QUERY__FAIL);
-        return Response.success(ResponseStatus.MEMBER_QUERY_SUCCESS,memberViewList);
+        memberViewQueryWrapper.in("oid",oids);
+        Page<MemberView> memberViewPage = memberViewMapper.selectPage(page, memberViewQueryWrapper);
+        return Response.success(ResponseStatus.MEMBER_QUERY_SUCCESS,memberViewPage);
+    }
+
+    @Override
+    public Response getMemberByOid(Integer oid) {
+        LambdaQueryWrapper<MemberView> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(MemberView::getOid, oid);
+        List<MemberView> memberViews = memberViewMapper.selectList(wrapper);
+
+        return Response.success(ResponseStatus.SUCCESS, memberViews);
     }
 
     /**
@@ -449,6 +547,7 @@ public class ManageServerImpl extends ServiceImpl<UserMapper,User> implements IM
      * @Param MultipartFile
      * @return com.SecondClass.entity.Response
      **/
+
     @Transactional
     public Response addAccountByBatch(MultipartFile file) {
         try {

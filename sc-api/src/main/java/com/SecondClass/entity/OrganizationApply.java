@@ -14,9 +14,12 @@ import lombok.Data;
 @Data
 @TableName("t_organization_apply")
 public class OrganizationApply {
-    @TableId(type= IdType.AUTO)
+
+    @TableId(value = "o_app_id",type= IdType.AUTO)
     private Long oAppId;
+
     private Long uid;
+
     private Long oid;
     /**
      * oAppStatus 审核状态
@@ -24,6 +27,6 @@ public class OrganizationApply {
      * 2：已通过
      * 1：已拒绝
      */
-    private String oAppStatus;
+    private Integer oAppStatus;
 
 }

@@ -1,5 +1,7 @@
 package com.SecondClass.entity;
 
+import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableId;
 import lombok.Data;
 
 import java.io.Serializable;
@@ -16,6 +18,7 @@ public class OrganizationMember implements Serializable {
     /**
      * id
      */
+    @TableId(value = "id",type= IdType.AUTO)
     private Long id;
     /**
      * 组织id
