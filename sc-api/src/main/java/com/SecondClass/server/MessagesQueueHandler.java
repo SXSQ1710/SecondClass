@@ -5,6 +5,10 @@ import com.SecondClass.entity.Participation;
 import com.SecondClass.mapper.ParticipationMapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.SpringApplicationShutdownHandlers;
+import org.springframework.context.ConfigurableApplicationContext;
+import org.springframework.data.redis.RedisConnectionFailureException;
 import org.springframework.data.redis.connection.stream.*;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
@@ -16,6 +20,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @title: MessagesQueueHandler
@@ -94,8 +99,46 @@ public class MessagesQueueHandler {
                     }
                     //5.ack确认
                     stringRedisTemplate.opsForStream().acknowledge(queueName,"g1",record.getId());
+                }catch (RedisConnectionFailureException e){
+                    log.error("->严重错误<-redis连接失败");
                 }catch (Exception e){
-                    log.error("处理PendingList报名异常", e);
+                    log.error("->参与处理<-消息队列异常");
+                    handleSignPendingList();
+                }
+            }
+        }
+
+        private void handleSignPendingList(){
+            while (true) {
+                try {
+                    //1.获取消息队列中的报名信息
+                    List<MapRecord<String, Object, Object>> list = stringRedisTemplate.opsForStream().read(
+                            Consumer.from("g1", "c1"),
+                            StreamReadOptions.empty().count(1),
+                            StreamOffset.create(queueName, ReadOffset.from("0"))
+                    );
+                    //2.判断消息获取是否成功
+                    if (list == null || list.isEmpty()) {
+                        //2.1如果为空表示PendingList中没有异常消息了，继续下一个循环
+                        break;
+                    }
+                    //3.解析数据
+                    MapRecord<String, Object, Object> record = list.get(0);
+                    Map<Object, Object> value = record.getValue();
+                    Participation participation = BeanUtil.fillBeanWithMap(value, new Participation(), true);
+                    //4.写入数据库
+                    updateStatus(participation);
+                    //5.ack确认
+                    stringRedisTemplate.opsForStream().acknowledge(queueName, "g1", record.getId());
+                }catch (IllegalStateException e){
+                    log.error("->严重错误<-redis连接失败", e);
+                }catch (Exception e){
+                    log.error("处理SignPendingList报名异常", e);
+                    try {
+                        Thread.sleep(20);
+                    } catch (InterruptedException interruptedException) {
+                        interruptedException.printStackTrace();
+                    }
                 }
             }
         }
@@ -135,16 +178,19 @@ public class MessagesQueueHandler {
                     saveParticipation(participation);
                     //5.ack确认
                     stringRedisTemplate.opsForStream().acknowledge(queueName,"g1",record.getId());
-                }catch (Exception e){
-                    log.error("处理PendingList报名异常", e);
-                    handlePendingList();
+                }catch (RedisConnectionFailureException e){
+                    log.error("->严重错误<-redis连接失败");
+                }
+                catch (Exception e){
+                    log.error("->报名处理<-消息队列异常", e);
+                    handleParticipationPendingList();
                 }
             }
         }
 
-        private void handlePendingList(){
-            while (true){
-                try{
+        private void handleParticipationPendingList(){
+            while (true) {
+                try {
                     //1.获取消息队列中的报名信息
                     List<MapRecord<String, Object, Object>> list = stringRedisTemplate.opsForStream().read(
                             Consumer.from("g1", "c1"),
@@ -152,7 +198,7 @@ public class MessagesQueueHandler {
                             StreamOffset.create(queueName, ReadOffset.from("0"))
                     );
                     //2.判断消息获取是否成功
-                    if (list == null || list.isEmpty()){
+                    if (list == null || list.isEmpty()) {
                         //2.1如果为空表示PendingList中没有异常消息了，继续下一个循环
                         break;
                     }
@@ -163,9 +209,11 @@ public class MessagesQueueHandler {
                     //4.写入数据库
                     saveParticipation(participation);
                     //5.ack确认
-                    stringRedisTemplate.opsForStream().acknowledge(queueName,"g1",record.getId());
+                    stringRedisTemplate.opsForStream().acknowledge(queueName, "g1", record.getId());
+                }catch (IllegalStateException e){
+                    log.error("->严重错误<-redis连接失败");
                 }catch (Exception e){
-                    log.error("处理PendingList报名异常", e);
+                    log.error("处理ParticipationPendingList报名异常", e);
                     try {
                         Thread.sleep(20);
                     } catch (InterruptedException interruptedException) {

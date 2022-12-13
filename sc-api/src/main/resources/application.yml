@@ -1,11 +1,11 @@
 # 应用服务 WEB 访问端口
-server-port: &port 8081
+server-port: &port 8083
 #服务器地址（后面可能用到，不用修改）
 serveUrl: &serveUrl http://localhost:8081
 #文件存储地址（后面可能用到，不用修改）
 filePath: &filePath SecondClass/src/main/resources/static
 #数据库配置
-mysql-url: &url jdbc:mysql://localhost:3306/secondclass?useSSL=false&amp&serverTimezone=UTC&allowPublicKeyRetrieval=true
+mysql-url: &url jdbc:mysql://localhost:3306/secondclass?useSSL=false&amp&serverTimezone=UTC&allowPublicKeyRetrieval=true&rewriteBatchedStatements=true
 mysql-username: &username root
 mysql-password: &password root
 #静态资源地址

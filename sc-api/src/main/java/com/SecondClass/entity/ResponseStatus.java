@@ -92,6 +92,9 @@ public enum ResponseStatus {
     CREATE_ORGANIZATION_FAIL("8-400","组织创建失败"),
     CREATE_USER_SUCCESS("8-200","用户账号导入成功"),
     CREATE_USER_FAIL("8-400","用户账号导入失败"),
+    CREATE_USERBYBATCH_SUCCESS("8-200","批量用户账号导入成功"),
+    CREATE_USERBYBATCH_FAIL("8-400","批量用户账号导入失败"),
+    CREATE_USERBYBATCH_FAIL_1("8-400","存在重复数据，批量用户账号导入失败"),
     CHANGE_USERPWD_SUCCESS("8-200","用户密码修改成功"),
     CHANGE_USERPWD_FAIL("8-400","用户密码修改失败"),
     ORGANIZATION_APPLY_SUCCESS("8-200","申请加入组织成功，请等待审核结果！"),
@@ -101,7 +104,13 @@ public enum ResponseStatus {
     MEMBER_QUERY_SUCCESS("8-200","查询组织成员成功"),
     MEMBER_QUERY__FAIL("8-400","查询组织成员失败"),
     SUBMIT_SHIAPPINFO_SUCCESS("9-200","提交有效信息给校团委成功"),
-    SUBMIT_SHIAPPINFO_FAIL("9-400","提交有效信息给校团委失败");
+    SUBMIT_SHIAPPINFO_FAIL("9-400","提交有效信息给校团委失败"),
+
+    //时长管理
+    SHICHANG_APP_SUCCESS("10-200","申请提交成功"),
+    SHICHANG_APP_FAIL("10-400","申请提交失败"),
+    SHICHANG_APP_ERROR("10-500","服务器错误");
+
 
     private final String responseStatus;
 

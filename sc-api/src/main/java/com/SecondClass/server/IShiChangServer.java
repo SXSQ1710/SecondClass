@@ -3,6 +3,7 @@ package com.SecondClass.server;
 import com.SecondClass.entity.Participation;
 import com.SecondClass.entity.Response;
 import com.SecondClass.entity.Shichang;
+import com.SecondClass.entity.ShichangApplication;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import org.apache.ibatis.annotations.Select;
 
@@ -12,10 +13,9 @@ public interface IShiChangServer {
 
     /**
      * 浏览个人时长
-     * @param uid 用户id
      * @return response
      */
-    Response browseMyShiChang(Integer uid);
+    Response browseMyShiChang();
 
     /**
      * 审核活动时长
@@ -43,4 +43,12 @@ public interface IShiChangServer {
      * @return
      */
     Response queryAllGroupBySidAndTime(Date startTime, Date endTime);
+
+    Response postShiChangApplication(ShichangApplication shichangApplication);
+
+    Response getShiChangApplication(Page<ShichangApplication> page);
+
+    Response getAllShiChangApplication(Page<ShichangApplication> page);
+
+    Response getShiAppInfo(Integer sAppId);
 }

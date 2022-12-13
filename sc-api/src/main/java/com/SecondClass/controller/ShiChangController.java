@@ -2,12 +2,10 @@ package com.SecondClass.controller;
 
 import com.SecondClass.entity.Participation;
 import com.SecondClass.entity.Response;
+import com.SecondClass.entity.ShichangApplication;
 import com.SecondClass.server.IShiChangServer;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import java.util.Date;
@@ -26,15 +24,39 @@ public class ShiChangController {
     @Resource
     private IShiChangServer shiChangServer;
 
-    @GetMapping("/browseMyShiChang/{uid}")
-    public Response browseMyShiChang(@PathVariable("uid") Integer uid){
-        return shiChangServer.browseMyShiChang(uid);
+    @GetMapping("/browseMyShiChang")
+    public Response browseMyShiChang(){
+        return shiChangServer.browseMyShiChang();
     }
 
     @GetMapping("/auditActivityShiChang/{aid}/{statue}")
     public Response auditActivityShiChang(@PathVariable("aid") Integer aid,
                                           @PathVariable("statue") Integer statue){
         return shiChangServer.auditActivityShiChang(aid,statue);
+    }
+
+    @PostMapping("/shiChangApplication")
+    public Response postShiChangApplication(@RequestBody ShichangApplication shichangApplication){
+        return shiChangServer.postShiChangApplication(shichangApplication);
+    }
+
+    @GetMapping("/shiChangApplication/{pageNo}/{pageSize}")
+    public Response getShiChangApplication( @PathVariable("pageNo") Integer pageNo,
+                                            @PathVariable("pageSize") Integer pageSize){
+        Page<ShichangApplication> page = new Page<>(pageNo,pageSize);
+        return shiChangServer.getShiChangApplication(page);
+    }
+
+    @GetMapping("/getAllShiChangApplication/{pageNo}/{pageSize}")
+    public Response getAllShiChangApplication( @PathVariable("pageNo") Integer pageNo,
+                                               @PathVariable("pageSize") Integer pageSize){
+        Page<ShichangApplication> page = new Page<>(pageNo,pageSize);
+        return shiChangServer.getAllShiChangApplication(page);
+    }
+
+    @GetMapping("/getShiAppInfo/{sAppId}")
+    public Response getShiAppInfo (@PathVariable("sAppId") Integer sAppId){
+        return shiChangServer.getShiAppInfo(sAppId);
     }
 
     @GetMapping("/getMyParticipation/{uid}/{pageNo}/{pageSize}")
