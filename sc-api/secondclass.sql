@@ -11,7 +11,7 @@
  Target Server Version : 80026
  File Encoding         : 65001
 
- Date: 24/11/2022 16:50:57
+ Date: 13/12/2022 18:48:06
 */
 
 SET NAMES utf8mb4;
@@ -43,13 +43,12 @@ CREATE TABLE `t_activity`  (
   INDEX `a_uid`(`a_uid`) USING BTREE,
   CONSTRAINT `t_activity_ibfk_1` FOREIGN KEY (`a_oid`) REFERENCES `t_organization` (`oid`) ON DELETE RESTRICT ON UPDATE RESTRICT,
   CONSTRAINT `t_activity_ibfk_2` FOREIGN KEY (`a_uid`) REFERENCES `t_user` (`uid`) ON DELETE RESTRICT ON UPDATE RESTRICT
-) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = DYNAMIC;
+) ENGINE = InnoDB AUTO_INCREMENT = 4 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Records of t_activity
 -- ----------------------------
-INSERT INTO `t_activity` VALUES (1, '测试讲座活动', '旨在测试接口', '2022-09-16 06:43:11', '2022-09-20 07:43:11', 100, 1, 1, '2022-10-16 02:00:00', '2022-10-16 04:00:00', 2, 'http://dummyimage.com/400x400', 2, 1, '龙洞校区教学楼101');
-INSERT INTO `t_activity` VALUES (2, '第二课堂', '旨在测试接口', '2022-09-16 06:43:11', '2022-09-20 07:43:11', 100, 1, 1, '2022-10-16 02:00:00', '2022-10-16 04:00:00', 2, 'http://dummyimage.com/400x400', 2, 1, '龙洞校区教学楼101');
+INSERT INTO `t_activity` VALUES (3, '知识分享讲座活动', '邀请校友分享创业经历', '2022-12-01 06:43:11', '2022-12-20 07:43:11', 100, 1, 1, '2022-12-20 02:00:00', '2022-12-20 04:00:00', 2, 'http://dummyimage.com/400x400', 2, 1, '龙洞校区教学楼101');
 
 -- ----------------------------
 -- Table structure for t_activity_application
@@ -65,14 +64,12 @@ CREATE TABLE `t_activity_application`  (
   `a_app_explain` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '审核说明',
   PRIMARY KEY (`a_app_id`) USING BTREE,
   INDEX `uid`(`uid`) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = DYNAMIC;
+) ENGINE = InnoDB AUTO_INCREMENT = 4 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Records of t_activity_application
 -- ----------------------------
-INSERT INTO `t_activity_application` VALUES (1, 1, NULL, '{\"aid\":1,\"aname\":\"测试讲座活动\",\"adescription\":\"旨在测试接口\",\"aRegisterOpen\":1663310591000,\"aRegisterClose\":1663659791000,\"aLimittedNumber\":100,\"aOid\":1,\"aUid\":1,\"aHoldStart\":1665885600000,\"aHoldEnd\":1665892800000,\"astatus\":2,\"apic\":\"http://dummyimage.com/400x400\",\"aShichangNum\":2,\"aShichangType\":1,\"aAddress\":\"龙洞校区教学楼101\"}', 'http://dummyimage.com/400x400', 2, '无');
-INSERT INTO `t_activity_application` VALUES (2, 1, NULL, '{\"aname\":\"测试讲座活动\",\"adescription\":\"旨在测试接口\",\"aRegisterOpen\":1663310591000,\"aRegisterClose\":1663659791000,\"aLimittedNumber\":100,\"aOid\":1,\"aUid\":1,\"aHoldStart\":1665885600000,\"aHoldEnd\":1665892800000,\"apic\":\"http://dummyimage.com/400x400\",\"aShichangNum\":2,\"aShichangType\":1,\"aAddress\":\"龙洞校区教学楼101\"}', 'http://dummyimage.com/400x400', 1, NULL);
-INSERT INTO `t_activity_application` VALUES (3, 1, NULL, '{\"aid\":2,\"aname\":\"第二课堂\",\"adescription\":\"旨在测试接口\",\"aRegisterOpen\":1663310591000,\"aRegisterClose\":1663659791000,\"aLimittedNumber\":100,\"aOid\":1,\"aUid\":1,\"aHoldStart\":1665885600000,\"aHoldEnd\":1665892800000,\"astatus\":2,\"apic\":\"http://dummyimage.com/400x400\",\"aShichangNum\":2,\"aShichangType\":1,\"aAddress\":\"龙洞校区教学楼101\"}', 'http://dummyimage.com/400x400', 2, '无');
+INSERT INTO `t_activity_application` VALUES (4, 1, NULL, '{\"aname\":\"知识分享讲座活动\",\"adescription\":\"邀请校友分享创业经历\",\"aRegisterOpen\":1669876991000,\"aRegisterClose\":1671522191000,\"aLimittedNumber\":100,\"aOid\":1,\"aUid\":1,\"aHoldStart\":1669860000000,\"aHoldEnd\":1671508800000,\"apic\":\"http://dummyimage.com/400x400\",\"aShichangNum\":2,\"aShichangType\":1,\"aAddress\":\"龙洞校区教学楼101\"}', 'http://dummyimage.com/400x400', 2, '通过');
 
 -- ----------------------------
 -- Table structure for t_class
@@ -86,13 +83,15 @@ CREATE TABLE `t_class`  (
   `college` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '学院',
   `campus` varchar(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '校区',
   PRIMARY KEY (`cid`) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 2 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = DYNAMIC;
+) ENGINE = InnoDB AUTO_INCREMENT = 5 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Records of t_class
 -- ----------------------------
 INSERT INTO `t_class` VALUES (1, '信管1班', 2020, '信息管理与信息系统', '管理学院', '龙洞校区');
-INSERT INTO `t_class` VALUES (2, '信管1班', 2020, '信息管理与信息系统', '管理学院', '龙洞校区');
+INSERT INTO `t_class` VALUES (2, '信管2班', 2020, '信息管理与信息系统', '管理学院', '龙洞校区');
+INSERT INTO `t_class` VALUES (3, '信管3班', 2020, '信息管理与信息系统', '管理学院', '龙洞校区');
+INSERT INTO `t_class` VALUES (4, '大数据1班', 2020, '大数据管理与应用', '管理学院', '龙洞校区');
 
 -- ----------------------------
 -- Table structure for t_organization
@@ -108,13 +107,16 @@ CREATE TABLE `t_organization`  (
   `permissions_level` int NULL DEFAULT NULL,
   PRIMARY KEY (`oid`) USING BTREE,
   INDEX `uid`(`uid`) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 2 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = DYNAMIC;
+) ENGINE = InnoDB AUTO_INCREMENT = 6 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Records of t_organization
 -- ----------------------------
-INSERT INTO `t_organization` VALUES (1, '校团委', 1, '龙洞校区', '学校老大', NULL, 1);
-INSERT INTO `t_organization` VALUES (2, '志愿者协会', 2, '龙洞校区', NULL, NULL, 2);
+INSERT INTO `t_organization` VALUES (1, '共青团广东工业大学委员会', 1, '龙洞校区', '学校活动管理总部', NULL, 1);
+INSERT INTO `t_organization` VALUES (2, '龙洞校区志愿者协会', 1, '龙洞校区', '进行志愿活动', NULL, 2);
+INSERT INTO `t_organization` VALUES (3, '广东工业大学乒乓球俱乐部', 2, '大学城校区', '举办乒乓球活动', NULL, 2);
+INSERT INTO `t_organization` VALUES (4, '广东工业大学大小招生宣传部（龙洞校区）', 3, '龙洞校区', '举行招生宣传活动', NULL, 2);
+INSERT INTO `t_organization` VALUES (5, '摄影社', 1, '龙洞校区', '学习摄影，开展活动', '校团委', 2);
 
 -- ----------------------------
 -- Table structure for t_organization_app_shi
@@ -130,7 +132,7 @@ CREATE TABLE `t_organization_app_shi`  (
   PRIMARY KEY (`shi_app_id`) USING BTREE,
   INDEX `uid`(`uid`) USING BTREE,
   INDEX `sid`(`sid`) USING BTREE
-) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = DYNAMIC;
+) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Records of t_organization_app_shi
@@ -144,13 +146,15 @@ CREATE TABLE `t_organization_apply`  (
   `o_app_id` bigint NOT NULL AUTO_INCREMENT,
   `uid` bigint NULL DEFAULT NULL,
   `oid` bigint NULL DEFAULT NULL,
-  `o_app_status` int NULL DEFAULT 0,
+  `o_app_status` int NULL DEFAULT 0 COMMENT '0:申请中；1：申请拒绝；2：申请通过',
   PRIMARY KEY (`o_app_id`) USING BTREE
-) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = DYNAMIC;
+) ENGINE = InnoDB AUTO_INCREMENT = 2 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Records of t_organization_apply
 -- ----------------------------
+INSERT INTO `t_organization_apply` VALUES (1, 3, 5, 2);
+INSERT INTO `t_organization_apply` VALUES (5, 2, 3, 2);
 
 -- ----------------------------
 -- Table structure for t_organization_member
@@ -164,11 +168,18 @@ CREATE TABLE `t_organization_member`  (
   PRIMARY KEY (`id`) USING BTREE,
   INDEX `uid`(`uid`) USING BTREE,
   INDEX `oid`(`oid`) USING BTREE
-) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = DYNAMIC;
+) ENGINE = InnoDB AUTO_INCREMENT = 1602485939557400580 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Records of t_organization_member
 -- ----------------------------
+INSERT INTO `t_organization_member` VALUES (1, 1, 1, '负责人');
+INSERT INTO `t_organization_member` VALUES (2, 2, 1, '负责人');
+INSERT INTO `t_organization_member` VALUES (3, 5, 1, '负责人');
+INSERT INTO `t_organization_member` VALUES (4, 2, 2, '普通成员');
+INSERT INTO `t_organization_member` VALUES (5, 4, 3, '负责人');
+INSERT INTO `t_organization_member` VALUES (1602485939557400580, 5, 3, '普通成员');
+INSERT INTO `t_organization_member` VALUES (1602485939557400582, 3, 2, '普通成员');
 
 -- ----------------------------
 -- Table structure for t_participation
@@ -187,6 +198,7 @@ CREATE TABLE `t_participation`  (
 -- ----------------------------
 -- Records of t_participation
 -- ----------------------------
+INSERT INTO `t_participation` VALUES (126083098596081665, 1, 3, 3);
 
 -- ----------------------------
 -- Table structure for t_self_application
@@ -203,12 +215,30 @@ CREATE TABLE `t_self_application`  (
   PRIMARY KEY (`self_app_id`) USING BTREE,
   INDEX `uid`(`uid`) USING BTREE,
   INDEX `self_app_type`(`self_app_type`) USING BTREE
-) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = DYNAMIC;
+) ENGINE = InnoDB AUTO_INCREMENT = 2 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Records of t_self_application
 -- ----------------------------
 INSERT INTO `t_self_application` VALUES (1, 1, 1, 2, 'aliquip dolor', 'voluptate non dolore', 2);
+
+-- ----------------------------
+-- Table structure for t_semester
+-- ----------------------------
+DROP TABLE IF EXISTS `t_semester`;
+CREATE TABLE `t_semester`  (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `last_semester_begin` datetime NULL DEFAULT NULL,
+  `last_semester_end` datetime NULL DEFAULT NULL,
+  `next_semester_begin` datetime NULL DEFAULT NULL,
+  `next_semester_end` datetime NULL DEFAULT NULL,
+  PRIMARY KEY (`id`) USING BTREE
+) ENGINE = InnoDB AUTO_INCREMENT = 2 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic;
+
+-- ----------------------------
+-- Records of t_semester
+-- ----------------------------
+INSERT INTO `t_semester` VALUES (1, '2022-09-01 00:00:00', '2023-03-01 00:00:00', '2023-03-01 00:00:00', '2023-09-01 00:00:00');
 
 -- ----------------------------
 -- Table structure for t_shichang
@@ -220,13 +250,33 @@ CREATE TABLE `t_shichang`  (
   `shi_chang` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL COMMENT '获得学年',
   PRIMARY KEY (`id`) USING BTREE,
   INDEX `uid`(`uid`) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = DYNAMIC;
+) ENGINE = InnoDB AUTO_INCREMENT = 9 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Records of t_shichang
 -- ----------------------------
-INSERT INTO `t_shichang` VALUES (1, 1, '[[1 ,[2 ,\"1-2\",\"1\"],[2 ,\"1-2\",\"1\"],[2 ,\"1-2\",\"1\"],[2 ,\"1-2\",\"1\"],[2 ,\"1-2\",\"1\"],[2 ,\"1-2\",\"1\"]],[2 ,[2 ,\"1-2\",\"1\"],[2 ,\"1-2\",\"1\"],[2 ,\"1-2\",\"1\"],[2 ,\"1-2\",\"1\"],[2 ,\"1-2\",\"1\"],[2 ,\"1-2\",\"1\"]],[3 ,[2 ,\"1-2\",\"1\"],[2 ,\"1-2\",\"1\"],[2 ,\"1-2\",\"1\"],[2 ,\"1-2\",\"1\"],[2 ,\"1-2\",\"1\"],[2 ,\"1-2\",\"1\"]],[4 ,[2 ,\"1-2\",\"1\"],[2 ,\"1-2\",\"1\"],[2 ,\"1-2\",\"1\"],[2 ,\"1-2\",\"1\"],[2 ,\"1-2\",\"1\"],[2 ,\"1-2\",\"1\"]]]');
-INSERT INTO `t_shichang` VALUES (2, 2, '[[1 ,[2 ,\"1-2\",\"1\"],[2 ,\"1-2\",\"1\"],[2 ,\"1-2\",\"1\"],[2 ,\"1-2\",\"1\"],[2 ,\"1-2\",\"1\"],[2 ,\"1-2\",\"1\"]],[2 ,[2 ,\"1-2\",\"1\"],[2 ,\"1-2\",\"1\"],[2 ,\"1-2\",\"1\"],[2 ,\"1-2\",\"1\"],[2 ,\"1-2\",\"1\"],[2 ,\"1-2\",\"1\"]],[3 ,[2 ,\"1-2\",\"1\"],[2 ,\"1-2\",\"1\"],[2 ,\"1-2\",\"1\"],[2 ,\"1-2\",\"1\"],[2 ,\"1-2\",\"1\"],[2 ,\"1-2\",\"1\"]],[4 ,[2 ,\"1-2\",\"1\"],[2 ,\"1-2\",\"1\"],[2 ,\"1-2\",\"1\"],[2 ,\"1-2\",\"1\"],[2 ,\"1-2\",\"1\"],[2 ,\"1-2\",\"1\"]]]');
+INSERT INTO `t_shichang` VALUES (6, 1, '[[1, [0,\"-\",\"-\"], [0,\"-\",\"-\"], [0,\"-\",\"-\"], [0,\"-\",\"-\"], [4,\"3-3\",\"-\"], [0,\"-\",\"-\"]], [2, [0,\"-\",\"-\"], [0,\"-\",\"-\"], [0,\"-\",\"-\"], [0,\"-\",\"-\"], [0,\"-\",\"-\"], [0,\"-\",\"-\"]], [3, [0,\"-\",\"-\"], [0,\"-\",\"-\"], [0,\"-\",\"-\"], [0,\"-\",\"-\"], [0,\"-\",\"-\"], [0,\"-\",\"-\"]], [4, [0,\"-\",\"-\"], [0,\"-\",\"-\"], [0,\"-\",\"-\"], [0,\"-\",\"-\"], [0,\"-\",\"-\"], [0,\"-\",\"-\"]], [5, [0,\"-\",\"-\"], [0,\"-\",\"-\"], [0,\"-\",\"-\"], [0,\"-\",\"-\"], [0,\"-\",\"-\"], [0,\"-\",\"-\"]]]');
+INSERT INTO `t_shichang` VALUES (7, 3120003556, '[[1,[2,\"3\",\"-\"],[0 ,\"-\",\"-\"],[0 ,\"-\",\"-\"],[0 ,\"-\",\"-\"],[0 ,\"-\",\"-\"],[0 ,\"-\",\"-\"]],[2,[0 ,\"-\",\"-\"],[0 ,\"-\",\"-\"],[0 ,\"-\",\"-\"],[0 ,\"-\",\"-\"],[0 ,\"-\",\"-\"],[0 ,\"-\",\"-\"]],[3,[0 ,\"-\",\"-\"],[0 ,\"-\",\"-\"],[0 ,\"-\",\"-\"],[0 ,\"-\",\"-\"],[0 ,\"-\",\"-\"],[0 ,\"-\",\"-\"]],[4,[0 ,\"-\",\"-\"],[0 ,\"-\",\"-\"],[0 ,\"-\",\"-\"],[0 ,\"-\",\"-\"],[0 ,\"-\",\"-\"],[0 ,\"-\",\"-\"]],[5,[0 ,\"-\",\"-\"],[0 ,\"-\",\"-\"],[0 ,\"-\",\"-\"],[0 ,\"-\",\"-\"],[0 ,\"-\",\"-\"],[0 ,\"-\",\"-\"]]]');
+INSERT INTO `t_shichang` VALUES (8, 3120003557, '[[1,[0 ,\"-\",\"-\"],[0 ,\"-\",\"-\"],[2,\"3\",\"-\"],[0 ,\"-\",\"-\"],[0 ,\"-\",\"-\"],[0 ,\"-\",\"-\"]],[2,[0 ,\"-\",\"-\"],[0 ,\"-\",\"-\"],[0 ,\"-\",\"-\"],[0 ,\"-\",\"-\"],[0 ,\"-\",\"-\"],[0 ,\"-\",\"-\"]],[3,[0 ,\"-\",\"-\"],[0 ,\"-\",\"-\"],[0 ,\"-\",\"-\"],[0 ,\"-\",\"-\"],[0 ,\"-\",\"-\"],[0 ,\"-\",\"-\"]],[4,[0 ,\"-\",\"-\"],[0 ,\"-\",\"-\"],[0 ,\"-\",\"-\"],[0 ,\"-\",\"-\"],[0 ,\"-\",\"-\"],[0 ,\"-\",\"-\"]],[5,[0 ,\"-\",\"-\"],[0 ,\"-\",\"-\"],[0 ,\"-\",\"-\"],[0 ,\"-\",\"-\"],[0 ,\"-\",\"-\"],[0 ,\"-\",\"-\"]]]');
+
+-- ----------------------------
+-- Table structure for t_shichang_application
+-- ----------------------------
+DROP TABLE IF EXISTS `t_shichang_application`;
+CREATE TABLE `t_shichang_application`  (
+  `shi_app_id` bigint NOT NULL AUTO_INCREMENT COMMENT '活动时长发放申请表id',
+  `uid` bigint NULL DEFAULT NULL COMMENT '申请人id',
+  `aid` bigint NULL DEFAULT NULL COMMENT '时长发放的活动id',
+  `shi_app_description` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL COMMENT '申请说明',
+  `shi_app_status` tinyint NULL DEFAULT NULL COMMENT '申请状态 1：申请中 2：通过 0：拒绝',
+  `shi_app_explain` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '审核理由',
+  PRIMARY KEY (`shi_app_id`) USING BTREE
+) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic;
+
+-- ----------------------------
+-- Records of t_shichang_application
+-- ----------------------------
+INSERT INTO `t_shichang_application` VALUES (1, 1, 3, '申请发放时长', 1, NULL);
 
 -- ----------------------------
 -- Table structure for t_shichang_type
@@ -236,7 +286,7 @@ CREATE TABLE `t_shichang_type`  (
   `sid` bigint NOT NULL AUTO_INCREMENT COMMENT '时长id',
   `shichang_name` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '时长类型',
   PRIMARY KEY (`sid`) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 5 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = DYNAMIC;
+) ENGINE = InnoDB AUTO_INCREMENT = 6 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Records of t_shichang_type
@@ -258,17 +308,22 @@ CREATE TABLE `t_user`  (
   `cid` bigint NULL DEFAULT NULL COMMENT '班级id',
   `oid` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '所属组织（为空时代表没有加入组织）',
   `uname` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '用户姓名',
+  `grade` int NULL DEFAULT NULL COMMENT '年级',
   PRIMARY KEY (`uid`) USING BTREE,
   INDEX `cid`(`cid`) USING BTREE,
   INDEX `oid`(`oid`) USING BTREE,
   CONSTRAINT `t_user_ibfk_1` FOREIGN KEY (`cid`) REFERENCES `t_class` (`cid`) ON DELETE RESTRICT ON UPDATE RESTRICT
-) ENGINE = InnoDB AUTO_INCREMENT = 2 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = DYNAMIC;
+) ENGINE = InnoDB AUTO_INCREMENT = 3120003559 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Records of t_user
 -- ----------------------------
-INSERT INTO `t_user` VALUES (1, '123456', 123456, 1, '[1,2]', '小明');
-INSERT INTO `t_user` VALUES (2, '123456', 12345, 1, '[2]', '小红');
+INSERT INTO `t_user` VALUES (1, '123456', 123456, 1, '[1,2,5]', '小明', 2020);
+INSERT INTO `t_user` VALUES (2, '123456', 12345, 1, '[2,3]', '小红', 2020);
+INSERT INTO `t_user` VALUES (3, '123456', 1300, 1, '[3,5]', 'stu_3120003555', 2021);
+INSERT INTO `t_user` VALUES (3120003556, '123456', 1300, 1, '[]', 'stu_3120003556', 2022);
+INSERT INTO `t_user` VALUES (3120003557, '123456', 1300, 1, '[]', 'stu_3120003557', 2021);
+INSERT INTO `t_user` VALUES (3120003558, '123456', 1300, 1, '[]', 'stu_3120003558', 2022);
 
 -- ----------------------------
 -- View structure for t_member
