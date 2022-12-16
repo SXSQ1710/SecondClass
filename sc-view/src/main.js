@@ -14,7 +14,10 @@ import Vuex from "vuex";
 
 // 引入路由配置
 import router from "./router";
-import axios from "axios";
+
+import axios from 'axios'
+axios.defaults.withCredentials=true //让ajax携带cookie
+
 
 const Vue = createApp(App);
 Vue.config.productionTip = false;
@@ -25,41 +28,5 @@ Vue.use(router);
 Vue.use(Vuex);
 Vue.use(store);
 
-// axios.defaults.withCredentials = true;
-// // axios.defaults.headers.common["tokenValue"] = store.state.token;
-// // // 添加请求拦截器
-// // axios.interceptors.request.use(
-// //   (config) => {
-// //     // 在发送请求之前做些什么
-// //     //判断是否存在token，如果存在将每个页面header都添加token
-// //     if (store.state.token) {
-// //       config.headers.common["tokenValue"] = store.state.token;
-// //     }
-// //     return config;
-// //   },
-// //   (error) => {
-// //     // 对请求错误做些什么
-// //     return Promise.reject(error);
-// //   }
-// // );
 
-// // http response 拦截器
-// axios.interceptors.response.use(
-//   (response) => {
-//     return response;
-//   },
-//   (error) => {
-//     if (error.response) {
-//       switch (error.response.status) {
-//         case 401:
-//           store.commit("del_token");
-//           router.replace({
-//             path: "/login",
-//             query: { redirect: "/" }, //登录成功后跳入浏览的当前页面
-//           });
-//       }
-//     }
-//     return Promise.reject(error);
-//   }
-// );
 Vue.mount("#app");

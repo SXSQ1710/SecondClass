@@ -6,7 +6,7 @@
 </template>
     
 <script>
-import axios from 'axios';
+
 export default {
     name: "wode2",
     data() {

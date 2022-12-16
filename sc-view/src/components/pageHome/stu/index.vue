@@ -6,8 +6,8 @@
 <script>
 import StuHome from '../../stuMain/index.vue'
 import TopMenu from '../../mainItem/topmenu.vue'
-import { ElMessage } from "element-plus";
-import axios from 'axios'
+import axios from '../../../server/http'
+import store from '../../../store/store.js'
 
 export default {
     name: 'pageHome',
@@ -52,7 +52,7 @@ export default {
     mounted() {
         let _this = this;
         let _uid = sessionStorage.getItem("uid")
-        axios.get('http://localhost:8083/api/manage/user/' + _uid)
+        axios.get('manage/user/' + _uid)
             .then((res) => {
                 if (res.data['code'] == '7-200') {//这个data 是接收的resolve参数--
                     _this.uname = res.data.data.uname

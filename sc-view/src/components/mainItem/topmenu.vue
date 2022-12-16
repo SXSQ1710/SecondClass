@@ -47,6 +47,7 @@ export default {
             message: '您已退出系统，请重新登录'
           })
           store.commit("del_token"); //清空token
+          location.reload();   
         })
         .catch(() => {
           ElMessage({
@@ -80,8 +81,8 @@ export default {
   font-size: 3vw;
   text-align: left;
   line-height: 8vh;
-  background: linear-gradient(to top, rgb(192, 194, 217), rgb(248, 229, 229));
-  border-bottom: 0.5px solid rgba(228, 233, 247, 0.6);
+  background: linear-gradient(to right, rgba(192, 194, 217, 0.751), rgb(248, 229, 229, 0.751));
+  border-bottom: 0.1px solid rgba(84, 124, 235, 0.6);
 }
 
 .rightBtn {

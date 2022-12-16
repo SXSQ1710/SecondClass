@@ -89,12 +89,14 @@ export default {
 
 .iconBtn:nth-child(1):hover {
   opacity: 0.6;
-  transform: rotate(5deg);
+  transform: scale(0.85);
+  transition: 0.8s;
 }
 
 .iconBtn:nth-child(2):hover {
   opacity: 0.6;
-  transform: rotate(-5deg);
+  transform: scale(0.85);
+  transition: 0.8s;
 }
 
 .iconBtn:active {

@@ -6,67 +6,72 @@
 
                 <div class="eltabs">
                     <el-tabs stretch class="demo-tabs">
+
                         <el-tab-pane label="通知我的" name="0">
-                            <div class="block">
-                                <div class="title2">暂无更多消息</div>
-                            </div>
+                            <el-scrollbar max-height="55vh" always>
+                                <div class="block">
+                                    <div class="title2">暂无更多消息</div>
+                                </div>
+                            </el-scrollbar>
                         </el-tab-pane>
                         <el-tab-pane label="活动概览" name="1">
-                            <div class="block">
-                                <!-- 表格 -->
-                                <el-table border :data="tableData" style="width: 100%">
-                                    <!-- fixed 属性配置，固定列-->
-                                    <el-table-column prop="aid" label="活动ID" sortable width="120" align="center"
-                                        header-align="center" />
+                            <el-scrollbar max-height="55vh" always>
+                                <div class="block">
+                                    <!-- 表格 -->
+                                    <el-table border :data="tableData" height="400" style="width: 100%">
+                                        <!-- fixed 属性配置，固定列-->
+                                        <el-table-column prop="aid" label="活动ID" sortable width="120" align="center"
+                                            header-align="center" />
 
-                                    <el-table-column prop="apic" label="封面图" width="120" align="center"
-                                        header-align="center">
-                                        <!-- <template #default="scope"> -->
-                                        <template v-slot="scope">
-                                            <el-image style="width: 100%; height: 100px" :src="scope.row.apic"
-                                                preview-teleported="true" :preview-src-list="[scope.row.apic]"
-                                                :key="scope.row.aid">
-                                                <div slot="error" class="image-slot">
-                                                    <i class="el-icon-picture-outline"></i>
-                                                </div>
-                                            </el-image>
-                                        </template>
-                                    </el-table-column>
-                                    <el-table-column label="二维码" width="120" align="center" header-align="center">
-                                        <!-- <template #default="scope"> -->
-                                        <template v-slot="scope">
-                                            <el-image style="width: 100%; height: 100px" :src="my_qrcode.data"
-                                                preview-teleported="true" :preview-src-list="[my_qrcode.data]"
-                                                :key="scope.row.aid">
-                                                <div slot="error" class="image-slot">
-                                                    <i class="el-icon-picture-outline"></i>
-                                                </div>
-                                            </el-image>
-                                        </template>
-                                    </el-table-column>
+                                        <el-table-column prop="apic" label="封面图" width="120" align="center"
+                                            header-align="center">
+                                            <!-- <template #default="scope"> -->
+                                            <template v-slot="scope">
+                                                <el-image style="width: 100%; height: 100px" :src="scope.row.apic"
+                                                    preview-teleported="true" :preview-src-list="[scope.row.apic]"
+                                                    :key="scope.row.aid">
+                                                    <div slot="error" class="image-slot">
+                                                        <i class="el-icon-picture-outline"></i>
+                                                    </div>
+                                                </el-image>
+                                            </template>
+                                        </el-table-column>
+                                        <el-table-column label="二维码" width="120" align="center" header-align="center">
+                                            <!-- <template #default="scope"> -->
+                                            <template v-slot="scope">
+                                                <el-image style="width: 100%; height: 100px" :src="my_qrcode.data"
+                                                    preview-teleported="true" :preview-src-list="[my_qrcode.data]"
+                                                    :key="scope.row.aid">
+                                                    <div slot="error" class="image-slot">
+                                                        <i class="el-icon-picture-outline"></i>
+                                                    </div>
+                                                </el-image>
+                                            </template>
+                                        </el-table-column>
 
-                                    <el-table-column prop="aname" label="活动名称" sortable width="200"
-                                        header-align="center" />
-                                    <el-table-column prop="astatus" label="活动状态" width="200" header-align="center" />
-                                    <el-table-column prop="a_register_open" label="报名时间" sortable width="200"
-                                        header-align="center" />
-                                    <el-table-column prop="a_hold_start" label="举办时间" sortable width="200"
-                                        header-align="center" />
-                                    <el-table-column prop="A_shichang_type" label="活动时长类型" width="120"
-                                        header-align="center" />
-                                    <el-table-column prop="a_shichang_num" label="时长" sortable width="120"
-                                        header-align="center" />
-                                    <el-table-column fixed="right" label="操作" width="100" align="center"
-                                        header-align="center">
-                                        <template #default="scope">
-                                            <el-button link type="primary" size="small"
-                                                @click="handleDetail(scope.row)">详情
-                                            </el-button>
-                                        </template>
-                                    </el-table-column>
-                                </el-table>
-                            </div>
-
+                                        <el-table-column prop="aname" label="活动名称" sortable width="200"
+                                            header-align="center" />
+                                        <el-table-column prop="astatus" label="活动状态" width="200"
+                                            header-align="center" />
+                                        <el-table-column prop="a_register_open" label="报名时间" sortable width="200"
+                                            header-align="center" />
+                                        <el-table-column prop="a_hold_start" label="举办时间" sortable width="200"
+                                            header-align="center" />
+                                        <el-table-column prop="A_shichang_type" label="活动时长类型" width="120"
+                                            header-align="center" />
+                                        <el-table-column prop="a_shichang_num" label="时长" sortable width="120"
+                                            header-align="center" />
+                                        <el-table-column fixed="right" label="操作" width="100" align="center"
+                                            header-align="center">
+                                            <template #default="scope">
+                                                <el-button link type="primary" size="small"
+                                                    @click="handleDetail(scope.row)">详情
+                                                </el-button>
+                                            </template>
+                                        </el-table-column>
+                                    </el-table>
+                                </div>
+                            </el-scrollbar>
                             <!-- 弹窗 -->
                             <el-dialog v-model="dialogFormVisible"
                                 :title="dialogType == 'add' ? '新增' : (dialogType == 'edit' ? '编辑' : '详情')">
@@ -130,6 +135,7 @@
                                             <el-radio label="双创实训" name="A_shichang_type" />
                                             <el-radio label="理想信念" name="A_shichang_type" />
                                             <el-radio label="实践志愿" name="A_shichang_type" />
+                                            <el-radio label="校园建设" name="A_shichang_type" />
                                         </el-radio-group>
                                     </el-form-item>
 
@@ -160,68 +166,70 @@
                             </el-dialog>
                         </el-tab-pane>
                         <el-tab-pane label="签到" name="2">
-                            <div class="block">
-                                <div class="title2" v-if="!identity">
-                                    签到签退属于学生组织角色权限
-                                    <p>抱歉，没有找到您申请的活动</p>
+                            <el-scrollbar max-height="55vh" always>
+                                <div class="block">
+                                    <div class="title2" v-if="!identity">
+                                        签到签退属于学生组织角色权限
+                                        <p>抱歉，没有找到您申请的活动</p>
+                                    </div>
+                                    <div class="table-box" v-if="identity">
+                                        <!-- 表格 -->
+                                        <el-table border :data="tableData" height="400" style="width: 100%">
+                                            <!-- fixed 属性配置，固定列-->
+                                            <el-table-column prop="aid" label="活动ID" sortable width="120" align="center"
+                                                header-align="center" />
+
+                                            <el-table-column prop="apic" label="封面图" width="120" align="center"
+                                                header-align="center">
+                                                <!-- <template #default="scope"> -->
+                                                <template v-slot="scope">
+                                                    <el-image style="width: 100%; height: 100px" :src="scope.row.apic"
+                                                        preview-teleported="true" :preview-src-list="[scope.row.apic]"
+                                                        :key="scope.row.aid">
+                                                        <div slot="error" class="image-slot">
+                                                            <i class="el-icon-picture-outline"></i>
+                                                        </div>
+                                                    </el-image>
+                                                </template>
+                                            </el-table-column>
+
+                                            <el-table-column prop="aname" label="活动名称" sortable width="200"
+                                                header-align="center" />
+                                            <el-table-column prop="astatus" label="活动状态" width="200"
+                                                header-align="center" />
+                                            <el-table-column prop="a_register_open" label="报名时间" sortable width="200"
+                                                header-align="center" />
+                                            <el-table-column prop="a_hold_start" label="举办时间" sortable width="200"
+                                                header-align="center" />
+                                            <el-table-column prop="A_shichang_type" label="活动时长类型" width="120"
+                                                header-align="center" />
+                                            <el-table-column prop="a_shichang_num" label="时长" sortable width="120"
+                                                header-align="center" />
+                                            <el-table-column fixed="right" label="操作" width="100" align="center"
+                                                header-align="center">
+                                                <template #default="scope">
+                                                    <el-button class="signin" link type="primary" size="small"
+                                                        @click="openQrcode(scope.row, 1)">生成签到码
+                                                    </el-button>
+                                                    <el-button class="signin" link type="primary" size="small"
+                                                        @click="openQrcode(scope.row, 0)">生成签退码
+                                                    </el-button>
+                                                </template>
+                                            </el-table-column>
+                                        </el-table>
+
+                                        <!-- 图片 -->
+                                        <el-dialog v-model="openQrcodeImg" class="qrImgBox" align-center>
+                                            <el-image style="width: 100%; height: 70vh" :src="getQrcode"
+                                                preview-teleported="true" :preview-src-list="[getQrcode]" class="qrImg">
+                                                <div slot="error" class="image-slot">
+                                                    <i class="el-icon-picture-outline"></i>
+                                                </div>
+                                            </el-image>
+                                        </el-dialog>
+                                    </div>
                                 </div>
-                                <div class="table-box" v-if="identity">
-                                    <!-- 表格 -->
-                                    <el-table border :data="tableData" style="width: 100%">
-                                        <!-- fixed 属性配置，固定列-->
-                                        <el-table-column prop="aid" label="活动ID" sortable width="120" align="center"
-                                            header-align="center" />
-
-                                        <el-table-column prop="apic" label="封面图" width="120" align="center"
-                                            header-align="center">
-                                            <!-- <template #default="scope"> -->
-                                            <template v-slot="scope">
-                                                <el-image style="width: 100%; height: 100px" :src="scope.row.apic"
-                                                    preview-teleported="true" :preview-src-list="[scope.row.apic]"
-                                                    :key="scope.row.aid">
-                                                    <div slot="error" class="image-slot">
-                                                        <i class="el-icon-picture-outline"></i>
-                                                    </div>
-                                                </el-image>
-                                            </template>
-                                        </el-table-column>
-
-                                        <el-table-column prop="aname" label="活动名称" sortable width="200"
-                                            header-align="center" />
-                                        <el-table-column prop="astatus" label="活动状态" width="200"
-                                            header-align="center" />
-                                        <el-table-column prop="a_register_open" label="报名时间" sortable width="200"
-                                            header-align="center" />
-                                        <el-table-column prop="a_hold_start" label="举办时间" sortable width="200"
-                                            header-align="center" />
-                                        <el-table-column prop="A_shichang_type" label="活动时长类型" width="120"
-                                            header-align="center" />
-                                        <el-table-column prop="a_shichang_num" label="时长" sortable width="120"
-                                            header-align="center" />
-                                        <el-table-column fixed="right" label="操作" width="100" align="center"
-                                            header-align="center">
-                                            <template #default="scope">
-                                                <el-button class="signin" link type="primary" size="small"
-                                                    @click="openQrcode(scope.row, 1)">生成签到码
-                                                </el-button>
-                                                <el-button class="signin" link type="primary" size="small"
-                                                    @click="openQrcode(scope.row, 0)">生成签退码
-                                                </el-button>
-                                            </template>
-                                        </el-table-column>
-                                    </el-table>
-
-                                    <!-- 图片 -->
-                                    <el-dialog v-model="openQrcodeImg" class="qrImgBox" align-center>
-                                        <el-image style="width: 100%; height: 70vh" :src="getQrcode"
-                                            preview-teleported="true" :preview-src-list="[getQrcode]" class="qrImg">
-                                            <div slot="error" class="image-slot">
-                                                <i class="el-icon-picture-outline"></i>
-                                            </div>
-                                        </el-image>
-                                    </el-dialog>
-                                </div>
-                            </div>
+                            </el-scrollbar>
                         </el-tab-pane>
                     </el-tabs>
                 </div>
@@ -240,7 +248,7 @@
     </div>
 </template>
 <script setup>
-import axios from 'axios'
+import axios from '../../../server/http'
 import { ElMessage } from "element-plus";
 import { onMounted } from 'vue'
 import { getNowTime } from '../../../server/api/time';
@@ -283,7 +291,7 @@ let my_qrcode = $ref({
 // 方法
 const all = () => {
 
-    axios.get('http://localhost:8083/api/activity/getAll/1/10').then(res => {
+    axios.get('activity/getAll/1/10').then(res => {
         let _tableData = res.data.data.records
         let _nowTime = getNowTime()
 
@@ -305,6 +313,8 @@ const all = () => {
                 _tableData[i].A_shichang_type = '理想信念'
             } else if (_tableData[i].A_shichang_type == 4) {
                 _tableData[i].A_shichang_type = '实践志愿'
+            } else if (_tableData[i].A_shichang_type == 5) {
+                _tableData[i].A_shichang_type = '校园建设'
             }
 
         }
@@ -323,7 +333,7 @@ const get_qrcode = () => {
         var activityData = toRaw(tableData[i])
         console.log("获取正在进行的活动信息", activityData.aid, activityData.a_oid, 0)
         // 1为获取签到码；0为获取签退码
-        axios.get('http://localhost:8083/api/activity/signIn/' + activityData.aid + '/' + activityData.a_oid + '/0').then(res => {
+        axios.get('activity/signIn/' + activityData.aid + '/' + activityData.a_oid + '/0').then(res => {
             ElMessage({ message: "刷新成功", type: "success" })
             my_qrcode.push({ id: i, data: res.data.data })
             console.log(my_qrcode)
@@ -344,7 +354,7 @@ let handleDetail = (row) => {
 
 let checkID = () => {
     var _uid = sessionStorage.getItem("uid")
-    axios.get('http://localhost:8083/api/manage/user/' + _uid).then(res => {
+    axios.get('manage/user/' + _uid).then(res => {
         var my_oids = res.data.data.oid
         if (my_oids.length >= 3) {
             identity = true
@@ -360,7 +370,7 @@ let openQrcode = (row, typeCount) => {
     var activityData = toRaw(row)
     console.log(activityData)
     // 1为获取签到码；0为获取签退码
-    axios.get('http://localhost:8083/api/activity/signIn/' + activityData.aid + '/' + activityData.a_uid + '/' + typeCount).then(res => {
+    axios.get('activity/signIn/' + activityData.aid + '/' + activityData.a_uid + '/' + typeCount).then(res => {
         console.log(res.data.data)
         getQrcode = res.data.data
         ElMessage({ message: res.data.msg, type: "success" })

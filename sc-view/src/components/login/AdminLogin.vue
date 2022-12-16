@@ -8,7 +8,8 @@
                     <span class="myicon  iconfont icon-yonghu"></span>
                 </div>
                 <div class="inputBox">
-                    <input type="text" autocomplete="username" required="required" v-model="username">
+                    <input type="text" autocomplete="username" required="required" v-model="username"
+                        @keydown="trimLR($event)" />
                     <span>管理员账号</span>
                 </div>
             </div>
@@ -17,7 +18,8 @@
                     <span class="myicon  iconfont icon-suo"></span>
                 </div>
                 <div class="inputBox">
-                    <input type="password" autocomplete="current-password" required="required" v-model="password">
+                    <input type="password" autocomplete="current-password" required="required" v-model="password"
+                        @keydown="trimLR($event)" />
                     <span>密码</span>
                 </div>
             </div>
@@ -34,15 +36,12 @@ import { ElMessage } from "element-plus";
 import { h } from 'vue'
 import { setUser } from '../../server/api/login'
 import loginitem from "./LoginItem.vue"
-import axios from "axios"
+import axios from "../../server/http"
 import store from "../../store/store"
 import '../../assets/css/login.css'
 
 export default {
     name: 'StuLogin',
-    props: {
-        msg: String
-    },
     components: { loginitem },
     data() {
         return {
@@ -52,6 +51,12 @@ export default {
     },
 
     methods: {
+        // 禁止输入空格
+        trimLR(event) {
+            if (event.keyCode == 32) {
+                event.returnValue = false
+            }
+        },
         submit() {
             var _this = this
             var formdata = {
@@ -59,7 +64,7 @@ export default {
                 upassword: this.password,
                 role: 1
             };
-            axios.post('http://localhost:8083/api/manage/login', formdata).then((res) => {
+            axios.post('manage/login', formdata).then((res) => {
                 //处理成功后的逻辑
                 if (res.data['code'] == '1-200') {//这个data 是接收的resolve参数--
                     ElMessage({

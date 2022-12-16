@@ -1,7 +1,7 @@
 <template>
     <div class="table-box">
         <div class="title">
-            列表展示
+            组织列表
         </div>
 
         <!-- query查询框 -->
@@ -13,10 +13,6 @@
                 </el-button>
             </div>
             <div class="query-btn">
-                <el-button class="box_btn2" type="danger" text v-if="multipleSelection.length > 0"
-                    @click="handleMultiDelete">
-                    删除多行
-                </el-button>
                 <el-button class="box_btn" type="primary" text @click="handleAdd">
                     增加
                 </el-button>
@@ -32,20 +28,16 @@
             <span>当前共有{{ totalValue }}条数据</span>
         </div>
 
-        <!-- 表格 -->
         <el-scrollbar max-height="55vh">
-            <el-table border stripe :data="tableData" ref="mutipleTableRef" style="width: 100%"
-                @selection-change="handleSelectionChange">
-                <!-- 多行选择器 -->
-                <el-table-column type="selection" width="55" />
-                <!-- fixed 属性配置，固定列-->
+            <!-- 表格 -->
+            <el-table border stripe :data="tableData" height="400px" style="width: 100%">
                 <el-table-column prop="oid" label="组织ID" width="120" />
-                <el-table-column prop="oname" label="组织名称" width="200" />
+                <el-table-column prop="oname" label="组织名称" width="260" />
                 <el-table-column prop="uid" label="负责人ID" width="120" />
                 <el-table-column prop="campus" label="所属校区" width="120" />
                 <el-table-column prop="odescription" label="组织概述" width="300" />
                 <el-table-column prop="superior_organization" label="上级单位" width="300" />
-                <el-table-column fixed="right" label="操作" width="180">
+                <el-table-column fixed="right" label="操作" width="150" align="center">
                     <template #default="scope">
                         <el-button link type="primary" size="small" @click="handleDetail(scope.row)">详情</el-button>
                         <el-button link type="primary" size="small"
@@ -54,20 +46,18 @@
                 </el-table-column>
             </el-table>
         </el-scrollbar>
-
-
         <!-- 弹窗 -->
-        <el-dialog v-model="dialogFormVisible" :title="dialogType == 'add' ? '申请创建组织' : '详情'" draggable>
-            <el-form ref="ruleFormRef" :model="form" :rules="rules" label-width="20vw" class="elform-input"
-                size="dafault" status-icon @submit.native.prevent>
+        <el-dialog v-model="dialogFormVisible" :title="dialogType == 'add' ? '申请创建组织' : '组织详情'" draggable>
+            <el-form ref="ruleFormRef" :model="form" :rules="rules" label-width="20vw" size="dafault"
+                label-position="right" status-icon @submit.native.prevent>
                 <el-form-item class="once" label="组织名称" prop="oname">
-                    <el-input @keyup.native.enter v-model="form.oname" />
+                    <el-input @keyup.native.enter v-model="form.oname" :readonly="dialogType != 'add'" />
                 </el-form-item>
                 <el-form-item class="once" label="负责人ID" prop="uid">
-                    <el-input @keyup.native.enter v-model="form.uid" />
+                    <el-input @keyup.native.enter v-model="form.uid" :readonly="dialogType != 'add'" />
                 </el-form-item>
                 <el-form-item label="所属校区" prop="campus">
-                    <el-select v-model="form.campus" placeholder="所属校区">
+                    <el-select v-model="form.campus" placeholder="所属校区" :disabled="dialogType != 'add'">
                         <el-option label="龙洞校区" value="龙洞校区" />
                         <el-option label="大学城校区" value="大学城校区" />
                         <el-option label="东风路校区" value="东风路校区" />
@@ -76,20 +66,23 @@
                     </el-select>
                 </el-form-item>
                 <el-form-item label="上级单位" prop="superior_organization">
-                    <el-input v-model="form.superior_organization" placeholder="上级单位" width="500" />
+                    <el-input v-model="form.superior_organization" :readonly="dialogType != 'add'" />
                 </el-form-item>
 
                 <el-form-item class="once" label="组织简介" prop="odescription">
-                    <el-input v-model="form.odescription" width="500" :rows="3" type="textarea" />
+                    <el-input v-model="form.odescription" :rows="3" type="textarea" class="elform_txt"
+                        :readonly="dialogType != 'add'" />
                 </el-form-item>
             </el-form>
-
 
             <template #footer>
                 <span class="dialog-footer">
                     <span>UID：{{ my_uid }} {{ uname }} </span>
-                    <el-button type="primary" @submit.native.prevent>
-                        申请加入组织
+                    <el-button text type="primary" v-if="dialogType != 'detail'" @click="handleReset">
+                        重置
+                    </el-button>
+                    <el-button type="primary" v-if="dialogType == 'add'" @submit.native.prevent="handleCheckAdd">
+                        提交申请
                     </el-button>
                 </span>
             </template>
@@ -100,30 +93,25 @@
 <script  setup>
 
 import { onMounted } from 'vue'
-import axios from 'axios'
+import axios from '../../../server/http'
 //第一种获取target值的方式，通过vue中的响应式对象可使用toRaw()方法获取原始对象
 import { toRaw } from '@vue/reactivity'
 import { ElMessage, ElMessageBox } from 'element-plus';
 import '../../../assets/css/common.css'
 
-//所有的生命周期用法均为回调函数
 onMounted(() => {
     all()
-    //每次进入该页面自动执行该方法，即自动读取数据库数据导入到页面当中
 })
 
 // 数据
 let my_uid = sessionStorage.getItem("uid")
 let queryInput = $ref("")
-let multipleSelection = $ref([])     // 多选
 let dialogFormVisible = $ref(false)
-let formLabelWidth = $ref('20vw')
 let totalValue = $ref("0")
 let dialogType = $ref('add')
 
 let form = $ref({
     uid: '',
-    uname: '',
     phone: '',
     oid: '',
     oname: '',
@@ -135,7 +123,6 @@ let form = $ref({
 let tableData = $ref([
     {
         uid: '',
-        uname: '',
         phone: '',
         oid: '',
         oname: '篮球俱乐部',
@@ -149,8 +136,9 @@ let tableDataCopy = Object.assign(tableData)
 
 // 方法
 const all = () => {
-    axios.get('http://localhost:8083/api/manage/getAllOrg/1').then(res => {
-        tableData = res.data.data;//数据传递到页面数组
+    axios.get('manage/getAllOrg/1/10').then(res => {
+        let { records } = res.data.data;
+        tableData = records;//数据传递到页面数组
         totalValue = tableData.length
 
         tableDataCopy = Object.assign(tableData)
@@ -161,7 +149,6 @@ const all = () => {
 
 // 申请加入组织
 let handleCheckApply = (row) => {
-    // console.log(row.oid)
     ElMessageBox.confirm(
         '确定申请加入该组织吗?',
         '申请加入',
@@ -172,9 +159,8 @@ let handleCheckApply = (row) => {
         }
     )
         .then(() => {
-
-            // 创建组织账号
-            axios.post('http://localhost:8083/api/manage/applyOrg', { oid: row.oid, uid: my_uid }).then((res) => {
+            // 发送请求
+            axios.post('manage/applyOrg', { oid: row.oid, uid: my_uid }).then((res) => {
                 console.log(res)
                 if (res.data["code"] == "8-200")
                     ElMessage({ message: res.data.msg, type: "success" })
@@ -184,11 +170,6 @@ let handleCheckApply = (row) => {
                 console.log("请求失败" + err);
                 ElMessage({ message: "失败了", type: "error" })
             })
-
-            // ElMessage({
-            //     type: 'success',
-            //     message: '成功提交申请至学生组织，请耐心等待审核通知'
-            // })
         })
         .catch(() => {
             ElMessage({
@@ -207,24 +188,6 @@ let handleQueryName = () => {
     // 浅拷贝一层tableData，防止数据搜索匹配不上
     tableData = tableDataCopy.filter(item => (item.oname).toString().match(val.toLowerCase()) || (item.oid).toString().match(val.toLowerCase()))
 }
-// 新增提交
-let handleCheckAdd = (formData) => {
-    dialogFormVisible = false // 关闭弹窗
-    var formDataList = toRaw(formData)
-
-    // 创建组织账号
-    axios.post('http://localhost:8083/api/manage/createOrg', { oname: formDataList.oname, uid: formDataList.uid, campus: formDataList.campus, odescription: formDataList.odescription, superior_organization: formDataList.superior_organization }).then(res => {
-        if (res.data["code"] == "8-200")
-            ElMessage({ message: res.data.msg, type: "success" })
-        else
-            ElMessage({ message: res.data.msg, type: "error" })
-    }).catch(err => {
-        console.log("请求失败" + err);
-        ElMessage({ message: "失败了", type: "error" })
-    })
-
-    all()
-}
 
 // 新增
 let handleAdd = () => {
@@ -238,35 +201,23 @@ let handleDetail = (row) => {
     form = { ...row }
     dialogFormVisible = true
 }
-
-// 多选
-const handleSelectionChange = (val) => {
-    multipleSelection = []
-    val.forEach(element => {
-        multipleSelection.push(element)
-    });
+// 重置
+let handleReset = () => {
+    form = []
 }
-// 多选删除
-let handleMultiDelete = () => {
-    multipleSelection.forEach(element => {
-        handleDelete(element)
-    });
-}
-
 const ruleFormRef = $ref()
 
 const rules = $ref({
     uid: [
         { required: true, message: '请填写用户ID', trigger: 'blur' },
-        { min: 10, max: 10, message: '请正确填写10位学号' }
-        // 限制学号位数为10位
+        // { min: 10, max: 10, message: '请正确填写10位学号' }
     ],
-
     oname: [
         { required: true, message: '请填写组织名称', trigger: 'blur' }
     ],
     campus: [
         {
+            required: true,
             message: '请选择您的所属校区',
             trigger: 'change',
         },
@@ -274,12 +225,6 @@ const rules = $ref({
     odescription: [
         {
             message: '请填写组织描述信息',
-            trigger: 'change',
-        },
-    ],
-    superior_organization: [
-        {
-            message: '请填写上级单位',
             trigger: 'change',
         },
     ]
@@ -291,21 +236,10 @@ const rules = $ref({
     user-select: text;
 }
 
-.el-input {
-    width: 222px;
-}
-
-.elform-input {
-    transform: scale(1);
-    display: inline-block;
-}
-
 .el-form-item {
     /* 表单行距 */
     margin-bottom: 14px;
 }
-
-
 
 /* 下面是对表格form的一些css修改 */
 .el-col-2 {
@@ -320,5 +254,10 @@ const rules = $ref({
     width: 60%;
     height: 100%;
     margin: 20vh;
+}
+
+/* 设置组织简介的宽度 */
+.elform_txt {
+    width: 20vw;
 }
 </style>

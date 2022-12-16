@@ -25,10 +25,10 @@ public class SaTokenConfigure implements WebMvcConfigurer {
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
 
-        // 跨域拦截器需放在最上面
-        registry.addInterceptor(corsInterceptor).addPathPatterns("/**");
+//        // 跨域拦截器需放在最上面
+//        registry.addInterceptor(corsInterceptor).addPathPatterns("/**");
 
-        // 校验token的拦截器
+//        // 校验token的拦截器
         registry.addInterceptor(new SaInterceptor(handler -> {
          // 指定一条 match 规则
          SaRouter

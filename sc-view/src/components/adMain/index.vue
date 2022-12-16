@@ -69,7 +69,8 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import Commons from './sidetoMenu.vue'
 import { getNowTime } from '../../server/api/time'
 import '../../assets/css/pageHome.css'
-import '../../store/store.js'
+import store from '../../store/store.js'
+
 
 export default {
     name: 'HomePage',
@@ -108,6 +109,7 @@ export default {
                         message: '您已退出系统，请重新登录'
                     })
                     store.commit("del_token"); //清空token
+                    location.reload();   
                 })
                 .catch((error) => {
                     console.log(error)

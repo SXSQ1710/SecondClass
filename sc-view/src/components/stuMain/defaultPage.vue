@@ -24,30 +24,28 @@
             </div>
         </div>
         <!-- 介绍 -->
-        <el-tooltip placement="top" content="查看详情点击报名">
+        <el-tooltip placement="top" content="审核通过的活动具有活动ID">
             <div class="intro_btn">
                 <span class="myicon  iconfont icon-9"></span>
             </div>
         </el-tooltip>
-        <!-- 刷新数据 -->
-        <el-tooltip content="更新列表数据">
-            <div class="refresh_btn" @click="all">
-                <i class='bx bx-refresh bx-flip-vertical'></i>
-            </div>
-        </el-tooltip>
+         <!-- 刷新数据 -->
+         <div class="refresh_btn">
+            <!-- 当前共有多少条数据 -->
+            <el-tooltip content="更新列表数据">
+                <i class='bx bx-refresh bx-flip-vertical' @click="all"></i>
+            </el-tooltip>
+            <span>当前共有{{ totalValue }}条数据</span>
+        </div>
 
         <el-scrollbar max-height="55vh" always>
 
             <!-- 表格 -->
-            <el-table border :data="tableData" ref="mutipleTableRef" style="width: 100%"
+            <el-table border :data="tableData" height="400px" style="width: 100%"
                 @selection-change="handleSelectionChange">
-                <!-- 多行选择器 -->
-                <el-table-column type="selection" width="55" />
-                <!-- fixed 属性配置，固定列-->
                 <el-table-column prop="aid" label="活动ID" sortable width="120" align="center" header-align="center" />
 
                 <el-table-column prop="apic" label="封面图" sortable width="120" align="center" header-align="center">
-                    <!-- <template #default="scope"> -->
                     <template v-slot="scope">
                         <el-image style="width: 100%; height: 100px" :src="scope.row.apic" preview-teleported="true"
                             :preview-src-list="[scope.row.apic]" :key="scope.row.aid">
@@ -69,11 +67,10 @@
                 <el-table-column prop="aShichangNum" label="时长" sortable width="120" header-align="center" />
                 <el-table-column prop="adescription" label="活动介绍" width="200" header-align="center" />
 
-                <el-table-column fixed="right" label="操作" width="180" header-align="center">
+                <el-table-column fixed="right" label="操作" width="120" header-align="center" align="center">
                     <template #default="scope">
                         <el-button link type="primary" size="small" @click="handleDetail(scope.row)">详情</el-button>
                         <el-button link type="primary" size="small" @click="handleEdit(scope.row)">编辑</el-button>
-                        <el-button link type="danger" size="small" @click="handleDelete(scope.row)">删除</el-button>
                     </template>
                 </el-table-column>
             </el-table>
@@ -82,41 +79,36 @@
         <el-dialog v-model="dialogFormVisible"
             :title="dialogType == 'add' ? '新增' : (dialogType == 'edit' ? '编辑' : '详情')">
             <el-form ref="ruleFormRef" :model="form" :rules="rules" label-width="120px" class="elform-input"
-                size="dafault" status-icon @submit.native.prevent readonly="true">
+                size="dafault" status-icon @submit.native.prevent >
                 <el-form-item class="once" label="活动ID" prop="aid">
                     <el-input @keyup.native.enter v-model="form.aid" disabled />
                 </el-form-item>
 
                 <el-form-item class="once" label="活动名称" prop="aname">
-                    <el-input @keyup.native.enter v-model="form.aname" />
+                    <el-input @keyup.native.enter v-model="form.aname" :readonly="dialogType==detail"/>
                 </el-form-item>
                 <el-form-item class="once" label="活动状态" prop="astatus">
                     <el-select v-model="form.astatus" placeholder="待审核" disabled>
                     </el-select>
                 </el-form-item>
                 <el-form-item class="once" label="举办单位" prop="oname">
-                    <el-input @keyup.native.enter v-model="form.oname" />
+                    <el-input @keyup.native.enter v-model="form.oname" :readonly="dialogType==detail"/>
                 </el-form-item>
                 <el-form-item class="once" label="申请组织ID" prop="a_oid" placeholder="请填写组织ID">
-                    <el-input @keyup.native.enter v-model="form.a_oid" />
+                    <el-input @keyup.native.enter v-model="form.a_oid" disabled />
                 </el-form-item>
 
                 <el-form-item label="活动举办地点" prop="a_address">
-                    <el-select v-model="form.a_address" placeholder="校区">
-                        <el-option label="高场" value="高场" />
-                        <el-option label="低场" value="低场" />
-                        <el-option label="行政楼架空层" value="行政楼架空层" />
-                        <el-option label="内饭三楼学术报告厅" value="内饭三楼学术报告厅" />
-                    </el-select>
+                    <el-input @keyup.native.enter v-model="form.a_address" :readonly="dialogType==detail"/>
                 </el-form-item>
                 <el-form-item class="once" label="活动限制人数" prop="a_limitted_number">
-                    <el-input v-model.number="form.a_limitted_number" autocomplete="off" />
+                    <el-input v-model.number="form.a_limitted_number" autocomplete="off" :readonly="dialogType==detail"/>
                 </el-form-item>
                 <el-form-item label="活动报名时间" required>
                     <el-col :span="10">
                         <el-form-item prop="a_register_open">
                             <el-date-picker v-model="form.a_register_open" type="datetime" label="请选择报名时间"
-                                placeholder="报名开始时间" style="width: 100%" />
+                                placeholder="报名开始时间" style="width: 100%" :readonly="dialogType==detail"/>
                         </el-form-item>
                     </el-col>
                     <el-col class="text-center" :span="1">
@@ -125,7 +117,7 @@
                     <el-col :span="10">
                         <el-form-item prop="a_register_close">
                             <el-date-picker v-model="form.a_register_close" type="datetime" label="请选择报名时间"
-                                placeholder="报名结束时间" style="width: 100%" />
+                                placeholder="报名结束时间" style="width: 100%" :readonly="dialogType==detail"/>
                         </el-form-item>
                     </el-col>
                 </el-form-item>
@@ -134,7 +126,7 @@
                     <el-col :span="10">
                         <el-form-item prop="a_hold_start">
                             <el-date-picker v-model="form.a_hold_start" type="datetime" label="请选择开始时间"
-                                placeholder="活动开始时间" style="width: 100%" />
+                                placeholder="活动开始时间" style="width: 100%" :readonly="dialogType==detail"/>
                         </el-form-item>
                     </el-col>
                     <el-col class="text-center" :span="1">
@@ -143,25 +135,26 @@
                     <el-col :span="10">
                         <el-form-item prop="a_hold_end">
                             <el-date-picker v-model="form.a_hold_end" type="datetime" label="请选择结束时间"
-                                placeholder="活动结束时间" style="width: 100%" />
+                                placeholder="活动结束时间" style="width: 100%" :readonly="dialogType==detail"/>
                         </el-form-item>
                     </el-col>
                 </el-form-item>
 
                 <el-form-item label="活动类型" prop="A_shichang_type">
-                    <el-select v-model="form.A_shichang_type" placeholder="时长类型">
+                    <el-select v-model="form.A_shichang_type" placeholder="时长类型" :disabled="dialogType==detail">
                         <el-option label="文体艺术" value="1" />
                         <el-option label="双创实训" value="2" />
                         <el-option label="理想信念" value="3" />
                         <el-option label="实践志愿" value="4" />
+                        <el-option label="校园建设" value="5" />
                     </el-select>
                 </el-form-item>
                 <el-form-item class="once" label="活动时长" prop="a_shichang_num">
-                    <el-input v-model.number="form.a_shichang_num" autocomplete="off" />
+                    <el-input v-model.number="form.a_shichang_num" autocomplete="off" :readonly="dialogType==detail"/>
                 </el-form-item>
 
                 <el-form-item class="once" label="活动简介" prop="adescription">
-                    <el-input v-model="form.adescription" type="textarea" />
+                    <el-input v-model="form.adescription" type="textarea" :readonly="dialogType==detail"/>  
                 </el-form-item>
             </el-form>
 
@@ -181,7 +174,7 @@
 </template>
 <script  setup>
 import { onMounted } from 'vue'
-import axios from 'axios'
+import axios from '../../server/http'
 
 import { getNowTime, GMTToStr, timestampToTime } from '../../server/api/time';
 import { ElMessage } from 'element-plus';
@@ -229,7 +222,7 @@ let tableDataCopy = []
 
 // 方法
 const all = () => {
-    axios.get('http://localhost:8083/api/activity/findActivityAppByUid/' + my_uid + '/1/10').then(res => {
+    axios.get('activity/findActivityAppByUid/' + my_uid + '/1/10').then(res => {
         var _tata = res.data.data.records
         var _tableData = []
         for (let i = 0; i < _tata.length; i++) {
@@ -268,6 +261,8 @@ const all = () => {
                 _tableData[i].aShichangType = '理想信念'
             } else if (_tableData[i].aShichangType == 4) {
                 _tableData[i].aShichangType = '实践志愿'
+            } else if (_tableData[i].aShichangType == 5) {
+                _tableData[i].aShichangType = '校园建设'
             }
 
         }
@@ -276,7 +271,6 @@ const all = () => {
 
         tableData = _tableData
         tableDataCopy = _tableData
-
 
     }).catch(err => {
         console.log("获取数据失败" + err);
@@ -297,6 +291,7 @@ let handleQueryName = (val) => {
 let handleAdd = () => {
     dialogType = 'add'
     form = []
+    form.a_oid = my_uid
     dialogFormVisible = true
 }
 // 编辑
@@ -346,8 +341,7 @@ let handleDetail = (row) => {
 // 重置(使用element-plus的resetField方法)
 
 // 提交表单功能实现
-const handleCheckApp = (formUID, formAID) => {
-
+const handleCheckApp = () => {
     dialogFormVisible = false // 关闭弹窗
 
     var _formdata = {
@@ -367,7 +361,7 @@ const handleCheckApp = (formUID, formAID) => {
         a_shichang_num: form.a_shichang_num,
         A_shichang_type: form.A_shichang_type,
     }
-    axios.post('http://localhost:8083/api/activity/applyActivity', _formdata).then((res) => {
+    axios.post('activity/applyActivity', _formdata).then((res) => {
         //处理成功后的逻辑
         if ((res.data.code) == '2-200') {
             ElMessage({ message: res.data.msg, type: 'success' })
@@ -416,10 +410,9 @@ const handleCheckApp = (formUID, formAID) => {
     margin: 20vh;
 }
 
-
 .intro_btn {
     padding: 0;
-    position: fixed;
+    float: right;
     z-index: 3;
     right: 70px;
     top: 200px;
