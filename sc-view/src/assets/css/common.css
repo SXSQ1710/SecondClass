@@ -3,6 +3,12 @@
     font-size: 26pt;
     margin-bottom: 10px;
 }
+/* 设置外围scrollbar */
+.demo-collapse {
+    width: 95%;
+    margin: auto;
+}
+
 /* 更新数据按钮样式 */
 .refresh_btn {
     padding: 20px 0;

@@ -12,10 +12,10 @@ export default defineConfig({
       reactivityTransform: true
     }),
     // WindiCSS(),
-  ],/*
+  ],
   server: {
-    port: 8080 //指定端口号
-  },*/
+    port: 5173 //指定端口号
+  },
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url))

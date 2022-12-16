@@ -3,21 +3,100 @@
         <el-divider />
         <div class="eltabs">
             <el-tabs stretch class="demo-tabs">
-                <el-tab-pane label="通知我的" name="2">
+                <el-tab-pane label="审核列表" name="2">
                     <div class="block">
-                        <div class="title2">暂无更多消息</div>
+                        <el-scrollbar max-height="55vh" always>
+                            <!-- 表格-->
+                            <el-table border :data="tableData2" height="400" style="width: 100%">
+                                <el-table-column prop="appOid" label="组织ID" sortable width="120" align="center"
+                                    header-align="center" />
+                                <el-table-column prop="appOname" label="组织名称" sortable width="120" align="center"
+                                    header-align="center" />
+                                <el-table-column prop="campus" label="所属校区" width="100" header-align="center" />
+
+                                <el-table-column prop="uname" label="申请人" sortable width="100" header-align="center" />
+                                <el-table-column prop="uid" label="学号" sortable width="100" header-align="center" />
+                                <el-table-column prop="grade" label="年级" sortable width="80" header-align="center" />
+                                <el-table-column prop="college" label="学院" sortable width="120" header-align="center" />
+                                <el-table-column prop="cname" label="班级" sortable width="200" header-align="center" />
+                                <el-table-column prop="major" label="专业" sortable width="200" header-align="center" />
+                                <el-table-column prop="phone" label="联系方式" sortable width="150" header-align="center" />
+
+                                <el-table-column fixed="right" label="操作" width="120" header-align="center">
+                                    <template #default="scope">
+                                        <el-button link type="primary" size="small"
+                                            @click="handleDetail2(scope.row)">审核</el-button>
+                                        <el-button link type="danger" size="small"
+                                            @click="handleDelete2(scope.row)">驳回</el-button>
+                                    </template>
+                                </el-table-column>
+                            </el-table>
+
+                        </el-scrollbar>
+                        <!-- 弹窗 2 -->
+                        <el-dialog v-model="dialogFormVisible2" title="详情">
+                            <el-form ref="ruleFormRef" :model="form" :rules="rules" label-width="120px" size="dafault"
+                                status-icon @submit.native.prevent>
+                                <el-form-item class="once" label="申请组织ID" prop="appOid">
+                                    <el-input @keyup.native.enter v-model="form.appOid"
+                                        :readonly="dialogType2 == 'detail'" />
+                                </el-form-item>
+                                <el-form-item class="once" label="组织名称" prop="appOname">
+                                    <el-input @keyup.native.enter v-model="form.appOname"
+                                        :readonly="dialogType2 == 'detail'" />
+                                </el-form-item>
+                                <el-form-item class="once" label="所属校区" prop="campus">
+                                    <el-input @keyup.native.enter v-model="form.campus"
+                                        :readonly="dialogType2 == 'detail'" />
+                                </el-form-item>
+                                <el-form-item class="once" label="申请人" prop="uname">
+                                    <el-input v-model="form.uname" :readonly="dialogType2 == 'detail'" />
+                                </el-form-item>
+                                <el-form-item class="once" label="学号" prop="uid">
+                                    <el-input v-model="form.uid" :readonly="dialogType2 == 'detail'" />
+                                </el-form-item>
+                                <el-form-item class="once" label="年级" prop="grade">
+                                    <el-input v-model="form.grade" :readonly="dialogType2 == 'detail'" />
+                                </el-form-item>
+                                <el-form-item class="once" label="学院" prop="college">
+                                    <el-input v-model="form.college" :readonly="dialogType2 == 'detail'" />
+                                </el-form-item>
+                                <el-form-item class="once" label="班级" prop="cname">
+                                    <el-input v-model="form.cname" :readonly="dialogType2 == 'detail'" />
+                                </el-form-item>
+                                <el-form-item class="once" label="专业" prop="major">
+                                    <el-input v-model="form.major" :readonly="dialogType2 == 'detail'" />
+                                </el-form-item>
+                                <el-form-item class="once" label="联系方式" prop="phone">
+                                    <el-input v-model="form.phone" :readonly="dialogType2 == 'detail'" />
+                                </el-form-item>
+                            </el-form>
+                            <!-- 底部按钮 -->
+                            <template #footer>
+                                <span class="dialog-footer">
+                                    <span class="dialog-footer">
+                                        <span>UID：{{ my_uid }} {{ uname }} </span>
+                                        <el-button type="success" v-if="dialogType == 'detail'" @submit.native.prevent
+                                            @click="handleCheckOrg(form.appOid, 2)">
+                                            通过
+                                        </el-button>
+                                        <el-button type="danger" v-if="dialogType == 'detail'" @submit.native.prevent
+                                            @click="handleCheckOrg(form.appOid, 1)">
+                                            驳回
+                                        </el-button>
+                                    </span>
+                                </span>
+                            </template>
+                        </el-dialog>
                     </div>
                 </el-tab-pane>
                 <el-tab-pane label="我参与的" name="0">
                     <div class="block">
                         <!-- 表格 -->
-                        <el-table border :data="tableData" style="width: 100%">
-                            <!-- fixed 属性配置，固定列-->
+                        <el-table border :data="tableData" height="400px" style="width: 100%">
                             <el-table-column prop="aid" label="活动ID" sortable width="120" align="center"
                                 header-align="center" />
-
                             <el-table-column prop="apic" label="封面图" width="120" align="center" header-align="center">
-                                <!-- <template #default="scope"> -->
                                 <template v-slot="scope">
                                     <el-image style="width: 100%; height: 100px" :src="scope.row.apic"
                                         preview-teleported="true" :preview-src-list="[scope.row.apic]"
@@ -109,6 +188,7 @@
                                     <el-radio label="双创实训" name="A_shichang_type" />
                                     <el-radio label="理想信念" name="A_shichang_type" />
                                     <el-radio label="实践志愿" name="A_shichang_type" />
+                                    <el-radio label="校园建设" name="A_shichang_type" />
                                 </el-radio-group>
                             </el-form-item>
 
@@ -117,19 +197,11 @@
                             </el-form-item>
                         </el-form>
 
-
                         <template #footer>
                             <span class="dialog-footer">
-                                <!-- <el-button type="primary" @click="dialogFormVisible = false"> -->
-                                <el-button text type="primary" v-if="dialogType != 'detail'" @click="resetField">
-                                    重置
-                                </el-button>
                                 <el-button type="primary" v-if="dialogType == 'add'" v-on:submit.prevent="submitAddForm"
                                     @click="handleCheckAdd">
                                     确认
-                                </el-button>
-                                <el-button type="primary" v-else-if="dialogType == 'edit'" @click="handleCheckEdit">
-                                    修改
                                 </el-button>
                             </span>
                         </template>
@@ -144,7 +216,7 @@
                         </div>
                         <div class="table-box" v-if="identity">
                             <!-- 表格 -->
-                            <el-table border :data="tableData" style="width: 100%">
+                            <el-table border :data="tableData" height="400px" style="width: 100%">
                                 <!-- fixed 属性配置，固定列-->
                                 <el-table-column prop="aid" label="活动ID" sortable width="120" align="center"
                                     header-align="center" />
@@ -204,7 +276,7 @@
     </div>
 </template>
 <script setup>
-import axios from 'axios'
+import axios from '../../../server/http'
 import { ElMessage } from "element-plus";
 import { onMounted } from 'vue'
 import { getNowTime, compareTime } from '../../../server/api/time';
@@ -213,9 +285,13 @@ import { toRaw } from '@vue/reactivity'
 // 数据
 let totalValue = $ref("0")
 let dialogType = $ref('detail')
+let dialogType2 = $ref('detail')
 let dialogFormVisible = $ref(false)
+let dialogFormVisible2 = $ref(false)
 let openQrcodeImg = $ref(false)
 let identity = $ref(false)
+
+let my_uid = sessionStorage.getItem("uid")
 let form = $ref({
     aid: '',
     aname: '',
@@ -236,12 +312,14 @@ let getQrcode = $ref()
 let tableData = $ref([
 
 ])
-let tableDataCopy = []
-// 方法
+let tableData2 = $ref([
 
+])
+
+// 方法
 const all = () => {
 
-    axios.get('http://localhost:8083/api/activity/getParticipationByUid/' + (sessionStorage.getItem("uid")) + '/1/10').then(res => {
+    axios.get('activity/getParticipationByUid/' + (sessionStorage.getItem("uid")) + '/1/10').then(res => {
         let _tableData = res.data.data.records
         let _nowTime = getNowTime()
         totalValue = _tableData.length
@@ -264,14 +342,27 @@ const all = () => {
                 _tableData[i].A_shichang_type = '理想信念'
             } else if (_tableData[i].A_shichang_type == 4) {
                 _tableData[i].A_shichang_type = '实践志愿'
+            } else if (_tableData[i].A_shichang_type == 4) {
+                _tableData[i].A_shichang_type = '校园建设'
             }
         }
         tableData = _tableData
-        tableDataCopy = _tableData
 
     }).catch(err => {
         console.log("获取数据失败" + err);
     })
+
+    axios.get('manage/getApplyOrg/1/10').then(res => {
+        let _tableData = res.data.data.records
+        for (let i = 0; i < _tableData.length; i++) {
+            console.log(_tableData[i])
+        }
+        tableData2 = _tableData
+
+    }).catch(err => {
+        console.log("获取数据失败" + err);
+    })
+
 }
 
 // 详情
@@ -279,11 +370,27 @@ let handleDetail = (row) => {
     dialogType = 'detail'
     form = { ...row }
     dialogFormVisible = true
+}// 详情
+let handleDetail2 = (row) => {
+    dialogType2 = 'detail'
+    form = { ...row }
+    dialogFormVisible2 = true
 }
-
+let handleCheckOrg = (oAppId, oAppStatus) => {
+    dialogFormVisible = false
+    axios.get('manage/auditOrgApp/' + oAppId + '/' + oAppStatus).then(res => {
+        console.log(res)
+        if (res.data['code'] != '8-200')
+            ElMessage({ msg: res.data.msg, type: "info" })
+        else
+            ElMessage({ msg: res.data.msg, type: "success" })
+    }).catch(err => {
+        console.log("操作无效" + err);
+        ElMessage({ message: res.data.msg, type: "info" })
+    })
+}
 let checkID = () => {
-    var _uid = sessionStorage.getItem("uid")
-    axios.get('http://localhost:8083/api/manage/user/' + _uid).then(res => {
+    axios.get('manage/user/' + my_uid).then(res => {
         var my_oids = res.data.data.oid
         if (my_oids.length >= 3) {
             identity = true
@@ -299,7 +406,7 @@ let openQrcode = (row, typeCount) => {
     var activityData = toRaw(row)
     console.log(activityData)
     // 1为获取签到码；0为获取签退码
-    axios.get('http://localhost:8083/api/activity/signIn/' + activityData.aid + '/' + activityData.uid + '/' + typeCount).then(res => {
+    axios.get('activity/signIn/' + activityData.aid + '/' + activityData.uid + '/' + typeCount).then(res => {
         getQrcode = res.data.data
         ElMessage({ message: res.data.msg, type: "success" })
     }).catch(err => {

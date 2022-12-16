@@ -9,7 +9,7 @@
             <el-collapse style="font-weight: 600;" v-model="activeNames">
                 <!-- 申报列表1 -->
                 <el-collapse-item title="校外实践时长申报" name="1">
-                    <div style="margin-left:10px">
+                    <div class="add_btn">
                         <el-button type="primary" :icon="Edit" round @click="handleAdd">申报时长</el-button>
                     </div>
                     <div>
@@ -26,7 +26,7 @@
                 </el-collapse-item>
                 <!-- 申报列表2 -->
                 <el-collapse-item title="其他类型时长申报" name="2">
-                    <div style="margin-left:10px">
+                    <div class="add_btn">
                         <el-button type="primary" :icon="Edit" round @click="handleAdd">申报时长</el-button>
                     </div>
                     <div>
@@ -60,7 +60,6 @@
                         </el-select>
                     </el-form-item>
 
-
                     <el-form-item class="once" label="时长数量" prop="selfAppShiNum">
                         <el-input v-model="form.selfAppShiNum" width="500" type="text" />
                     </el-form-item>
@@ -71,7 +70,6 @@
                         <upload_demo></upload_demo>
                     </el-form-item>
                 </el-form>
-
 
                 <template #footer>
                     <span class="dialog-footer">
@@ -102,16 +100,14 @@ export default {
 }
 </script>
 <script setup>
-import { ref } from 'vue'
 import { Edit } from '@element-plus/icons-vue'
-import { getMySelfApplication } from '@/server/api/shiChang'
+import axios from '../../../server/http'
 
 // 数据
 let my_uid = sessionStorage.getItem("uid")
-const activeNames = $ref(['1'])
-const dialogFormVisible = $ref('false')
-const dialogType = $ref('add')
-
+let activeNames = $ref(['1'])
+let dialogFormVisible = $ref('false')
+let dialogType = $ref('add')
 
 let form = $ref({
     uid: '',
@@ -122,11 +118,9 @@ let form = $ref({
     selfAppStatu: ''
 })
 
-
-
 const tableData = [
     {
-        uid: '3220001111',
+        uid: '---',
         selfAppType: '志愿时长',
         selfAppShiNum: '10',
         selfAppDescription: '献血',
@@ -134,7 +128,7 @@ const tableData = [
         selfAppStatu: '待审核'
     },
     {
-        uid: '3220001111',
+        uid: '---',
         selfAppType: '双创时长',
         selfAppShiNum: '40',
         selfAppDescription: '实习',
@@ -151,16 +145,21 @@ let handleAdd = () => {
 }
 
 </script>
-<style>
-.title {
-    font-size: 26pt;
-}
-
+<style >
 div[role="button"] {
     padding: 1% 0 1% 1%;
     font-size: 15pt;
 }
+.add_btn{
+    padding-left: 1%;
+}
+/* 设置外围scrollbar */
+.demo-collapse {
+    width: 85%;
+    margin: auto;
+}
 
+/* 设置弹窗样式 */
 .el-input,
 .el-textarea {
     width: 70%;

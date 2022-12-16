@@ -1,5 +1,6 @@
 import { ElMessage } from "element-plus";
 import store from '../store/store.js'
+import jscookie from 'js-cookie'
 import { createRouter, createWebHistory } from "vue-router";
 import NotFound from "@/components/404.vue";
 const routes = [
@@ -87,14 +88,14 @@ router.beforeEach(async (to, from, next) => {
   // 判断该路由是否需要登录权限
   if (to.meta.requireAuth) {
     //如果token不存在，就回到首页
-    if (localStorage.getItem('token')) next();
+    if (jscookie.get('satoken')) next();
     else {
       next("/");
       ElMessage("您未登录！");
     }
   } else {
     // 登录过一次后无需再次登录，直至用户退出登录
-    if (store.state.token) {
+    if (jscookie.get('satoken')) {
       if (to.path == "/admin") {
         next("/home");
       }

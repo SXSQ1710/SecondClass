@@ -12,12 +12,13 @@
                 <el-button class="box_btn" type="primary" text @click="handleQueryName(queryInput)">
                     搜索
                 </el-button>
+                <el-button class="box_btn" type="warning" text @click="handleAdd">
+                    导入账号
+                </el-button>
             </div>
 
             <div class="query-btn">
-                <el-button class="box_btn" type="primary" text @click="handleAdd">
-                    导入账号
-                </el-button>
+        
             </div>
 
         </div>
@@ -28,35 +29,29 @@
                 <i class='bx bx-refresh bx-flip-vertical'></i>
             </div>
         </el-tooltip>
+        <div class="demo-collapse">
+            <!-- 表格 -->
+            <el-scrollbar max-height="55vh">
+                <el-table border :data="tableData" height="400" style="width: 100%">
+                    <el-table-column property="uid" label="用户ID" width="120" />
+                    <el-table-column property="uname" label="用户名" width="150" />
+                    <el-table-column property="phone" label="联系方式" width="120" />
+                    <el-table-column property="cname" label="班级" width="200" />
+                    <el-table-column fixed="right" label="操作" width="180">
+                        <template #default="scope">
+                            <el-button link type="primary" size="small" @click="handleDetail(scope.row)">详情</el-button>
+                            <el-button link type="primary" size="small" @click="handleEdit(scope.row)">编辑</el-button>
+                        </template>
+                    </el-table-column>
+                </el-table>
 
-        <!-- 表格 -->
-        <el-scrollbar max-height="55vh">
-            <el-table border :data="tableData" ref="mutipleTableRef" style="width: 100%"
-                @selection-change="handleSelectionChange">
-                <!-- 多行选择器 -->
-                <el-table-column type="selection" width="55" />
-                <!-- fixed 属性配置，固定列-->
-                <el-table-column property="uid" label="用户ID" width="120" />
-                <el-table-column property="uname" label="用户名" width="120" />
-                <el-table-column property="upassword" label="用户密码" width="120" />
-                <el-table-column property="phone" label="联系方式" width="120" />
-                <el-table-column property="cname" label="班级" width="200" />
-                <el-table-column property="oid" label="所属组织" width="" />
-                <el-table-column fixed="right" label="操作" width="180">
-                    <template #default="scope">
-                        <el-button link type="primary" size="small" @click="handleDetail(scope.row)">详情</el-button>
-                        <el-button link type="primary" size="small" @click="handleEdit(scope.row)">编辑</el-button>
-                    </template>
-                </el-table-column>
-            </el-table>
-
-        </el-scrollbar>
-
+            </el-scrollbar>
+        </div>
         <!-- 弹窗 -->
         <el-dialog v-model="dialogFormVisible" :title="dialogType == 'add' ? '新增' : dialogType == 'edit' ? '编辑' : '详情'"
             draggable>
-            <el-form ref="ruleFormRef" :model="form" :rules="rules" label-width="180px" class="elform-input"
-                size="dafault" status-icon @submit.native.prevent>
+            <el-form ref="ruleFormRef" :model="form" :rules="rules" label-width="180px" size="dafault" status-icon
+                @submit.native.prevent>
                 <el-form-item class="once" label="用户ID" prop="uid" width="0px">
                     <el-input @keyup.native.enter v-model="form.uid" :disabled="dialogType != 'add'" />
                 </el-form-item>
@@ -64,34 +59,13 @@
                     <el-input @keyup.native.enter v-model="form.uname" :disabled="dialogType != 'add'" />
                 </el-form-item>
                 <el-form-item class="once" label="用户密码" prop="upassword">
-                    <el-input @keyup.native.enter v-model="form.upassword" />
+                    <el-input @keyup.native.enter v-model="form.upassword" :disabled="true" />
                 </el-form-item>
                 <el-form-item class="once" label="联系方式" prop="phone">
                     <el-input @keyup.native.enter v-model="form.phone" :disabled="dialogType != 'add'" />
                 </el-form-item>
                 <el-form-item label="班级" prop="cid">
                     <el-input @keyup.native.enter v-model="form.cid" :disabled="dialogType != 'add'" />
-                </el-form-item>
-                <!-- <el-form-item label="班级ID" prop="grade">
-                    <el-select v-model="form.cid" placeholder="">
-                        <el-option label="1" value="1" />
-                        <el-option label="2" value="2" />
-                        <el-option label="3" value="3" />
-                        <el-option label="4" value="4" />
-                        <el-option label="5" value="5" />
-                    </el-select>
-                </el-form-item> 
-                <el-form-item label="所属组织" prop="oid">
-                    <el-select v-model="form.oid" placeholder="组织ID">
-                        <el-option label="1" value="1" />
-                        <el-option label="2" value="2" />
-                        <el-option label="3" value="3" />
-                        <el-option label="4" value="4" />
-                        <el-option label="5" value="5" />
-                    </el-select>
-                </el-form-item>-->
-                <el-form-item label="所属组织" prop="oid">
-                    <el-input @keyup.native.enter v-model="form.oid" :readonly="dialogType != 'add'" />
                 </el-form-item>
             </el-form>
 
@@ -115,7 +89,7 @@
 </template>
 <script  setup>
 import { onMounted } from 'vue'
-import axios from 'axios'
+import axios from '../../../server/http'
 
 //第一种获取target值的方式，通过vue中的响应式对象可使用toRaw()方法获取原始对象
 import { toRaw } from '@vue/reactivity'
@@ -131,18 +105,15 @@ onMounted(() => {
 
 // 数据
 let queryInput = $ref("")
-let multipleSelection = $ref([])     // 多选
 let dialogFormVisible = $ref(false)
-let formLabelWidth = $ref('20vw')
 let dialogType = $ref('add')
 
 let form = $ref({
     uid: '',
     uname: '',
-    upassword: '',
     phone: '',
     cname: '',
-    oid: '',
+    cid: '1',
 })
 
 
@@ -151,26 +122,23 @@ let tableData = $ref([
         id: '1',
         uid: '1',
         uname: '小明',
-        upassword: '123456',
         phone: '123456',
+        cid: '1',
         cname: '信管1班',
-        oid: '[1]'
     }, {
         id: '2',
         uid: '2',
         uname: '小红',
-        upassword: '123456',
         phone: '123456',
+        cid: '1',
         cname: '信管1班',
-        oid: '[2,4]'
     }, {
         id: '3',
         uid: '3220001111',
         uname: '张三',
-        upassword: '123456',
         phone: '19854181623',
+        cid: '1',
         cname: '信管1班',
-        oid: '[4]'
     },
 ])
 
@@ -178,16 +146,15 @@ let tableDataCopy = Object.assign(tableData)
 // 方法
 
 const all = () => {
-    axios.get('http://localhost:8083/api/manage/getAllAccount/1').then(res => {
+    axios.get('manage/getAllAccount/1/10').then(res => {
         if (res.data["code"] == "7-200") {
-
-            tableData = res.data.data
+            let { records } = res.data.data;
+            tableData = records;//数据传递到页面数组
             tableDataCopy = Object.assign(tableData)
 
             ElMessage({ message: res.data.msg, type: "success" })
         } else
             ElMessage({ message: res.data.msg, type: "error" })
-
 
     }).catch(err => {
         console.log("获取数据失败" + err);
@@ -195,21 +162,15 @@ const all = () => {
     })
 }
 
-// 删除按钮
-let handleDelete = ({ id }) => {
-    let index = tableData.findIndex(item => item.id == id)
-    // 从index位置开始删除tableData中的1个元素
-    tableData.splice(index, 1)
-}
 //搜索，模糊查询
 let handleQueryInput = (val) => {
     queryInput = val
-    tableData = tableDataCopy.filter(item => (item.uid).toLowerCase().match(val.toLowerCase()) || (item.uname).toLowerCase().match(val.toLowerCase()))
+    tableData = tableDataCopy.filter(item => (item.uid).toString().match(val) || (item.uname.trim()).toString().match(val))
 }
 //搜索，模糊查询
 let handleQueryName = (val) => {
     // 浅拷贝一层tableData，防止数据搜索匹配不上
-    tableData = tableDataCopy.filter(item => (item.uid).toLowerCase().match(val.toLowerCase()) || (item.uname).toLowerCase().match(val.toLowerCase()))
+    tableData = tableDataCopy.filter(item => (item.uid).toString().match(val) || (item.uname).toString().match(val))
 }
 
 // 新增提交
@@ -219,19 +180,20 @@ let handleCheckAdd = (formData) => {
 
     var receiveData = {
         uid: formDataList.uid,
-        upassword: formDataList.upassword,
+        upassword: '123456',
         cid: formDataList.cid,
         uname: formDataList.uname,
-        oid: formDataList.oid,
         phone: formDataList.phone
     }
+    console.log(receiveData)
 
-    console.log("receiveData", receiveData)
-    // 创建组织账号
-    axios.post('http://localhost:8083/api/manage/addAccount', receiveData).then(res => {
-        console.log(res)
+    // 创建账号
+    axios.post('manage/addAccount', receiveData, {
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' },
+    }).then(res => {
+        console.log("res=", res)
         if (res.data["code"] == "8-200") {
-            form.cname = "信管" + form.cid + "班"
+            form.cid = "信管" + form.cid + "班"
 
             tableData.push({
                 id: (tableData.length + 1).toString(),
@@ -260,6 +222,7 @@ let handleCheckEdit = () => {
 let handleAdd = () => {
     dialogType = 'add'
     form = []
+    form.upassword = '123456'
     dialogFormVisible = true
 }
 // 编辑
@@ -279,21 +242,6 @@ let handleDetail = (row) => {
 const handleReset = () => {
     form = []
 }
-// 多选
-const handleSelectionChange = (val) => {
-    multipleSelection = []
-    val.forEach(element => {
-        multipleSelection.push(element)
-    });
-    console.log(val)
-}
-// 多选删除
-let handleMultiDelete = () => {
-    multipleSelection.forEach(element => {
-        handleDelete(element)
-    });
-}
-
 const ruleFormRef = $ref()
 
 const rules = $ref({
@@ -308,22 +256,16 @@ const rules = $ref({
         { required: true, message: '请填写用户的联系方式', trigger: 'blur' },
         { min: 11, max: 11, message: '请正确填写11位手机号' }
     ],
-    cname: [
+    cid: [
         {
+            required: true,
             message: '请选择您的所属班级',
-            trigger: 'change',
-        },
-    ],
-    oid: [
-        {
-            message: '请选择您的所属组织',
             trigger: 'change',
         },
     ]
 })
 // 提交表单功能实现
 const submitAddForm = async (formEl) => {
-    console.log("FormEI", formEl)
     if (!formEl) return
     // 验证表单
     await formEl.validate((valid, fields) => {
@@ -341,16 +283,16 @@ const submitAddForm = async (formEl) => {
     user-select: text;
 }
 
-.elform-input {
-    transform: scale(1);
-    display: inline-block;
+/* 设置外围scrollbar */
+.demo-collapse {
+    width: fit-content;
+    margin: 0;
 }
 
 .el-form-item {
     /* 表单行距 */
     margin-bottom: 14px;
 }
-
 
 /* 下面是对表格form的一些css修改 */
 .el-col-2 {

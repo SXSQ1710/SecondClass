@@ -31,11 +31,10 @@
         <el-scrollbar max-height="55vh" always>
 
             <!-- 表格 -->
-            <el-table border :data="tableData" ref="mutipleTableRef" style="width: 100%"
-                @selection-change="handleSelectionChange">
+            <el-table border :data="tableData" height="400px" style="width: 100%">
                 <el-table-column prop="aid" label="活动ID" sortable width="120" align="center" header-align="center" />
 
-                <el-table-column prop="apic" label="封面图" width="120" align="center" header-align="center">
+                <el-table-column prop="apic" label="封面图" sortable width="120" align="center" header-align="center">
                     <!-- <template #default="scope"> -->
                     <template v-slot="scope">
                         <el-image style="width: 100%; height: 100px" :src="scope.row.apic" preview-teleported="true"
@@ -48,56 +47,55 @@
                 </el-table-column>
 
                 <el-table-column prop="aname" label="活动名称" sortable width="200" header-align="center" />
-                <el-table-column prop="a_oid" label="举办单位" width="100" header-align="center" />
+                <el-table-column prop="a_oid" label="组织ID" sortable width="100" header-align="center" />
                 <el-table-column prop="astatus" label="活动状态" sortable width="200" header-align="center" />
                 <el-table-column prop="a_uid" label="申请人" sortable width="120" header-align="center" />
                 <el-table-column prop="a_register_open" label="报名时间" sortable width="200" header-align="center" />
                 <el-table-column prop="a_hold_start" label="举办时间" sortable width="200" header-align="center" />
                 <el-table-column prop="a_address" label="举办地点" width="250" header-align="center" />
-                <el-table-column prop="A_shichang_type" label="活动时长类型" width="120" header-align="center" />
+                <el-table-column prop="A_shichang_type" label="时长类型" sortable width="120" header-align="center" />
                 <el-table-column prop="a_shichang_num" label="时长" sortable width="120" header-align="center" />
-                <el-table-column fixed="right" label="操作" width="100" align="center" header-align="center">
+                <el-table-column prop="adescription" label="活动介绍" width="200" header-align="center" />
+
+                <el-table-column fixed="right" label="操作" width="100" header-align="center" align="center">
                     <template #default="scope">
                         <el-button link type="primary" size="small" @click="handleDetail(scope.row)">详情</el-button>
                     </template>
                 </el-table-column>
             </el-table>
+
         </el-scrollbar>
+
         <!-- 弹窗 -->
         <el-dialog v-model="dialogFormVisible"
             :title="dialogType == 'add' ? '新增' : (dialogType == 'edit' ? '编辑' : '详情')">
-            <el-form ref="ruleFormRef" :model="form" :rules="rules" label-width="120px" class="elform-input"
-                size="dafault" status-icon @submit.native.prevent readonly="true">
+            <el-form :model="form" label-width="120px" size="dafault" status-icon @submit.native.prevent>
                 <el-form-item class="once" label="活动ID" prop="aid">
-                    <el-input @keyup.native.enter v-model="form.aid" />
+                    <el-input @keyup.native.enter v-model="form.aid" disabled />
                 </el-form-item>
 
                 <el-form-item class="once" label="活动名称" prop="aname">
-                    <el-input @keyup.native.enter v-model="form.aname" />
+                    <el-input @keyup.native.enter v-model="form.aname" readonly />
                 </el-form-item>
                 <el-form-item class="once" label="活动状态" prop="astatus">
-                    <el-select v-model="form.astatus" placeholder="">
-                    </el-select>
+                    <el-select v-model="form.astatus" placeholder="" disabled />
                 </el-form-item>
                 <el-form-item class="once" label="举办单位" prop="oname">
-                    <el-input @keyup.native.enter v-model="form.oname" />
+                    <el-input @keyup.native.enter v-model="form.oname" disabled />
                 </el-form-item>
                 <el-form-item class="once" label="申请人" prop="a_uid" placeholder="请填写用户ID">
-                    <el-input @keyup.native.enter v-model="form.a_uid" />
+                    <el-input @keyup.native.enter v-model="form.a_uid" readonly />
                 </el-form-item>
 
                 <el-form-item label="活动举办地点" prop="a_address">
-                    <el-select v-model="form.a_address" placeholder="校区">
-                    </el-select>
+                    <el-select v-model="form.a_address" placeholder="校区" readonly />
                 </el-form-item>
-                <el-form-item class="once" label="活动限制人数" prop="a_limitted_number">
-                    <el-input v-model.number="form.a_limitted_number" autocomplete="off" />
-                </el-form-item>
+          
                 <el-form-item label="活动报名时间" required>
                     <el-col :span="10">
                         <el-form-item prop="a_register_open">
                             <el-date-picker v-model="form.a_register_open" type="datetime" label="请选择报名时间"
-                                placeholder="报名开始时间" style="width: 100%" />
+                                placeholder="报名开始时间" style="width: 100%" readonly />
                         </el-form-item>
                     </el-col>
                     <el-col class="text-center" :span="1">
@@ -106,7 +104,7 @@
                     <el-col :span="10">
                         <el-form-item prop="a_register_close">
                             <el-date-picker v-model="form.a_register_close" type="datetime" label="请选择报名时间"
-                                placeholder="报名结束时间" style="width: 100%" />
+                                placeholder="报名结束时间" style="width: 100%" readonly />
                         </el-form-item>
                     </el-col>
                 </el-form-item>
@@ -115,7 +113,7 @@
                     <el-col :span="10">
                         <el-form-item prop="a_hold_start">
                             <el-date-picker v-model="form.a_hold_start" type="datetime" label="请选择开始时间"
-                                placeholder="活动开始时间" style="width: 100%" />
+                                placeholder="活动开始时间" style="width: 100%" readonly />
                         </el-form-item>
                     </el-col>
                     <el-col class="text-center" :span="1">
@@ -124,25 +122,26 @@
                     <el-col :span="10">
                         <el-form-item prop="a_hold_end">
                             <el-date-picker v-model="form.a_hold_end" type="datetime" label="请选择结束时间"
-                                placeholder="活动结束时间" style="width: 100%" />
+                                placeholder="活动结束时间" style="width: 100%" readonly />
                         </el-form-item>
                     </el-col>
                 </el-form-item>
 
                 <el-form-item label="活动类型" prop="A_shichang_type">
-                    <el-radio-group v-model="form.A_shichang_type">
+                    <el-radio-group v-model="form.A_shichang_type" disabled>
                         <el-radio label="文体艺术" name="A_shichang_type" />
                         <el-radio label="双创实训" name="A_shichang_type" />
                         <el-radio label="理想信念" name="A_shichang_type" />
                         <el-radio label="实践志愿" name="A_shichang_type" />
+                        <el-radio label="校园建设" name="A_shichang_type" />
                     </el-radio-group>
                 </el-form-item>
                 <el-form-item class="once" label="活动限制人数" prop="a_limitted_number">
-                    <el-input v-model.number="form.a_limitted_number" autocomplete="off" />
+                    <el-input v-model.number="form.a_limitted_number" autocomplete="off" readonly/>
                 </el-form-item>
 
                 <el-form-item class="once" label="活动简介" prop="adescription">
-                    <el-input v-model="form.adescription" type="textarea" />
+                    <el-input v-model="form.adescription" type="textarea" readonly/>
                 </el-form-item>
             </el-form>
 
@@ -157,11 +156,30 @@
             </template>
 
         </el-dialog>
+        <div class="pagination_block">
+            <el-pagination @size-change="handleSizeChange" @current-change="handleCurrentChange"
+                :current-page="pagePage" :page-sizes="[1, 5, 10, 50]" :page-size="sizePage"
+                layout="total, sizes, prev, pager, next, jumper" :total="totalValue">
+            </el-pagination>
+        </div>
     </div>
+
 </template>
+<script>
+export default {
+    methods: {
+        handleSizeChange(val) {
+            console.log(`每页 ${val} 条`);
+        },
+        handleCurrentChange(val) {
+            console.log(`当前页: ${val}`);
+        }
+    }
+}
+</script>
 <script  setup>
 import { onMounted } from 'vue'
-import axios from 'axios'
+import axios from '../../../server/http'
 
 import { getNowTime, compareTime } from '../../../server/api/time';
 import { ElMessage } from 'element-plus';
@@ -180,6 +198,10 @@ let queryInput = $ref("")
 let totalValue = $ref(0)
 let dialogType = $ref('add')
 let dialogFormVisible = $ref(false)
+
+let sizePage = $ref("10")
+let pagePage = $ref("1")
+
 let form = $ref({
     aid: '',
     aname: '',
@@ -206,7 +228,7 @@ let tableDataCopy = []
 
 // 方法
 const all = () => {
-    axios.get('http://localhost:8083/api/activity/getAll/1/10').then(res => {
+    axios.get('activity/getAll/' + pagePage + '/' + sizePage).then(res => {
 
         let _tableData = res.data.data.records
         let _nowTime = getNowTime()
@@ -235,6 +257,8 @@ const all = () => {
                 _tableData[i].A_shichang_type = '理想信念'
             } else if (_tableData[i].A_shichang_type == 4) {
                 _tableData[i].A_shichang_type = '实践志愿'
+            } else if (_tableData[i].A_shichang_type == 5) {
+                _tableData[i].A_shichang_type = '校园建设'
             }
 
         }
@@ -274,7 +298,7 @@ const handleCheckApp = (formUID, formAID) => {
         uid: formUID.toString(),
         aid: formAID.toString()
     }
-    axios.post('http://localhost:8083/api/activity/register', formdata).then((res) => {
+    axios.post('activity/register', formdata).then((res) => {
         //处理成功后的逻辑
         if ((res.data.code) == 200) {
             ElMessage({ message: res.data.msg, type: 'success' })
@@ -293,13 +317,14 @@ const handleCheckApp = (formUID, formAID) => {
     user-select: text;
 }
 
-.text-center {
-    margin: 0 auto
+/* 设置分页器样式 */
+.pagination_block {
+    position: absolute;
+    bottom: 10vh;
 }
 
-.elform-input {
-    transform: scale(1);
-    display: inline-block;
+.text-center {
+    margin: 0 auto
 }
 
 .el-form-item {
@@ -322,10 +347,10 @@ const handleCheckApp = (formUID, formAID) => {
     margin: 20vh;
 }
 
-
+/* 帮助按钮样式设置 */
 .intro_btn {
     padding: 0;
-    position: fixed;
+    float: right;
     z-index: 3;
     right: 70px;
     top: 200px;

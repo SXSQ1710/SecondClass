@@ -10,7 +10,7 @@
                <span class="myicon iconfont icon-yonghu"></span>
             </div>
             <div class="inputBox">
-               <input type="text" autocomplete="username" required="required" v-model="username">
+               <input type="text" autocomplete="username" required="required" v-model="username" @keydown="trimLR">
                <span>学号</span>
             </div>
          </div>
@@ -20,7 +20,7 @@
             </div>
 
             <div class="inputBox">
-               <input type="password" autocomplete="current-password" required="required" v-model="password">
+               <input type="password" autocomplete="current-password" required="required" v-model="password" @keydown="trimLR">
                <span>密码</span>
             </div>
          </div>
@@ -47,7 +47,7 @@ import { ElMessage } from "element-plus";
 import { h } from 'vue'
 import { setUser } from '../../server/api/login'
 import loginitem from "./LoginItem.vue"
-import axios from "axios"
+import axios from "../../server/http"
 import store from "../../store/store"
 import '../../assets/css/login.css'
 
@@ -70,6 +70,12 @@ export default {
          this.sdf = "https://jxfw.gdut.edu.cn/yzm?d=" + new Date().getTime()
          // this.sdf.value =ref( "https://jxfw.gdut.edu.cn/yzm?d=" +new Date().getTime())
       },
+      // 禁止输入空格
+      trimLR(event) {
+         if (event.keyCode == 32) {
+            event.returnValue = false
+         }
+      },
       submit() {
          console.log("submit!")
          var _this = this
@@ -78,7 +84,7 @@ export default {
             upassword: this.password,
             role: 0
          };
-         axios.post('http://localhost:8083/api/manage/login', formdata).then((res) => {
+         axios.post('manage/login', formdata).then((res) => {
             //处理成功后的逻辑
             if (res.data['code'] == '1-200') {//这个data 是接收的resolve参数--
                ElMessage({
