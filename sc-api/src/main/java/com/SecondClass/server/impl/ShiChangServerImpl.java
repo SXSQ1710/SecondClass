@@ -1,4 +1,4 @@
-package com.SecondClass.server;
+package com.SecondClass.server.impl;
 
 import cn.dev33.satoken.stp.StpUtil;
 import cn.hutool.core.bean.BeanUtil;
@@ -7,6 +7,7 @@ import cn.hutool.json.JSONUtil;
 import com.SecondClass.entity.*;
 import com.SecondClass.entity.R_entity.R_ShiChang;
 import com.SecondClass.mapper.*;
+import com.SecondClass.server.IShiChangServer;
 import com.SecondClass.utils.DateUtils;
 import com.SecondClass.utils.RedisUtils;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -190,6 +191,7 @@ public class ShiChangServerImpl implements IShiChangServer {
         }else {
             return Response.error(ResponseStatus.ERROR);
         }
+        //System.out.println("aSemester:"+aSemester);
 
 //        数据库个人时长储存格式：
 //         [时长类型id,大一上[时长总数,参与活动id列表,自主申报id列表],大一下[时长总数,参与活动id列表,自主申报id列表],大二上,大二下,大三上,大三下,]
@@ -215,8 +217,9 @@ public class ShiChangServerImpl implements IShiChangServer {
 
                 Calendar cal = Calendar.getInstance();
                 int nowYear = cal.get(Calendar.YEAR);
-                int grade = nowYear - user.getGrade() + 1;
-//                System.out.println(uid +"-"+ grade );
+                ///需修改
+                int grade = nowYear - user.getGrade() ;
+                System.out.println("grade:"+ grade );
 
                 LambdaQueryWrapper<Shichang> wrapper = new LambdaQueryWrapper<>();
                 wrapper.eq(Shichang::getUid, uid);
@@ -273,13 +276,16 @@ public class ShiChangServerImpl implements IShiChangServer {
                     for (int i = 0; i < allInfo.size(); i++) {
                         data = allInfo.get(i);
                         if ((int)data.get(0) == aShiChangType.intValue()){
+
                             for (int j = 1; j < data.size(); j++) {
+                                System.out.println((aSemester + (grade - 1) * 2));
                                 if ((aSemester + (grade - 1) * 2) == j) {
                                     //data.get(i) : [2 ,"1-2","1"]
                                     List<Object> list = JSONUtil.toList((JSONArray) data.get(j), Object.class);
 
                                     String[] activities = list.get(1).toString().split("-");
                                     ArrayList<String> arrayList = new ArrayList<>(Arrays.asList(activities));
+                                    //System.out.println(arrayList.toString());
                                     arrayList.add(aid.toString());
                                     list.set(1, StringUtils.collectionToDelimitedString(arrayList, "-"));
                                     list.set(0, (int)list.get(0) + aShiChangNum);

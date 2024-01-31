@@ -6,7 +6,7 @@ import com.SecondClass.entity.R_entity.R_ActivityApplication;
 
 import com.SecondClass.entity.R_entity.R_ShiAppInfo;
 import com.SecondClass.entity.R_entity.R_SignIn;
-import com.SecondClass.server.ActivityServerImpl;
+import com.SecondClass.server.impl.ActivityServerImpl;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import org.springframework.web.bind.annotation.*;
@@ -47,9 +47,9 @@ public class ActivityController {
     }
 
     @GetMapping("/getAll/{pageNo}/{pageSize}")
-    public Response getAll(@PathVariable("pageNo")Integer pageNo,@PathVariable("pageSize")Integer pageSize){
-        Page<Activity> page = new Page<>(pageNo,pageSize);
-        return activityServer.getAll(page);
+    public Response getAll(@PathVariable("pageNo")Long pageNo,@PathVariable("pageSize")Long pageSize){
+//        Page<Activity> page = new Page<>(pageNo,pageSize);
+        return activityServer.getAll(pageNo, pageSize);
 
     }
 
@@ -61,6 +61,12 @@ public class ActivityController {
     @PostMapping("/register")
     public Response register(@RequestBody Participation participation){
         return activityServer.register(participation);
+    }
+
+    @GetMapping("/getMangAct/{pageNo}/{pageSize}")
+    public Response getMangAct(@PathVariable("pageNo")Integer pageNo,@PathVariable("pageSize")Integer pageSize){
+        Page<Activity> page = new Page<>(pageNo,pageSize);
+        return activityServer.getMangAct(page);
     }
 
     @GetMapping("/signIn/{aid}/{uid}/{type}")
@@ -84,6 +90,11 @@ public class ActivityController {
         return activityServer.modifyRegisterStatusByUid(participation);
     }
 
+    @GetMapping("/dynamicGetAllParticipatedMember/{aid}")
+    public Response dynamicGetAllParticipatedMember(@PathVariable("aid")Long aid){
+        return activityServer.dynamicGetAllParticipatedMember(aid);
+    }
+
     @GetMapping("/getAllParticipatedMember/{aid}")
     public Response getAllParticipatedMember(@PathVariable("aid")Long aid){
         return activityServer.getAllParticipatedMember(aid);
@@ -105,6 +116,12 @@ public class ActivityController {
     public Response getParticipationByUid(@PathVariable("uid")String uid,@PathVariable("pageNo")Integer pageNo,@PathVariable("pageSize")Integer pageSize){
         Page<Participation> page = new Page<>(pageNo,pageSize);
         return activityServer.getParticipationByUid(uid,page);
+    }
+
+    @GetMapping("/getParticipationByUid2/{pageNo}/{pageSize}")
+    public Response getParticipationByUid2(@PathVariable("pageNo")Integer pageNo,@PathVariable("pageSize")Integer pageSize){
+        Page<Participation> page = new Page<>(pageNo,pageSize);
+        return activityServer.getParticipationByUid2(page);
     }
 
     @PostMapping("/sendInfoToOrganization")

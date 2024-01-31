@@ -16,7 +16,7 @@ import javax.annotation.Resource;
  * @Date 2022/11/13 14:52
  **/
 
-@Configuration
+//@Configuration
 public class SaTokenConfigure implements WebMvcConfigurer {
 
     @Resource
@@ -28,12 +28,12 @@ public class SaTokenConfigure implements WebMvcConfigurer {
 //        // 跨域拦截器需放在最上面
 //        registry.addInterceptor(corsInterceptor).addPathPatterns("/**");
 
-//        // 校验token的拦截器
+        // 校验token的拦截器
         registry.addInterceptor(new SaInterceptor(handler -> {
          // 指定一条 match 规则
          SaRouter
                  .match("/**")    // 拦截的 path 列表，可以写多个 */
-                 .notMatch("/api/manage/login")        // 排除掉的 path 列表，可以写多个
+                 .notMatch("/api/manage/login","/api/manage/isLogin")        // 排除掉的 path 列表，可以写多个
                  .check(r -> StpUtil.checkLogin());        // 要执行的校验动作，可以写完整的 lambda 表达式
 
          // 根据路由划分模块，不同模块不同鉴权

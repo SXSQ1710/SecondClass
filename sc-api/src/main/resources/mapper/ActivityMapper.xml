@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.SecondClass.mapper.ActivityMapper">
+
+    <resultMap id="BaseResultMap" type="com.SecondClass.entity.R_entity.R_GetAllActivity">
+        <id property="aid" column="aid" jdbcType="BIGINT"/>
+        <result property="aname" column="aname" jdbcType="VARCHAR"/>
+        <result property="adescription" column="adescription" jdbcType="VARCHAR"/>
+        <result property="aAddress" column="a_address" jdbcType="VARCHAR"/>
+        <result property="aRegisterOpen" column="a_register_open" jdbcType="TIMESTAMP"/>
+        <result property="aRegisterClose" column="a_register_close" jdbcType="TIMESTAMP"/>
+        <result property="aHoldStart" column="a_hold_start" jdbcType="TIMESTAMP"/>
+        <result property="aHoldEnd" column="a_hold_end" jdbcType="TIMESTAMP"/>
+
+        <result property="astatus" column="astatus" jdbcType="INTEGER"/>
+        <result property="apic" column="apic" jdbcType="VARCHAR"/>
+        <result property="aShichangNum" column="a_shichang_num" jdbcType="INTEGER"/>
+        <result property="aLimitedNumber" column="a_limited_number" jdbcType="INTEGER"/>
+
+        <result property="shichangName" column="shichang_name" jdbcType="VARCHAR"/>
+        <result property="oname" column="oname" jdbcType="VARCHAR"/>
+        <result property="uname" column="uname" jdbcType="VARCHAR"/>
+
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        aid,aname,adescription,
+        a_register_open,a_register_close,a_limitted_number,
+        a_oid,a_uid,a_hold_start,
+        a_hold_end,astatus,apic,
+        a_shichang_num,a_shichang_type,a_address
+    </sql>
+
+    <select id="getAll" resultMap="BaseResultMap">
+        SELECT a.aid,a.aname,a.adescription, a.a_address,a.a_register_open,a.a_register_close,a.a_hold_start,
+        a.a_hold_end,a.astatus,a.apic,a.a_shichang_num,a.a_limited_number,st.shichang_name, o.oname, u.uname
+        FROM t_activity a, t_shichang_type st, t_organization o, t_user u
+        WHERE a.a_shichang_type = st.sid AND o.oid = a.a_oid AND u.uid = a.a_uid AND a.astatus = 2
+        ORDER BY aid DESC LIMIT #{pageNo},#{pageSize};
+    </select>
+</mapper>

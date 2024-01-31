@@ -1,13 +1,16 @@
-package com.SecondClass.server;
+package com.SecondClass.server.impl;
 
 import cn.dev33.satoken.stp.StpUtil;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.lang.UUID;
 import cn.hutool.json.JSONUtil;
+import co.paralleluniverse.fibers.Fiber;
+import com.SecondClass.config.ThreadPoolTaskConfig;
 import com.SecondClass.entity.*;
 import com.SecondClass.entity.Class;
 import com.SecondClass.entity.R_entity.*;
 import com.SecondClass.mapper.*;
+import com.SecondClass.server.IActivityServer;
 import com.SecondClass.utils.DateUtils;
 import com.SecondClass.utils.QrCodeUtils;
 import com.SecondClass.utils.RedisIdWorker;
@@ -19,21 +22,30 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import io.netty.util.internal.StringUtil;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.ibatis.annotations.Param;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.script.DefaultRedisScript;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 
 @Slf4j
 @Service
-public class ActivityServerImpl implements IActivityServer{
+public class ActivityServerImpl implements IActivityServer {
     @Resource
     ActivityMapper activityMapper;
     @Resource
@@ -52,10 +64,13 @@ public class ActivityServerImpl implements IActivityServer{
     RedisUtils redisUtils;
     @Resource
     RedisIdWorker redisIdWorker;
+    @Resource
+    @Qualifier("taskExecutor")
+    Executor executor;
 
     @Transactional
-    public Response applyActivity(R_ActivityApplication request){
-        try{
+    public Response applyActivity(R_ActivityApplication request) {
+        try {
             //1.生成活动描述
             //  将活动信息转换为json字符串存入申请表的活动描述
             Activity activity = BeanUtil.copyProperties(request, Activity.class);
@@ -75,16 +90,15 @@ public class ActivityServerImpl implements IActivityServer{
             //将活动申请活动信息写入redis，以活动id作为hashKey
             redisUtils.setValue(RedisKeyName.ACTIVITY_APPLICATION + activityApplication.getAAppId().toString(), activityApplication, 10L, TimeUnit.DAYS);
             return Response.success(ResponseStatus.ACTIVITY_APPLY_SUCCESS);
-        }catch (IllegalArgumentException i){
+        } catch (IllegalArgumentException i) {
             //redis插入失败
             i.printStackTrace();
             return Response.error(ResponseStatus.ACTIVITY_APPLY_FAIL);
-        }catch (DataIntegrityViolationException d){
+        } catch (DataIntegrityViolationException d) {
             //数据库插入失败
             d.printStackTrace();
             return Response.error(ResponseStatus.ACTIVITY_APPLY_FAIL);
-        }
-        catch (Exception e){
+        } catch (Exception e) {
             //其他错误
             e.printStackTrace();
             return Response.success(ResponseStatus.ERROR);
@@ -92,41 +106,41 @@ public class ActivityServerImpl implements IActivityServer{
     }
 
     @Transactional
-    public Response auditActivity(Integer aAppId,Integer status,String explain) {
+    public Response auditActivity(Integer aAppId, Integer status, String explain) {
         try {
             //1.更新活动申请实体和活动实体的状态
             //1.1 获得活动实体
             String aAppIdStr = aAppId.toString();
-            ActivityApplication activityApplication = redisUtils.queryForValue(RedisKeyName.ACTIVITY_APPLICATION, aAppIdStr,ActivityApplication.class,5L, TimeUnit.MINUTES, true,
+            ActivityApplication activityApplication = redisUtils.queryForValue(RedisKeyName.ACTIVITY_APPLICATION, aAppIdStr, ActivityApplication.class, 5L, TimeUnit.MINUTES, true,
                     (id) -> {
                         QueryWrapper<ActivityApplication> queryWrapper = new QueryWrapper<>();
                         queryWrapper.eq("a_app_id", aAppIdStr);
                         return activityApplicationMapper.selectOne(queryWrapper);
-            });
+                    });
 
             if (activityApplication == null) throw new IllegalArgumentException();
             //1.2修改活动申请状态   2表示通过 0：表示拒绝
             activityApplication.setAAppStatus(status);
-            if(explain != null){
+            if (explain != null) {
                 activityApplication.setAAppExplain(explain);
-            }else{
+            } else {
                 activityApplication.setAAppExplain("无");
             }
 
             //2.如果活动通过的话，将活动存入活动表中
-            if(status == 2){
+            if (status == 2) {
                 //2.1添加活动到活动表 并将状态设置为1（活动审核中）
                 String json = activityApplication.getAAppDescription();
                 Activity activity = JSONUtil.toBean(json, Activity.class);
                 //2.2设置活动状态：审核通过 2
                 activity.setAstatus(status);
-                if(activityMapper.insert(activity) !=1)throw new IllegalArgumentException();
+                if (activityMapper.insert(activity) != 1) throw new IllegalArgumentException();
                 //2.2 缓存存入活动表中
-                redisUtils.setValue(RedisKeyName.ACTIVITY + activity.getAid().toString(),activity,10L, TimeUnit.DAYS);
+                redisUtils.setValue(RedisKeyName.ACTIVITY + activity.getAid().toString(), activity, 10L, TimeUnit.DAYS);
                 //2.3 缓存存入活动报名限制人数
-                stringRedisTemplate.opsForValue().set(RedisKeyName.SECOND_KILL_STOCK + activity.getAid().toString(),activity.getALimittedNumber().toString());
+                stringRedisTemplate.opsForValue().set(RedisKeyName.SECOND_KILL_STOCK + activity.getAid().toString(), activity.getALimitedNumber().toString());
                 //2.4 缓存存入活动报名人员信息列表
-                stringRedisTemplate.opsForZSet().add(RedisKeyName.SECOND_KILL_PARTICIPATION + activity.getAid().toString(),activity.getAname(),0);
+                stringRedisTemplate.opsForZSet().add(RedisKeyName.SECOND_KILL_PARTICIPATION + activity.getAid().toString(), activity.getAname(), 0);
 
                 //2.4 新的活动状态(多了一个aid）更新到活动描述中
                 String jsonStr_activity = JSONUtil.toJsonStr(activity);
@@ -134,18 +148,15 @@ public class ActivityServerImpl implements IActivityServer{
 
             }
             //2.5 更新活动申请表
-            if(activityApplicationMapper.updateById(activityApplication)!=1)throw new IllegalArgumentException();
+            if (activityApplicationMapper.updateById(activityApplication) != 1) throw new IllegalArgumentException();
 
             //3.修改redis里面的数据
             //3.1 活动申请表
             stringRedisTemplate.delete(RedisKeyName.ACTIVITY_APPLICATION + activityApplication.getAAppId().toString());
 
             return Response.success(ResponseStatus.ADUIT_SUCCESS);
-        } catch (IllegalArgumentException i) {
+        } catch (IllegalArgumentException | DataIntegrityViolationException i) {
             i.printStackTrace();
-            return Response.error(ResponseStatus.ADUIT_FAIL);
-        } catch (DataIntegrityViolationException d) {
-            d.printStackTrace();
             return Response.error(ResponseStatus.ADUIT_FAIL);
         } catch (Exception e) {
             //其他错误
@@ -155,51 +166,49 @@ public class ActivityServerImpl implements IActivityServer{
     }
 
 
-    public Response findActivityAppByUid(Long uid,Page page) {
+    public Response findActivityAppByUid(Long uid, Page page) {
         //通过token获取用户id，传入的uid暂时被禁用
         String user_id = StpUtil.getLoginId().toString();
         QueryWrapper<ActivityApplication> queryWrapper = new QueryWrapper<>();
-        queryWrapper.eq("uid",user_id);
-        IPage<ActivityApplication> appList =  activityApplicationMapper.selectPage(page,queryWrapper);
-        if(appList.getSize() == 0 ){
-            return Response.success(ResponseStatus.ACTIVITY_APP_QUERY_FAIL,appList);
-        }
-        else{
-            return Response.success(ResponseStatus.ACTIVITY_APP_QUERY_SUCCESS,appList);
+        queryWrapper.eq("uid", user_id);
+        IPage<ActivityApplication> appList = activityApplicationMapper.selectPage(page, queryWrapper);
+        if (appList.getSize() == 0) {
+            return Response.success(ResponseStatus.ACTIVITY_APP_QUERY_FAIL, appList);
+        } else {
+            return Response.success(ResponseStatus.ACTIVITY_APP_QUERY_SUCCESS, appList);
         }
     }
 
 
     public Response findAppStatusByAid(Long aAppId) {
         String aAppIdStr = aAppId.toString();
-        ActivityApplication activityApplication = redisUtils.queryForValue(RedisKeyName.ACTIVITY_APPLICATION, aAppIdStr,ActivityApplication.class,10L, TimeUnit.DAYS, true,
+        ActivityApplication activityApplication = redisUtils.queryForValue(RedisKeyName.ACTIVITY_APPLICATION, aAppIdStr, ActivityApplication.class, 10L, TimeUnit.DAYS, true,
                 (id) -> {
                     QueryWrapper<ActivityApplication> queryWrapper = new QueryWrapper<>();
                     queryWrapper.eq("a_app_id", aAppIdStr);
                     return activityApplicationMapper.selectOne(queryWrapper);
-        });
+                });
 
-        if(activityApplication == null){
-            return Response.success(ResponseStatus.ACTIVITY_APP_QUERY_FAIL,activityApplication);
-        }
-        else{
-            return Response.success(ResponseStatus.ACTIVITY_APP_QUERY_SUCCESS,activityApplication);
+        if (activityApplication == null) {
+            return Response.success(ResponseStatus.ACTIVITY_APP_QUERY_FAIL, activityApplication);
+        } else {
+            return Response.success(ResponseStatus.ACTIVITY_APP_QUERY_SUCCESS, activityApplication);
         }
     }
 
     @Override
     public Response getAllApp(Page page) {
         QueryWrapper<ActivityApplication> queryWrapper = new QueryWrapper<>();
-        IPage<ActivityApplication> appList =  activityApplicationMapper.selectPage(page,queryWrapper);
-        return Response.success(ResponseStatus.ACTIVITY_APP_QUERY_SUCCESS,appList);
+        IPage<ActivityApplication> appList = activityApplicationMapper.selectPage(page, queryWrapper);
+        return Response.success(ResponseStatus.ACTIVITY_APP_QUERY_SUCCESS, appList);
     }
 
     @Override
-    public Response getAll(Page page) {
-        QueryWrapper<Activity> queryWrapper = new QueryWrapper<>();
-        IPage<Activity> activityIPage =  activityMapper.selectPage(page,queryWrapper);
-
-        return Response.success(ResponseStatus.ACTIVITY_APP_QUERY_SUCCESS,activityIPage);
+    public Response getAll(Long pageNo, Long pageSize) {
+        if (pageSize > 50) return Response.error(ResponseStatus.FAIL, "页码过大");
+        pageNo = (pageNo - 1) * pageSize;
+        List<R_GetAllActivity> all = activityMapper.getAll(pageNo, pageSize);
+        return Response.success(ResponseStatus.ACTIVITY_APP_QUERY_SUCCESS, all);
 
     }
 
@@ -210,9 +219,9 @@ public class ActivityServerImpl implements IActivityServer{
                     QueryWrapper<Activity> queryWrapper = new QueryWrapper<>();
                     queryWrapper.eq("aid", aid);
                     return activityMapper.selectOne(queryWrapper);
-        });
+                });
 
-        return Response.success(ResponseStatus.ACTIVITY_QUERY_SUCCESS,activity);
+        return Response.success(ResponseStatus.ACTIVITY_QUERY_SUCCESS, activity);
     }
 
     private static final DefaultRedisScript<Long> SECKILL_SCRIPT;
@@ -223,24 +232,24 @@ public class ActivityServerImpl implements IActivityServer{
         SECKILL_SCRIPT.setResultType(Long.class);
     }
 
-    public Response register(Participation participation){
-        try{
+    public Response register(Participation participation) {
+        try {
             //1.判断是否为合法用户
-            //String uid = participation.getUid().toString(); //压力测试用
-            String uid = (String) StpUtil.getLoginId();
+            String uid = participation.getUid().toString(); //压力测试用
+//            String uid = (String) StpUtil.getLoginId();
             String aid = participation.getAid().toString();
             //2.判断活动是否正在申请的活动举办时间内,活动开始前15分钟结束后15分钟
             Activity activity = redisUtils.queryForValue(RedisKeyName.ACTIVITY, aid, Activity.class, 10L, TimeUnit.DAYS, true,
                     (id) -> {
                         QueryWrapper<Activity> queryWrapper = new QueryWrapper<>();
                         queryWrapper.eq("aid", aid);
-                        queryWrapper.eq("a_uid",uid);
+                        queryWrapper.eq("a_uid", uid);
                         return activityMapper.selectOne(queryWrapper);
                     });
             Date start = activity.getARegisterOpen();
             Date end = activity.getARegisterClose();
 
-            if (!DateUtils.isEffectiveDate(start, end)){
+            if (!DateUtils.isEffectiveDate(start, end)) {
                 return Response.error(ResponseStatus.REGISTER_ACTIVITY_FAIL_4);
             }
 
@@ -256,7 +265,7 @@ public class ActivityServerImpl implements IActivityServer{
             Long result = stringRedisTemplate.execute(
                     SECKILL_SCRIPT,
                     Collections.emptyList(),
-                    aid, uid,String.valueOf(pid),"0"
+                    aid, uid, String.valueOf(pid), "0"
             );
             //3. 判断结果是否为0
             int r = result.intValue();
@@ -266,25 +275,36 @@ public class ActivityServerImpl implements IActivityServer{
             }
 
             return Response.success(ResponseStatus.SUCCESS, pid);
-        }catch (Exception e){
+        } catch (Exception e) {
             e.printStackTrace();
             return Response.error(ResponseStatus.REGISTER_ACTIVITY_FAIL);
         }
     }
 
+    public Response getMangAct(Page page) {
+        String uid = (String) StpUtil.getLoginId();
+        QueryWrapper<Activity> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("a_uid", uid);
+        IPage<Activity> activityIPage = activityMapper.selectPage(page, queryWrapper);
+
+        return Response.success(ResponseStatus.SUCCESS, activityIPage);
+    }
+
     @Value("${myConfig.serveUrl}")
     private String serveUrl;
 
-    public Response getSignIn(Long aid, Long uid, Integer type) {
+    public Response getSignIn(Long aid, Long a_uid, Integer type) {
         try {
+            String uid = (String) StpUtil.getLoginId();
             Activity activity = redisUtils.queryForValue(RedisKeyName.ACTIVITY, aid.toString(), Activity.class, 10L, TimeUnit.DAYS, true,
                     (id) -> {
                         QueryWrapper<Activity> queryWrapper = new QueryWrapper<>();
                         queryWrapper.eq("aid", aid);
-                        queryWrapper.eq("a_uid",uid);
+                        queryWrapper.eq("a_uid", uid);
                         return activityMapper.selectOne(queryWrapper);
-            });
-            if (!Objects.equals(activity.getAUid(), uid)) throw new IllegalArgumentException();
+                    });
+            System.out.println(uid);
+            if (!Objects.equals(activity.getAUid().toString(), uid)) throw new IllegalArgumentException();
             //判断活动状态是否为2(活动审核通过)
             if (activity.getAstatus() != 2) return Response.error(ResponseStatus.ACTIVITY_GET_SIGN_IN_FAIL_3);
             //判断活动是否正在申请的活动举办时间内,活动开始前15分钟结束后15分钟
@@ -299,17 +319,17 @@ public class ActivityServerImpl implements IActivityServer{
 //                return Response.error(ResponseStatus.ACTIVITY_GET_SIGN_IN_FAIL_2);
 //            }
 
-            if(BeanUtil.isNotEmpty(activity)){
+            if (BeanUtil.isNotEmpty(activity)) {
                 //1.生成随机uuid保存在redis里并设置5分钟的TTL
                 String uuid = UUID.randomUUID().toString();
                 String signInUrl;
-                if (type == 1){
-                    stringRedisTemplate.opsForValue().set(RedisKeyName.ACTIVITY_GET_SIGN_IN+uuid,aid.toString());
-                    stringRedisTemplate.expire(RedisKeyName.ACTIVITY_GET_SIGN_IN+uuid,5L, TimeUnit.MINUTES);
+                if (type == 1) {
+                    stringRedisTemplate.opsForValue().set(RedisKeyName.ACTIVITY_GET_SIGN_IN + uuid, aid.toString());
+                    stringRedisTemplate.expire(RedisKeyName.ACTIVITY_GET_SIGN_IN + uuid, 5L, TimeUnit.MINUTES);
                     signInUrl = serveUrl + "/api/activity/signIn/" + uuid;
                 } else if (type == 0) {
-                    stringRedisTemplate.opsForValue().set(RedisKeyName.ACTIVITY_GET_SIGN_OFF+uuid,aid.toString());
-                    stringRedisTemplate.expire(RedisKeyName.ACTIVITY_GET_SIGN_OFF+uuid,5L, TimeUnit.MINUTES);
+                    stringRedisTemplate.opsForValue().set(RedisKeyName.ACTIVITY_GET_SIGN_OFF + uuid, aid.toString());
+                    stringRedisTemplate.expire(RedisKeyName.ACTIVITY_GET_SIGN_OFF + uuid, 5L, TimeUnit.MINUTES);
                     //2.签到扫描二维码的访问路径
                     signInUrl = serveUrl + "/api/activity/signOff/" + uuid;
                 } else {
@@ -318,8 +338,8 @@ public class ActivityServerImpl implements IActivityServer{
 
                 //3.生成二维码以base64返回响应
                 String qrCode = QrCodeUtils.createQRCode(signInUrl);
-                return Response.success(ResponseStatus.ACTIVITY_GET_SIGN_IN_SUCCESS,qrCode);
-            }else {
+                return Response.success(ResponseStatus.ACTIVITY_GET_SIGN_IN_SUCCESS, qrCode);
+            } else {
                 return Response.error(ResponseStatus.ACTIVITY_GET_SIGN_IN_FAIL_1);
             }
         } catch (Exception e) {
@@ -347,19 +367,23 @@ public class ActivityServerImpl implements IActivityServer{
             String oldStatus;
             String status;
             String typeStr;
-            if (type.equals("1")){
+            if (type.equals("1")) {
                 aid = stringRedisTemplate.opsForValue().get(RedisKeyName.ACTIVITY_GET_SIGN_IN + signInfo.getUuid());
-                oldStatus = "1"; status = "2"; typeStr = "i";
-            }else if(type.equals("0")){
+                oldStatus = "1";
+                status = "2";
+                typeStr = "i";
+            } else if (type.equals("0")) {
                 aid = stringRedisTemplate.opsForValue().get(RedisKeyName.ACTIVITY_GET_SIGN_OFF + signInfo.getUuid());
-                oldStatus = "2"; status = "3"; typeStr = "o";
-            }else {
+                oldStatus = "2";
+                status = "3";
+                typeStr = "o";
+            } else {
                 return Response.error(ResponseStatus.ACTIVITY_SIGN_FAIL);
             }
 
-            if (StringUtil.isNullOrEmpty(aid)){
+            if (StringUtil.isNullOrEmpty(aid)) {
                 return Response.error(ResponseStatus.ACTIVITY_SIGN_IN_FAIL_2);
-            }else {
+            } else {
 
                 //2. 执行lua脚本
                 Long result = stringRedisTemplate.execute(
@@ -387,7 +411,6 @@ public class ActivityServerImpl implements IActivityServer{
     }
 
     /**
-     *
      * @param aid
      * @param page
      * @return
@@ -395,8 +418,8 @@ public class ActivityServerImpl implements IActivityServer{
     @Override
     public Response getAllRegisteredUser(Long aid, Page page) {
         QueryWrapper<Participation> queryWrapper = new QueryWrapper<>();
-        queryWrapper.eq("aid",aid);
-        queryWrapper.eq("participate_status",0);
+        queryWrapper.eq("aid", aid);
+        queryWrapper.eq("participate_status", 0);
         Page selectPage = participationMapper.selectPage(page, queryWrapper);
         List records = selectPage.getRecords();
 
@@ -409,17 +432,17 @@ public class ActivityServerImpl implements IActivityServer{
             User user;
             Object userStr = stringRedisTemplate.opsForHash().get("secondclass:user:userList", uid.toString());
             //1.2 如果redis没有，从数据库查询
-            if( userStr != null){
+            if (userStr != null) {
                 System.out.println("从redis中查询");
                 user = JSONUtil.toBean(userStr.toString(), User.class);
-            }else{
+            } else {
 
                 QueryWrapper<User> userQueryWrapper = new QueryWrapper<>();
-                userQueryWrapper.eq("uid",uid);
+                userQueryWrapper.eq("uid", uid);
                 System.out.println("从数据库中查询");
                 user = userMapper.selectOne(userQueryWrapper);
                 //将数据库查询结果存入redis
-                stringRedisTemplate.opsForHash().put("secondclass:user:userList",uid.toString(),JSONUtil.toJsonStr(user));
+                stringRedisTemplate.opsForHash().put("secondclass:user:userList", uid.toString(), JSONUtil.toJsonStr(user));
             }
 
             //2.通过cid查询班级、校区等信息
@@ -429,15 +452,15 @@ public class ActivityServerImpl implements IActivityServer{
             //2.2 从redis中查询,如果没有的话就查询数据库
 
             String classJson = (String) stringRedisTemplate.opsForHash().get("secondclass:class:classList", cid.toString());
-            if(classJson != null){
+            if (classJson != null) {
                 System.out.println("从redis中查询");
                 aClass = JSONUtil.toBean(classJson, Class.class);
-            }else {
+            } else {
                 QueryWrapper<Class> classQueryWrapper = new QueryWrapper<>();
-                classQueryWrapper.eq("cid",cid);
+                classQueryWrapper.eq("cid", cid);
                 System.out.println("从数据库中查询");
                 aClass = classMapper.selectOne(classQueryWrapper);
-                stringRedisTemplate.opsForHash().put("secondclass:class:classList",cid.toString(),JSONUtil.toJsonStr(aClass));
+                stringRedisTemplate.opsForHash().put("secondclass:class:classList", cid.toString(), JSONUtil.toJsonStr(aClass));
             }
             R_Student student = R_Student.builder().uid(user.getUid())
                     .uname(user.getUname())
@@ -451,7 +474,7 @@ public class ActivityServerImpl implements IActivityServer{
             list.add(student);
         }
         page.setRecords(list);
-        return Response.success(ResponseStatus.SUCCESS,page);
+        return Response.success(ResponseStatus.SUCCESS, page);
     }
 
     private static final DefaultRedisScript<Long> modifyRegisterStatusByUid;
@@ -470,15 +493,15 @@ public class ActivityServerImpl implements IActivityServer{
             String uid = participation.getUid().toString();
             String status = participation.getParticipateStatus().toString();
             UpdateWrapper<Participation> updateWrapper = new UpdateWrapper<>();
-            updateWrapper.eq("aid",aid).eq("uid",uid);
-            updateWrapper.set("participate_status",status);
-            if (participationMapper.update(null,updateWrapper) != 1) throw new IllegalArgumentException();
+            updateWrapper.eq("aid", aid).eq("uid", uid);
+            updateWrapper.set("participate_status", status);
+            if (participationMapper.update(null, updateWrapper) != 1) throw new IllegalArgumentException();
 
             //执行lua脚本
             Long result = stringRedisTemplate.execute(
                     modifyRegisterStatusByUid,
                     Collections.emptyList(),
-                    aid, uid,"1"
+                    aid, uid, "1"
             );
 
             //3. 判断结果是否为0
@@ -504,6 +527,34 @@ public class ActivityServerImpl implements IActivityServer{
     }
 
     @Override
+    public Response dynamicGetAllParticipatedMember(Long aid) {
+        Long size = stringRedisTemplate.opsForZSet().size(RedisKeyName.SECOND_KILL_PARTICIPATION + aid);
+
+        //小数据量
+        if (size != null && size != 0 && size < 500) {
+            Map<String, Object> allParticipatedMember = participationMapper.getAllParticipatedMember(aid,null);
+            Map<String, Object> classParticipationData = participationMapper.getClassParticipationData(aid);
+            HashMap<String, Object> r = new HashMap<>();
+            r.put("参与人员名单列表",allParticipatedMember);
+            r.put("各班参与情况",classParticipationData);
+            return Response.success(ResponseStatus.SUCCESS, r);
+        } else {
+            CompletableFuture<Map<String, Object>> future1 = CompletableFuture.supplyAsync(() -> participationMapper.getAllParticipatedMember(aid, null), executor);
+            CompletableFuture<Map<String, Object>> future2 = CompletableFuture.supplyAsync(() -> participationMapper.getClassParticipationData(aid), executor);
+            HashMap<String, Object> r = new HashMap<>();
+            try {
+                Map<String, Object> allParticipatedMember = future1.get();
+                Map<String, Object> classParticipationData = future2.get();
+                r.put("参与人员名单列表",allParticipatedMember);
+                r.put("各班参与情况",classParticipationData);
+            } catch (InterruptedException | ExecutionException e) {
+                e.printStackTrace();
+            }
+            return Response.success(ResponseStatus.SUCCESS, r);
+        }
+    }
+
+    @Override
     public Response getAllParticipatedMember(Long aid) {
 
         //1.从redis中获取对应活动所有报名人员列表
@@ -511,51 +562,93 @@ public class ActivityServerImpl implements IActivityServer{
         List<R_Student> list = new LinkedList<>();
 
         Object[] userList = userSet.toArray();
-        for (Object data : userList){
+        List<CompletableFuture<R_Student>> futures = new ArrayList<>();
+
+
+        for (Object data : userList) {
             //报名人员id
             String uid = data.toString().split("-")[0];
             //报名人员活动参与状态
             String status = data.toString().split("-")[1];
             //2.参与状态不为3时（签退）跳过，即完成签到签退的人员
-            if (!status.equals("3")) continue;
+            //todo 测试接口
+            if (!status.equals("0")) continue;
+//            if (!status.equals("3")) continue;
+
+
+            CompletableFuture<R_Student> future = CompletableFuture.supplyAsync(() -> {
+
+                User user = redisUtils.queryForValue(RedisKeyName.MANAGE_USER, uid, User.class, 60L, TimeUnit.DAYS, false,
+                        (id) -> {
+                            LambdaQueryWrapper<User> userQueryWrapper = new LambdaQueryWrapper<>();
+                            userQueryWrapper.eq(User::getUid, uid);
+                            return userMapper.selectOne(userQueryWrapper);
+                        });
+                String cIdStr = user.getCid().toString();
+                Class classInfo = redisUtils.queryForValue(RedisKeyName.MANAGE_CLASS, cIdStr, Class.class, 60L, TimeUnit.DAYS, true,
+                        (id) -> {
+                            QueryWrapper<Class> classQueryWrapper = new QueryWrapper<>();
+                            classQueryWrapper.eq("cid", cIdStr);
+                            return classMapper.selectOne(classQueryWrapper);
+                        });
+                R_Student student = R_Student.builder().uid(user.getUid())
+                        .uname(user.getUname())
+                        .phone(user.getPhone())
+                        .cname(classInfo.getCname())
+                        .grade(classInfo.getGrade())
+                        .major(classInfo.getMajor())
+                        .college(classInfo.getCollege())
+                        .campus(classInfo.getCampus()).build();
+                return student;
+            }, executor);
+            futures.add(future);
 
             //3.根据uid获取用户信息
-            User user = redisUtils.queryForValue(RedisKeyName.MANAGE_USER, uid, User.class, 60L, TimeUnit.DAYS, false,
-                    (id) -> {
-                        LambdaQueryWrapper<User> userQueryWrapper = new LambdaQueryWrapper<>();
-                        userQueryWrapper.eq(User::getUid, uid);
-                        return userMapper.selectOne(userQueryWrapper);
-                    });
-
-            //4.根据cid获取用户的班级信息
-            String cIdStr = user.getCid().toString();
-            Class classInfo = redisUtils.queryForValue(RedisKeyName.MANAGE_CLASS, cIdStr, Class.class, 60L, TimeUnit.DAYS, true,
-                    (id) -> {
-                        QueryWrapper<Class> classQueryWrapper = new QueryWrapper<>();
-                        classQueryWrapper.eq("cid", cIdStr);
-                        return classMapper.selectOne(classQueryWrapper);
-                    });
-
-            R_Student student = R_Student.builder().uid(user.getUid())
-                    .uname(user.getUname())
-                    .phone(user.getPhone())
-                    .cname(classInfo.getCname())
-                    .grade(classInfo.getGrade())
-                    .major(classInfo.getMajor())
-                    .college(classInfo.getCollege())
-                    .campus(classInfo.getCampus()).build();
-            list.add(student);
+//            User user = redisUtils.queryForValue(RedisKeyName.MANAGE_USER, uid, User.class, 60L, TimeUnit.DAYS, false,
+//                    (id) -> {
+//                        LambdaQueryWrapper<User> userQueryWrapper = new LambdaQueryWrapper<>();
+//                        userQueryWrapper.eq(User::getUid, uid);
+//                        return userMapper.selectOne(userQueryWrapper);
+//                    });
+//
+//            //4.根据cid获取用户的班级信息
+//            String cIdStr = user.getCid().toString();
+//            Class classInfo = redisUtils.queryForValue(RedisKeyName.MANAGE_CLASS, cIdStr, Class.class, 60L, TimeUnit.DAYS, true,
+//                    (id) -> {
+//                        QueryWrapper<Class> classQueryWrapper = new QueryWrapper<>();
+//                        classQueryWrapper.eq("cid", cIdStr);
+//                        return classMapper.selectOne(classQueryWrapper);
+//                    });
+//
+//            R_Student student = R_Student.builder().uid(user.getUid())
+//                    .uname(user.getUname())
+//                    .phone(user.getPhone())
+//                    .cname(classInfo.getCname())
+//                    .grade(classInfo.getGrade())
+//                    .major(classInfo.getMajor())
+//                    .college(classInfo.getCollege())
+//                    .campus(classInfo.getCampus()).build();
+//            list.add(student);
         }
 
-        return Response.success(ResponseStatus.SUCCESS,list);
+        for (CompletableFuture<R_Student> future : futures) {
+            try {
+                R_Student r_student = future.get();
+                list.add(r_student);
+            } catch (InterruptedException | ExecutionException e) {
+                e.printStackTrace();
+            }
+        }
+
+        return Response.success(ResponseStatus.SUCCESS, list);
     }
 
     @Override
-    public Response searchByName(String aname,Page page) {
+    public Response searchByName(String aname, Page page) {
         QueryWrapper<Activity> queryWrapper = new QueryWrapper<>();
-        queryWrapper.like("aname",aname);
+        queryWrapper.like("aname", aname);
         Page selectPage = activityMapper.selectPage(page, queryWrapper);
-        return Response.success(ResponseStatus.ACTIVITY_APP_QUERY_SUCCESS,selectPage);
+        return Response.success(ResponseStatus.ACTIVITY_APP_QUERY_SUCCESS, selectPage);
     }
 
     /**
@@ -564,9 +657,9 @@ public class ActivityServerImpl implements IActivityServer{
      * @return
      */
     @Override
-    public Response getParticipationByUid(String uid,Page page) {
+    public Response getParticipationByUid(String uid, Page page) {
         QueryWrapper<Participation> queryWrapper = new QueryWrapper<>();
-        queryWrapper.eq("uid",uid);
+        queryWrapper.eq("uid", uid);
         Page selectPage = participationMapper.selectPage(page, queryWrapper);
         List records = selectPage.getRecords();
         // 返回的数组
@@ -579,17 +672,17 @@ public class ActivityServerImpl implements IActivityServer{
             Activity activity;
             Object activityStr = stringRedisTemplate.opsForHash().get(RedisKeyName.ACTIVITY, aid.toString());
             //1.2 如果redis没有，从数据库查询
-            if( activityStr != null){
+            if (activityStr != null) {
                 System.out.println("从redis中查询");
                 activity = JSONUtil.toBean(activityStr.toString(), Activity.class);
-            }else{
+            } else {
 
                 QueryWrapper<Activity> activityQueryWrapper = new QueryWrapper<>();
-                activityQueryWrapper.eq("aid",aid);
+                activityQueryWrapper.eq("aid", aid);
                 System.out.println("从数据库中查询");
                 activity = activityMapper.selectOne(activityQueryWrapper);
                 //将数据库查询结果存入redis
-                stringRedisTemplate.opsForHash().put(RedisKeyName.ACTIVITY,aid.toString(),JSONUtil.toJsonStr(activity));
+                stringRedisTemplate.opsForHash().put(RedisKeyName.ACTIVITY, aid.toString(), JSONUtil.toJsonStr(activity));
             }
 
 
@@ -609,7 +702,56 @@ public class ActivityServerImpl implements IActivityServer{
             list.add(activity_participation);
         }
         page.setRecords(list);
-        return Response.success(ResponseStatus.SUCCESS,page);
+        return Response.success(ResponseStatus.SUCCESS, page);
+    }
+
+    public Response getParticipationByUid2(Page page) {
+        String uid = (String) StpUtil.getLoginId();
+        QueryWrapper<Participation> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("uid", uid);
+        Page selectPage = participationMapper.selectPage(page, queryWrapper);
+        List records = selectPage.getRecords();
+        // 返回的数组
+        List<R_Activity_Participation> list = new LinkedList<>();
+        for (int i = 0; i < records.size(); i++) {
+            Participation participation = (Participation) records.get(i);
+            //1.通过参与表查看报名人员  根据uid查询到所有aid
+            //1.1先用uid查询redis得到cid
+            Long aid = participation.getAid();
+            Activity activity;
+            Object activityStr = stringRedisTemplate.opsForHash().get(RedisKeyName.ACTIVITY, aid.toString());
+            //1.2 如果redis没有，从数据库查询
+            if (activityStr != null) {
+                System.out.println("从redis中查询");
+                activity = JSONUtil.toBean(activityStr.toString(), Activity.class);
+            } else {
+
+                QueryWrapper<Activity> activityQueryWrapper = new QueryWrapper<>();
+                activityQueryWrapper.eq("aid", aid);
+                System.out.println("从数据库中查询");
+                activity = activityMapper.selectOne(activityQueryWrapper);
+                //将数据库查询结果存入redis
+                stringRedisTemplate.opsForHash().put(RedisKeyName.ACTIVITY, aid.toString(), JSONUtil.toJsonStr(activity));
+            }
+
+
+            R_Activity_Participation activity_participation = R_Activity_Participation.builder().uid(uid)
+                    .aid(activity.getAid())
+                    .participateStatus(participation.getParticipateStatus())
+                    .aname(activity.getAname())
+                    .adescription(activity.getAdescription())
+                    .aRegisterOpen(activity.getARegisterOpen())
+                    .aRegisterClose(activity.getARegisterClose())
+                    .aHoldStart(activity.getAHoldStart())
+                    .aHoldEnd(activity.getAHoldEnd())
+                    .apic(activity.getApic())
+                    .aShichangNum(activity.getAShichangNum())
+                    .aShichangType(activity.getAShichangType()).build();
+
+            list.add(activity_participation);
+        }
+        page.setRecords(list);
+        return Response.success(ResponseStatus.SUCCESS, page);
     }
 
 
@@ -619,14 +761,14 @@ public class ActivityServerImpl implements IActivityServer{
         //1.1 通过aid查询活动
         Long aid = info.getAid();
 
-        Activity activity = redisUtils.queryForValue(RedisKeyName.ACTIVITY, aid.toString(),Activity.class,5L, TimeUnit.MINUTES, true,
+        Activity activity = redisUtils.queryForValue(RedisKeyName.ACTIVITY, aid.toString(), Activity.class, 5L, TimeUnit.MINUTES, true,
                 (id) -> {
                     QueryWrapper<Activity> queryWrapper = new QueryWrapper<>();
                     queryWrapper.eq("aid", aid);
                     return activityMapper.selectOne(queryWrapper);
                 });
 
-        if(activity == null) throw new IllegalArgumentException();
+        if (activity == null) throw new IllegalArgumentException();
 
         //1。2 获得市场类型
         Long sid = activity.getAShichangType();
@@ -634,7 +776,7 @@ public class ActivityServerImpl implements IActivityServer{
         //2.存入组织申请时长表
 
         Long uid = Long.valueOf((String) StpUtil.getLoginId());
-        OrganizationAppShi  organizationAppShi = OrganizationAppShi.builder().uid(uid)
+        OrganizationAppShi organizationAppShi = OrganizationAppShi.builder().uid(uid)
                 .sid(sid)
                 .shiAppDescription(info.getShiAppDescription())
                 .shiAppAttachment(info.getShiAppAttachment())
@@ -643,7 +785,7 @@ public class ActivityServerImpl implements IActivityServer{
 
         int i = organizationAppShiMapper.insert(organizationAppShi);
 
-        if(i != 1) throw new IllegalArgumentException();
+        if (i != 1) throw new IllegalArgumentException();
 
         return Response.success(ResponseStatus.SUBMIT_SHIAPPINFO_SUCCESS);
     }

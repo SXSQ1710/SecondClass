@@ -25,6 +25,18 @@ if(tonumber(redis.call('zscore', participationKey,userId .. '-' .. participation
     --3.3.存在，说明重复报名，返回2
     return 2
 end
+if(tonumber(redis.call('zscore', participationKey,userId .. '-' .. 1)) ~= nil)then
+    --3.3.存在，说明重复报名，返回2
+    return 2
+end
+if(tonumber(redis.call('zscore', participationKey,userId .. '-' .. 2)) ~= nil)then
+    --3.3.存在，说明重复报名，返回2
+    return 2
+end
+if(tonumber(redis.call('zscore', participationKey,userId .. '-' .. 3)) ~= nil)then
+    --3.3.存在，说明重复报名，返回2
+    return 2
+end
 --if(tonumber(redis.call('sismember', participationKey, userId .. '-' .. participationStatus)) == 1)then
 --    --3.3.存在，说明重复报名，返回2
 --    return 2

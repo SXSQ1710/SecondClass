@@ -2,14 +2,12 @@ package com.SecondClass.controller;
 
 import com.SecondClass.entity.*;
 import com.SecondClass.entity.R_entity.R_Login;
-import com.SecondClass.server.ManageServerImpl;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.SecondClass.server.impl.ManageServerImpl;
 import org.springframework.web.bind.annotation.*;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
-import java.util.List;
 import java.util.Map;
 
 @RequestMapping(value = "/api/manage")
@@ -21,6 +19,11 @@ public class ManageController {
 
     @PostMapping("/login")
     public Response login(@RequestBody R_Login rLogin){ return manageServer.login(rLogin); }
+
+    @GetMapping("/isLogin")
+    public Response isLogin(){
+        return manageServer.isLogin();
+    }
 
     @PostMapping("/createOrg")
     public Response createOrg(@RequestBody Organization organization ){

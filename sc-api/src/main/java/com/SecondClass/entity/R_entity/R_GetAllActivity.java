@@ -1,4 +1,4 @@
-package com.SecondClass.entity;
+package com.SecondClass.entity.R_entity;
 
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
@@ -11,25 +11,24 @@ import lombok.NoArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 
 import java.util.Date;
-import java.io.Serializable;
 
 /**
- * (TActivity)实体类
- *
- * @author makejava
- * @since 2022-10-29 09:33:01
- */
+ * @title: R_GetAllActivity
+ * @Author SXSQ
+ * @Description //TODO
+ * @Date 2023/10/4 17:49
+ **/
 
 @Data
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class Activity implements Serializable {
+public class R_GetAllActivity {
     private static final long serialVersionUID = -56724925718894306L;
     /**
      * 活动id
      */
-    @TableId(value = "aid",type= IdType.AUTO)
+    @TableId(value = "aid", type = IdType.AUTO)
     private Long aid;
     /**
      * 活动名字
@@ -39,48 +38,47 @@ public class Activity implements Serializable {
      * 活动描述
      */
     private String adescription;
+
+    /**
+     * 活动地点
+     */
+    @JsonProperty(value = "a_address")
+    private String aAddress;
+
     /**
      * 报名开始时间
      */
     @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss",timezone = "GMT+8")
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
     @JsonProperty(value = "a_register_open")
     private Date aRegisterOpen;
+
     /**
      * 报名结束时间
      */
     @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss",timezone = "GMT+8")
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
     @JsonProperty(value = "a_register_close")
     private Date aRegisterClose;
+
     /**
      * 报名限制人数
      */
-
     @JsonProperty(value = "a_limited_number")
     private Integer aLimitedNumber;
-    /**
-     * 举办单位
-     */
-    @JsonProperty(value = "a_oid")
-    private Long aOid;
-    /**
-     * 活动管理员（即活动申请人）
-     */
-    @JsonProperty(value = "a_uid")
-    private Long aUid;
+
     /**
      * 举办开始时间
      */
     @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss",timezone = "GMT+8")
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
     @JsonProperty(value = "a_hold_start")
     private Date aHoldStart;
     /**
      * 举办结束时间
      */
     @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss",timezone = "GMT+8")
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
     @JsonProperty(value = "a_hold_end")
     private Date aHoldEnd;
     /**
@@ -96,18 +94,12 @@ public class Activity implements Serializable {
     /**
      * 活动时长数量
      */
-    @JsonProperty(value = "a_shichang_num")
     private Integer aShichangNum;
-    /**
-     * 活动时长类型
-     */
-    @JsonProperty(value = "A_shichang_type")
-    private Long aShichangType;
-    /**
-     * 活动地点
-     */
-    @JsonProperty(value = "a_address")
-    private String aAddress;
+
+    private String shichangName;
+
+    private String oname;
+
+    private String uname;
 
 }
-

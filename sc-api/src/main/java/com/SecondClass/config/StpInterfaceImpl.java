@@ -1,25 +1,21 @@
 package com.SecondClass.config;
 
-import cn.dev33.satoken.stp.SaTokenInfo;
 import cn.dev33.satoken.stp.StpInterface;
 import cn.dev33.satoken.stp.StpUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.SecondClass.entity.Organization;
 import com.SecondClass.entity.RedisKeyName;
-import com.SecondClass.entity.User;
 import com.SecondClass.mapper.OrganizationMapper;
 import com.SecondClass.mapper.UserMapper;
 import com.SecondClass.utils.RedisUtils;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 /**
  * @title: StpInterfaceImpl

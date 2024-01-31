@@ -1,4 +1,4 @@
-package com.SecondClass.server;
+package com.SecondClass.server.impl;
 
 import cn.dev33.satoken.stp.SaTokenInfo;
 import cn.dev33.satoken.stp.StpUtil;
@@ -9,6 +9,7 @@ import com.SecondClass.entity.R_entity.R_Login;
 import com.SecondClass.entity.R_entity.R_Student;
 import com.SecondClass.entity.R_entity.R_UserAppOrg;
 import com.SecondClass.mapper.*;
+import com.SecondClass.server.IManageServer;
 import com.SecondClass.utils.ExcelListener;
 import com.alibaba.excel.EasyExcelFactory;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -50,7 +51,7 @@ import java.util.concurrent.TimeUnit;
 @Slf4j
 @Service
 @Component
-public class ManageServerImpl extends ServiceImpl<UserMapper,User> implements IManageServer{
+public class ManageServerImpl extends ServiceImpl<UserMapper,User> implements IManageServer {
 
     @Resource
     RedisUtils redisUtils;
@@ -599,5 +600,18 @@ public class ManageServerImpl extends ServiceImpl<UserMapper,User> implements IM
                 });
 
         return Response.success(ResponseStatus.MANAGE_USER_SUCCESS,userInfo);
+    }
+
+    public Response isLogin() {
+        try{
+            String uid =(String) StpUtil.getLoginId();
+            SaTokenInfo tokenInfo = StpUtil.getTokenInfo();
+            Map<String, String> token = new HashMap<>();
+            token.put("tokenName",tokenInfo.tokenName);
+            token.put("tokenValue",tokenInfo.tokenValue);
+            return Response.success(ResponseStatus.SUCCESS,token);
+        }catch (Exception e){
+            return Response.error(ResponseStatus.FAIL);
+        }
     }
 }

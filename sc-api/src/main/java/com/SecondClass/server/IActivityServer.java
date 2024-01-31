@@ -41,6 +41,8 @@ public interface IActivityServer {
      */
     Response findActivityAppByUid(Long uid, Page page);
 
+    Response dynamicGetAllParticipatedMember(Long aid);
+
     /**
      *
      * @param aAppid 活动申请id
@@ -61,7 +63,7 @@ public interface IActivityServer {
      * @param page 分页
      * @return Response
      */
-    Response getAll(Page page);
+    Response getAll(Long pageNo, Long pageSize);
 
 
     /**

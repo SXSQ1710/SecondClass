@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.SecondClass.mapper.ParticipationMapper">
+
+    <resultMap id="BaseResultMap" type="com.SecondClass.entity.Participation">
+            <id property="pid" column="pid" jdbcType="BIGINT"/>
+            <result property="uid" column="uid" jdbcType="BIGINT"/>
+            <result property="aid" column="aid" jdbcType="BIGINT"/>
+            <result property="participateStatus" column="participate_status" jdbcType="TINYINT"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        pid,uid,aid,
+        participate_status
+    </sql>
+
+    <select id="creatParticipationTemp">
+        DROP TABLE IF EXISTS t_participation_temp;
+        CREATE TABLE t_participation_temp (
+          pid bigint NOT NULL COMMENT '参加活动id，可能涉及高并发用自增不合适',
+          uid bigint NULL DEFAULT NULL COMMENT '用户id',
+          aid bigint NULL DEFAULT NULL COMMENT '活动id',
+          participate_status tinyint NULL DEFAULT NULL COMMENT '参与状态 0：等待审核 1：已报名 2：签到 3：签退 4：时长已发放 5:报名失败',
+          PRIMARY KEY (pid) USING BTREE,
+          INDEX uid(uid) USING BTREE,
+          INDEX aid(aid) USING BTREE
+        ) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = DYNAMIC;
+
+
+        INSERT INTO t_participation_temp
+        SELECT * FROM t_participation p WHERE p.uid IN (SELECT uid FROM t_user u WHERE u.grade > #{grade});
+
+        set @logSqlStr=concat("RENAME TABLE t_participation TO t_participation_",#{grade});
+        prepare sqlStr from @logSqlStr;
+        execute sqlStr;
+        RENAME TABLE t_participation_temp TO t_participation;
+    </select>
+
+
+    <select id="getAllParticipatedMember" resultType="java.util.Map">
+        select u.uid, u.uname, u.phone, c.cname, c.major, c.campus, c.college
+        from t_user as u left join t_participation as p on u.uid = p.uid left join t_class as c on c.cid = u.cid
+        <where>
+            <if test="status != null">
+                p.participate_status = #{status}
+            </if>
+            <if test="aid != null">
+                and p.aid = #{aid}
+            </if>
+        </where>
+    </select>
+
+    <select id="getClassParticipationData" resultType="java.util.Map">
+        select c.cid,c.cname,
+        sum(case when p.participate_status= 1 then 1 end) as '报名未签到',
+        sum(case when p.participate_status= 2 then 1 end) as '签到未签退',
+        sum(case when p.participate_status= 3 then 1 end) as '已签到签退'
+        from t_user as u left join t_participation as p on u.uid = p.uid left join t_class as c on c.cid = u.cid
+        where p.participate_status >= 0 and p.aid = #{aid}
+        GROUP BY c.cid;
+    </select>
+</mapper>

@@ -20,7 +20,7 @@ import java.io.Serializable;
 @AllArgsConstructor
 @NoArgsConstructor
 public class Class implements Serializable {
-    private static final long serialVersionUID = 469348194103564852L;
+        private static final long serialVersionUID = 469348194103564852L;
     /**
      * 班级id
      */

@@ -1,4 +1,4 @@
-package com.SecondClass.server;
+package com.SecondClass.server.impl;
 
 import cn.dev33.satoken.stp.StpUtil;
 import cn.hutool.core.date.DateUtil;
@@ -6,6 +6,7 @@ import cn.hutool.core.util.IdUtil;
 import com.SecondClass.entity.*;
 import com.SecondClass.mapper.SelfApplicationMapper;
 import com.SecondClass.mapper.ShiChangMapper;
+import com.SecondClass.server.ISelfApplicationServer;
 import com.SecondClass.utils.RedisUtils;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
